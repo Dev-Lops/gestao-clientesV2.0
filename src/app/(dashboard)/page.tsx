@@ -2,8 +2,8 @@
 
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { useUser } from '@/context/UserContext'
-import { firebaseApp } from '@/lib/firebase'
-import { getAuth, signOut } from 'firebase/auth'
+import { auth } from '@/lib/firebase'
+import { signOut } from 'firebase/auth'
 import { useRouter } from 'next/navigation'
 
 export default function DashboardPage() {
@@ -11,7 +11,12 @@ export default function DashboardPage() {
   const router = useRouter()
 
   const handleLogout = async () => {
-    await signOut(getAuth(firebaseApp))
+    if (!auth) {
+      // If Firebase auth isn't initialized, just navigate to login.
+      router.push('/login')
+      return
+    }
+    await signOut(auth)
     router.push('/login')
   }
 

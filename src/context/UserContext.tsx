@@ -17,18 +17,29 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (!auth) {
+      // If auth is not initialized (missing env or server-side), don't try to
+      // subscribe. Mark loading as false so the UI can continue.
+      // Avoid synchronous setState inside effect body (can trigger cascading renders)
+      Promise.resolve().then(() => setLoading(false))
+      return
+    }
+
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser)
       setLoading(false)
     })
+
     return () => unsubscribe()
   }, [])
 
   const loginWithGoogle = async () => {
+    if (!auth || !provider) throw new Error('Firebase auth not initialized')
     await signInWithPopup(auth, provider)
   }
 
   const logout = async () => {
+    if (!auth) throw new Error('Firebase auth not initialized')
     await signOut(auth)
   }
 
