@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "prisma:generate": "node scripts/prisma-generate.mjs",
+    "postinstall": "node scripts/prisma-generate.mjs"
   },
   "dependencies": {
     "@prisma/client": "^6.19.0",

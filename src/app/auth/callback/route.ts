@@ -14,15 +14,17 @@ export async function GET(req: Request) {
   try {
     const decoded = await adminAuth.verifyIdToken(token)
 
-    await handleUserOnboarding({
+    const onboardingResult = await handleUserOnboarding({
       uid: decoded.uid,
       email: decoded.email!,
       name: decoded.name || decoded.email!.split('@')[0],
     })
 
+    const destination = onboardingResult.hasOrganization
+      ? '/dashboard'
+      : '/onboarding'
 
-
-    return NextResponse.redirect(new URL('/dashboard', req.url))
+    return NextResponse.redirect(new URL(destination, req.url))
   } catch (err) {
     console.error('Erro ao validar token:', err)
     return NextResponse.redirect(new URL('/login', req.url))

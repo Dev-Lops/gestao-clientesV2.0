@@ -1,9 +1,18 @@
 'use client'
 
 import { useUser } from '@/context/UserContext'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 
 export default function LoginPage() {
-  const { loginWithGoogle, loading } = useUser()
+  const { loginWithGoogle, loading, user } = useUser()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!loading && user) {
+      router.replace('/dashboard')
+    }
+  }, [loading, user, router])
 
   return (
     <div className="flex h-screen items-center justify-center bg-gradient-to-br from-gray-900 via-purple-900 to-violet-700">
