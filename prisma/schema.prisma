@@ -1,0 +1,76 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  orgs      Member[]
+  clients   Client[] @relation("ClientOwner")
+  createdAt DateTime @default(now())
+}
+
+model Org {
+  id        String   @id @default(cuid())
+  name      String
+  members   Member[]
+  clients   Client[]
+  createdAt DateTime @default(now())
+}
+
+model Member {
+  id     String @id @default(cuid())
+  role   Role
+  userId String
+  orgId  String
+  user   User   @relation(fields: [userId], references: [id])
+  org    Org    @relation(fields: [orgId], references: [id])
+}
+
+enum Role {
+  OWNER
+  STAFF
+  CLIENT
+}
+
+model Client {
+  id      String  @id @default(cuid())
+  name    String
+  email   String?
+  orgId   String
+  ownerId String
+  org     Org     @relation(fields: [orgId], references: [id])
+  owner   User    @relation("ClientOwner", fields: [ownerId], references: [id])
+  tasks   Task[]
+  media   Media[]
+}
+
+model Task {
+  id          String  @id @default(cuid())
+  title       String
+  description String?
+  status      String  @default("pending")
+  clientId    String
+  client      Client  @relation(fields: [clientId], references: [id])
+}
+
+model Media {
+  id       String @id @default(cuid())
+  url      String
+  type     String
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id])
+}
