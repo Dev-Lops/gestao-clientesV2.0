@@ -25,7 +25,6 @@ export function InstallmentManager({ clientId, canEdit }: InstallmentManagerProp
   const [submitting, setSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     installmentCount: '',
-    installmentValue: '',
     startDate: '',
   })
   const [editingInstallment, setEditingInstallment] = useState<Installment | null>(null)
@@ -56,15 +55,9 @@ export function InstallmentManager({ clientId, canEdit }: InstallmentManagerProp
     e.preventDefault()
 
     const count = parseInt(formData.installmentCount)
-    const value = parseFloat(formData.installmentValue)
 
     if (isNaN(count) || count <= 0) {
       toast.error('Número de parcelas inválido')
-      return
-    }
-
-    if (isNaN(value) || value <= 0) {
-      toast.error('Valor da parcela inválido')
       return
     }
 
@@ -83,16 +76,18 @@ export function InstallmentManager({ clientId, canEdit }: InstallmentManagerProp
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           installmentCount: count,
-          installmentValue: value,
           startDate: startDateToSave,
         }),
       })
 
-      if (!res.ok) throw new Error('Falha ao criar parcelas')
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.error || 'Falha ao criar parcelas')
+      }
 
       toast.success('Parcelas criadas com sucesso!')
       setIsModalOpen(false)
-      setFormData({ installmentCount: '', installmentValue: '', startDate: '' })
+      setFormData({ installmentCount: '', startDate: '' })
       loadInstallments()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Erro ao criar parcelas')
@@ -391,17 +386,10 @@ export function InstallmentManager({ clientId, canEdit }: InstallmentManagerProp
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="installmentValue">Valor da Parcela (R$)</Label>
-                  <Input
-                    id="installmentValue"
-                    type="number"
-                    step="0.01"
-                    min="0.01"
-                    value={formData.installmentValue}
-                    onChange={(e) => setFormData({ ...formData, installmentValue: e.target.value })}
-                    required
-                  />
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <p className="text-xs text-slate-600 dark:text-slate-400">
+                    💡 <strong>Info:</strong> O valor de cada parcela será calculado automaticamente dividindo o <strong>valor do contrato</strong> pelo número de parcelas.
+                  </p>
                 </div>
 
                 <div>

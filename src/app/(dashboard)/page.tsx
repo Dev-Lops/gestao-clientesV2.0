@@ -1,15 +1,13 @@
 'use client'
 
-import { AdminLink } from '@/components/AdminLink'
+import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
-import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { useUser } from '@/context/UserContext'
 import { ClientsWithBottlenecks, type ClientHealthMetrics } from '@/features/clients/components'
 import { ActivitiesCalendar } from '@/features/dashboard/components/ActivitiesCalendar'
 
 import { motion } from 'framer-motion'
-import { Sparkles, Users } from 'lucide-react'
+import { Sparkles } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -68,13 +66,14 @@ interface DashboardData {
 export default function DashboardPage() {
   return (
     <ProtectedRoute>
-      <RealtimeDashboard />
+      <DashboardLayout>
+        <RealtimeDashboard />
+      </DashboardLayout>
     </ProtectedRoute>
   )
 }
 
 function RealtimeDashboard() {
-  const { logout } = useUser()
   const router = useRouter()
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -99,14 +98,6 @@ function RealtimeDashboard() {
     void loadDashboard()
   }, [])
 
-  const handleLogout = async () => {
-    try {
-      await logout()
-    } catch {
-      // Error handled silently
-    }
-  }
-
   if (loading) {
     return (
       <div className="relative flex h-screen items-center justify-center bg-linear-to-br from-slate-50 via-blue-50/30 to-slate-100 dark:from-slate-950 dark:via-blue-950/20 dark:to-slate-900">
@@ -125,7 +116,12 @@ function RealtimeDashboard() {
     return (
       <div className="p-10 text-center">
         <p className="text-red-600 font-medium mb-4">{error || 'Erro desconhecido'}</p>
-        <Button onClick={() => router.push('/login')}>Voltar ao login</Button>
+        <button
+          onClick={() => router.push('/login')}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+        >
+          Voltar ao login
+        </button>
       </div>
     )
   }
@@ -145,162 +141,136 @@ function RealtimeDashboard() {
   const metrics = data.metrics
 
   return (
-    <div className="relative min-h-screen bg-linear-to-br from-slate-50 via-blue-50/30 to-slate-100 dark:from-slate-950 dark:via-blue-950/20 dark:to-slate-900">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 -left-4 w-96 h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob" />
-        <div className="absolute top-0 -right-4 w-96 h-96 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-2000" />
-        <div className="absolute -bottom-8 left-20 w-96 h-96 bg-pink-400 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-4000" />
+    <motion.div
+      className="space-y-4 sm:space-y-6 p-4 sm:p-6"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      {/* HEADER COMPACTO */}
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="relative">
+            <div className="absolute inset-0 bg-linear-to-tr from-blue-600 to-purple-600 rounded-xl blur-md opacity-50" />
+            <div className="relative w-10 h-10 bg-linear-to-tr from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+              <Sparkles className="w-5 h-5 text-white" />
+            </div>
+          </div>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
+              Painel de Gestão
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+              Bem-vindo de volta!
+            </p>
+          </div>
+        </div>
+      </header>
+
+      {/* KPIs COMPACTOS */}
+      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <KpiCard
+          icon="👥"
+          label="Clientes"
+          value={clients.length}
+          iconBg="from-blue-500 to-blue-600"
+          textColor="text-blue-700 dark:text-blue-400"
+        />
+        <KpiCard
+          icon="📋"
+          label="Pendentes"
+          value={pendingTasks.length}
+          iconBg="from-amber-500 to-orange-600"
+          textColor="text-amber-700 dark:text-amber-400"
+        />
+        <KpiCard
+          icon="🔄"
+          label="Em progresso"
+          value={inProgressTasks.length}
+          iconBg="from-purple-500 to-purple-600"
+          textColor="text-purple-700 dark:text-purple-400"
+        />
+        <KpiCard
+          icon="✅"
+          label="Concluídas"
+          value={completedTasks.length}
+          iconBg="from-emerald-500 to-emerald-600"
+          textColor="text-emerald-700 dark:text-emerald-400"
+        />
+      </section>
+
+      {/* Layout em 2 colunas para desktop */}
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
+        {/* Coluna 1 - Clientes com Gargalos */}
+        {data.clientsHealth && data.clientsHealth.length > 0 && (
+          <ClientsWithBottlenecks clients={data.clientsHealth} maxDisplay={3} />
+        )}
+
+        {/* Coluna 2 - Calendário */}
+        {data.activities && data.activities.length > 0 && (
+          <ActivitiesCalendar activities={data.activities} />
+        )}
       </div>
 
-      <motion.div
-        className="relative space-y-4 sm:space-y-6 p-4 sm:p-6 max-w-7xl mx-auto"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        {/* HEADER COMPACTO */}
-        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="relative">
-              <div className="absolute inset-0 bg-linear-to-tr from-blue-600 to-purple-600 rounded-xl blur-md opacity-50" />
-              <div className="relative w-10 h-10 bg-linear-to-tr from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
-            </div>
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
-                Painel de Gestão
-              </h1>
-              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-                {data.user.name || data.user.email}
-              </p>
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <AdminLink />
-            <Link href="/finance">
-              <Button size="sm" variant="outline" className="backdrop-blur-sm bg-white/80">
-                💰
-              </Button>
-            </Link>
-            <Link href="/clients">
-              <Button size="sm" className="bg-linear-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/20">
-                <Users className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                <span className="hidden sm:inline">Clientes</span>
-              </Button>
-            </Link>
-            <Button size="sm" onClick={handleLogout} variant="ghost">
-              Sair
-            </Button>
-          </div>
-        </header>
-
-        {/* KPIs COMPACTOS */}
-        <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <KpiCard
-            icon="👥"
-            label="Clientes"
-            value={clients.length}
-            iconBg="from-blue-500 to-blue-600"
-            textColor="text-blue-700 dark:text-blue-400"
-          />
-          <KpiCard
-            icon="📋"
-            label="Pendentes"
-            value={pendingTasks.length}
-            iconBg="from-amber-500 to-orange-600"
-            textColor="text-amber-700 dark:text-amber-400"
-          />
-          <KpiCard
-            icon="🔄"
-            label="Em progresso"
-            value={inProgressTasks.length}
-            iconBg="from-purple-500 to-purple-600"
-            textColor="text-purple-700 dark:text-purple-400"
-          />
-          <KpiCard
-            icon="✅"
-            label="Concluídas"
-            value={completedTasks.length}
-            iconBg="from-emerald-500 to-emerald-600"
-            textColor="text-emerald-700 dark:text-emerald-400"
-          />
-        </section>
-
-        {/* Layout em 2 colunas para desktop */}
-        <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
-          {/* Coluna 1 - Clientes com Gargalos */}
-          {data.clientsHealth && data.clientsHealth.length > 0 && (
-            <ClientsWithBottlenecks clients={data.clientsHealth} maxDisplay={3} />
-          )}
-
-          {/* Coluna 2 - Calendário */}
-          {data.activities && data.activities.length > 0 && (
-            <ActivitiesCalendar activities={data.activities} />
-          )}
-        </div>
-
-        {/* Tarefas Pendentes */}
-        {priorities.length > 0 && (
-          <section>
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
-                Tarefas Pendentes
-              </h2>
-              <Link href="/clients" className="text-xs sm:text-sm text-blue-600 hover:text-blue-700">
-                ver tudo →
-              </Link>
-            </div>
-            <div className="grid gap-2 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {priorities.map((task) => (
-                <Card
-                  key={task.id}
-                  className="p-3 sm:p-4 border-l-4 border-amber-400 bg-white/80 backdrop-blur-sm hover:shadow-md transition-all"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-xs sm:text-sm text-slate-900 truncate">{task.title}</p>
-                      <p className="text-[10px] sm:text-xs text-slate-600 mt-1">
-                        {task.client.name}
-                      </p>
-                    </div>
-                    <span className="text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 uppercase font-medium whitespace-nowrap">
-                      {task.status}
-                    </span>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Tarefas Urgentes (se houver) */}
-        {metrics && metrics.urgentTasks.length > 0 && (
-          <section>
-            <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mb-3">
-              Tarefas Urgentes
+      {/* Tarefas Pendentes */}
+      {priorities.length > 0 && (
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
+              Tarefas Pendentes
             </h2>
-            <div className="grid gap-2 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {metrics.urgentTasks.slice(0, 6).map((t) => (
-                <Card key={t.id} className="p-3 sm:p-4 border-l-4 border-red-500 bg-red-50/50 backdrop-blur-sm">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-xs sm:text-sm text-slate-900 truncate">{t.title}</p>
-                      <p className="text-[10px] sm:text-xs text-slate-600 mt-1">{t.client.name}</p>
-                      <div className="text-[10px] sm:text-xs text-slate-500 mt-1">
-                        Score: {t.urgencyScore.toFixed(0)}
-                      </div>
-                    </div>
-                    <span className="text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full bg-red-100 text-red-700 uppercase font-medium whitespace-nowrap">{t.priority}</span>
+            <Link href="/clients" className="text-xs sm:text-sm text-blue-600 hover:text-blue-700">
+              ver tudo →
+            </Link>
+          </div>
+          <div className="grid gap-2 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {priorities.map((task) => (
+              <Card
+                key={task.id}
+                className="p-3 sm:p-4 border-l-4 border-amber-400 bg-white/80 backdrop-blur-sm hover:shadow-md transition-all"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-xs sm:text-sm text-slate-900 truncate">{task.title}</p>
+                    <p className="text-[10px] sm:text-xs text-slate-600 mt-1">
+                      {task.client.name}
+                    </p>
                   </div>
-                </Card>
-              ))}
-            </div>
-          </section>
-        )}
-      </motion.div>
-    </div>
+                  <span className="text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 uppercase font-medium whitespace-nowrap">
+                    {task.status}
+                  </span>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Tarefas Urgentes (se houver) */}
+      {metrics && metrics.urgentTasks.length > 0 && (
+        <section>
+          <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mb-3">
+            Tarefas Urgentes
+          </h2>
+          <div className="grid gap-2 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {metrics.urgentTasks.slice(0, 6).map((t) => (
+              <Card key={t.id} className="p-3 sm:p-4 border-l-4 border-red-500 bg-red-50/50 backdrop-blur-sm">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-xs sm:text-sm text-slate-900 truncate">{t.title}</p>
+                    <p className="text-[10px] sm:text-xs text-slate-600 mt-1">{t.client.name}</p>
+                    <div className="text-[10px] sm:text-xs text-slate-500 mt-1">
+                      Score: {t.urgencyScore.toFixed(0)}
+                    </div>
+                  </div>
+                  <span className="text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full bg-red-100 text-red-700 uppercase font-medium whitespace-nowrap">{t.priority}</span>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
+    </motion.div>
   )
 }
 

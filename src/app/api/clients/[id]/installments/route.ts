@@ -66,9 +66,9 @@ export async function POST(request: NextRequest, { params }: Params) {
 
     const { id } = await params
     const body = await request.json()
-    const { installmentCount, installmentValue, startDate } = body
+    const { installmentCount, startDate } = body
 
-    if (!installmentCount || !installmentValue || !startDate) {
+    if (!installmentCount || !startDate) {
       return NextResponse.json({ error: 'Dados incompletos' }, { status: 400 })
     }
 
@@ -93,6 +93,17 @@ export async function POST(request: NextRequest, { params }: Params) {
         { status: 404 }
       )
     }
+
+    // Verificar se cliente tem contractValue definido
+    if (!client.contractValue) {
+      return NextResponse.json(
+        { error: 'Cliente não possui valor de contrato definido' },
+        { status: 400 }
+      )
+    }
+
+    // Calcular valor de cada parcela baseado no contractValue
+    const installmentValue = client.contractValue / installmentCount
 
     // Atualizar cliente para modo parcelado
     await prisma.client.update({
