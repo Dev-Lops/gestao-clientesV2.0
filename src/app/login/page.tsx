@@ -34,7 +34,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen w-full overflow-hidden bg-linear-to-br from-slate-50 via-blue-50/30 to-slate-100 dark:from-slate-950 dark:via-blue-950/20 dark:to-slate-900">
+    <div className="relative flex min-h-screen w-full overflow-hidden bg-linear-to-br from-slate-50 via-blue-50/30 to-slate-100 dark:from-slate-950 dark:via-blue-950/20 dark:to-slate-900 items-center justify-center">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 -left-4 w-96 h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob" />
@@ -43,7 +43,7 @@ export default function LoginPage() {
       </div>
 
       {/* Left Panel - Brand & Features */}
-      <div className="relative hidden lg:flex lg:w-1/2 flex-col justify-between p-12 xl:p-16">
+      <div className="relative hidden lg:flex lg:w-1/2 flex-col justify-between p-8 xl:p-10">
         <div className="relative z-10 flex flex-col gap-12">
           {/* Logo */}
           <div className="flex items-center gap-3">
@@ -118,8 +118,8 @@ export default function LoginPage() {
       </div>
 
       {/* Right Panel - Login Form */}
-      <div className="relative flex w-full lg:w-1/2 items-center justify-center p-6">
-        <div className="w-full max-w-md space-y-8">
+      <div className="relative flex w-full lg:w-1/2 items-center justify-center p-4">
+        <div className="w-full max-w-md space-y-6">
           {/* Mobile Logo */}
           <div className="flex lg:hidden items-center justify-center gap-3 mb-8">
             <div className="relative">

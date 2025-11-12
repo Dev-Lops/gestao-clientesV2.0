@@ -1,7 +1,6 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import { motion } from 'framer-motion'
 import {
   BarChart3,
   Calendar,
@@ -198,14 +197,14 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed left-0 top-16 bottom-0 z-40 w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 shadow-lg overflow-hidden transform transition-transform',
+          'fixed left-0 top-16 bottom-0 z-40 w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 shadow-lg overflow-hidden transform transition-transform h-[calc(100vh-4rem)]',
           isOpen ? 'translate-x-0' : '-translate-x-full',
           'lg:translate-x-0 lg:static lg:shadow-none'
         )}
       >
-        <div className="h-full flex flex-col">
-          {/* Sidebar Content */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-2">
+        <div className="h-full flex flex-col overflow-hidden">
+          {/* Sidebar Content - compacta, sem rolagem interna */}
+          <div className="flex-1 p-2 space-y-1 overflow-visible">
             {menuItems.map((item) => (
               <div key={item.label}>
                 {/* Main Menu Item */}
@@ -213,7 +212,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   <button
                     onClick={() => toggleSubmenu(item.label)}
                     className={cn(
-                      'w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg transition-all duration-200',
+                      'w-full flex items-center justify-between gap-2 px-2 py-2 rounded-lg transition-all duration-200 text-sm',
                       isActive(item.href)
                         ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
                         : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
@@ -241,7 +240,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     href={item.href}
                     onClick={() => onClose()}
                     className={cn(
-                      'flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg transition-all duration-200',
+                      'flex items-center justify-between gap-2 px-2 py-2 rounded-lg transition-all duration-200 text-sm',
                       isActive(item.href)
                         ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
                         : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
@@ -261,20 +260,14 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
                 {/* Submenu */}
                 {item.submenu && expandedMenus.includes(item.label) && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="mt-1 ml-6 space-y-1"
-                  >
+                  <div className="mt-0.5 ml-4 space-y-0.5">
                     {item.submenu.map((subitem) => (
                       <Link
                         key={subitem.href}
                         href={subitem.href}
                         onClick={() => onClose()}
                         className={cn(
-                          'block px-3 py-2 rounded-lg text-sm transition-colors',
+                          'block px-2 py-1 rounded-lg text-xs transition-colors',
                           pathname === subitem.href
                             ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium'
                             : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200'
@@ -283,16 +276,16 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                         {subitem.label}
                       </Link>
                     ))}
-                  </motion.div>
+                  </div>
                 )}
               </div>
             ))}
           </div>
 
           {/* Sidebar Footer */}
-          <div className="p-4 border-t border-slate-200 dark:border-slate-800">
-            <div className="p-3 rounded-lg bg-linear-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-100 dark:border-blue-800">
-              <p className="text-xs font-medium text-slate-900 dark:text-white mb-1">
+          <div className="p-2 border-t border-slate-200 dark:border-slate-800">
+            <div className="p-2 rounded-lg bg-linear-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-100 dark:border-blue-800">
+              <p className="text-xs font-medium text-slate-900 dark:text-white mb-0.5">
                 💡 Dica do dia
               </p>
               <p className="text-xs text-slate-600 dark:text-slate-400">

@@ -22,14 +22,14 @@ export default function AppShell({ children }: AppShellProps) {
   // If user not authenticated, render children only
   if (!user) return <>{children}</>
 
-  // Authenticated: show global app shell
+  // Layout fixo: Sidebar nunca rola, main ocupa todo espaço e rola
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+    <div className="w-screen h-screen bg-slate-50 dark:bg-slate-950 flex flex-col overflow-hidden">
       <Navbar onMenuClick={toggleSidebar} isSidebarOpen={isSidebarOpen} />
-      <div className="flex pt-16">
+      <div className="flex flex-1 h-0 pt-16 overflow-hidden">
         <Sidebar isOpen={isSidebarOpen} onClose={closeSidebar} />
-        <main className="flex-1 lg:ml-0">
-          <div className="max-w-7xl mx-auto">{children}</div>
+        <main className="flex-1 h-full overflow-y-auto">
+          <div className="max-w-7xl mx-auto min-h-full">{children}</div>
         </main>
       </div>
     </div>
