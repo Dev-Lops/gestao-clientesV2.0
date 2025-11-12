@@ -84,6 +84,18 @@ export async function PATCH(req: Request) {
     }
   })
 
+  // Server-side validation (CNPJ/CEP)
+  const onlyDigits = (s: string | null | undefined) =>
+    (s || '').replace(/\D/g, '')
+  const cnpjDigits = onlyDigits(data.cnpj as string)
+  if (cnpjDigits && cnpjDigits.length !== 14) {
+    return NextResponse.json({ error: 'CNPJ inválido' }, { status: 400 })
+  }
+  const cepDigits = onlyDigits(data.postalCode as string)
+  if (cepDigits && cepDigits.length !== 8) {
+    return NextResponse.json({ error: 'CEP inválido' }, { status: 400 })
+  }
+
   if (Object.keys(data).length === 0) {
     return NextResponse.json({ error: 'No changes' }, { status: 400 })
   }

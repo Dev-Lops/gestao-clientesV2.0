@@ -1,7 +1,7 @@
 'use client'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { AlertTriangle, CheckCircle, TrendingDown, TrendingUp } from 'lucide-react'
+import { AlertCircle, AlertOctagon, AlertTriangle, CheckCircle, Clock, Percent, TrendingDown, TrendingDown as TrendingDownIcon, TrendingUp, XCircle } from 'lucide-react'
 
 export interface ClientHealthMetrics {
   clientId: string
@@ -24,7 +24,7 @@ interface ClientHealthCardProps {
 export function ClientHealthCard({ metrics, variant = 'detailed', onClientClick }: ClientHealthCardProps) {
   // Calcular indicadores de saúde
   const healthScore = calculateHealthScore(metrics)
-  const bottlenecks = identifyBottlenecks(metrics)
+  const issues = getClientIssues(metrics)
   const status = getHealthStatus(healthScore)
 
   const handleClick = () => {
@@ -78,11 +78,24 @@ export function ClientHealthCard({ metrics, variant = 'detailed', onClientClick 
             </div>
           </div>
 
-          {bottlenecks.length > 0 && (
+          {issues.length > 0 && (
             <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
-              <div className="flex items-center gap-1.5 text-xs text-red-600 dark:text-red-400">
-                <AlertTriangle className="h-3 w-3 shrink-0" />
-                <span className="font-medium truncate">{bottlenecks[0]}</span>
+              <div className="flex items-center gap-1.5 text-xs">
+                {issues[0].severity === 'high' ? (
+                  <XCircle className="h-3 w-3 text-red-600" />
+                ) : issues[0].severity === 'medium' ? (
+                  <AlertCircle className="h-3 w-3 text-orange-600" />
+                ) : (
+                  <AlertTriangle className="h-3 w-3 text-yellow-600" />
+                )}
+                <span className={`font-medium truncate ${issues[0].severity === 'high'
+                  ? 'text-red-600 dark:text-red-400'
+                  : issues[0].severity === 'medium'
+                    ? 'text-orange-600 dark:text-orange-400'
+                    : 'text-yellow-700 dark:text-yellow-400'
+                  }`}>
+                  {issues[0].message}
+                </span>
               </div>
             </div>
           )}
@@ -114,8 +127,8 @@ export function ClientHealthCard({ metrics, variant = 'detailed', onClientClick 
             <p className="text-xs text-slate-500 mt-0.5">{metrics.tasksCompleted}/{metrics.tasksTotal}</p>
           </div>
           <div className={`text-center p-4 rounded-lg border ${metrics.balance >= 0
-              ? 'bg-green-50 border-green-200'
-              : 'bg-red-50 border-red-200'
+            ? 'bg-green-50 border-green-200'
+            : 'bg-red-50 border-red-200'
             }`}>
             <div className={`text-2xl font-bold ${metrics.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(metrics.balance)}
@@ -137,21 +150,28 @@ export function ClientHealthCard({ metrics, variant = 'detailed', onClientClick 
           </div>
         </div>
 
-        {/* Gargalos identificados */}
-        {bottlenecks.length > 0 && (
-          <div className="p-4 rounded-lg bg-red-50 border border-red-200">
-            <div className="flex items-center gap-2 mb-2">
-              <AlertTriangle className="h-4 w-4 text-red-600" />
-              <span className="text-sm font-semibold text-red-900">Gargalos Identificados</span>
-            </div>
-            <ul className="space-y-1.5">
-              {bottlenecks.map((bottleneck, idx) => (
-                <li key={idx} className="text-xs text-red-700 flex items-start gap-1.5">
-                  <span className="text-red-500 mt-0.5">•</span>
-                  <span>{bottleneck}</span>
-                </li>
-              ))}
-            </ul>
+        {/* Alertas de Gargalo */}
+        {issues.length > 0 && (
+          <div className="space-y-3">
+            {issues.map((issue, idx) => {
+              const meta = GARGALO_META[issue.type]
+              return (
+                <div key={idx} className={`flex items-start gap-3 p-3 rounded-lg border ${meta.color} ${issue.severity === 'high' ? 'border-2 border-red-400' : 'border'} shadow-sm`}>
+                  <div className="shrink-0 mt-0.5">{meta.icon}</div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded ${meta.color}`}>{meta.label}</span>
+                      {issue.severity === 'high' && <span className="text-xs text-red-600 font-bold">Crítico</span>}
+                      {issue.severity === 'medium' && <span className="text-xs text-orange-600 font-bold">Atenção</span>}
+                      {issue.severity === 'low' && <span className="text-xs text-yellow-700 font-bold">Baixo</span>}
+                    </div>
+                    <div className="text-xs text-slate-800 dark:text-slate-200 font-medium">
+                      {meta.description(issue)}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
           </div>
         )}
       </CardContent>
@@ -180,31 +200,195 @@ function calculateHealthScore(metrics: ClientHealthMetrics): number {
   return Math.round(score)
 }
 
-function identifyBottlenecks(metrics: ClientHealthMetrics): string[] {
-  const bottlenecks: string[] = []
+// Identificar problemas específicos com severidade
+export type Gargalo = {
+  type: 'overdue' | 'pending' | 'balance' | 'completion' | 'noneDone' | 'paymentLate' | 'meetingMissed' | 'installmentLate';
+  message: string;
+  severity: 'high' | 'medium' | 'low';
+  action?: string;
+  amount?: number;
+  count?: number;
+}
 
-  if (metrics.completionRate < 50) {
-    bottlenecks.push(`Taxa de conclusão baixa (${metrics.completionRate}%)`)
-  }
 
-  if (metrics.balance < -1000) {
-    bottlenecks.push(`Saldo negativo de ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Math.abs(metrics.balance))}`)
-  }
 
-  if (metrics.tasksPending > 10) {
-    bottlenecks.push(`${metrics.tasksPending} tarefas pendentes acumuladas`)
-  }
+export const GARGALO_META: Record<Gargalo['type'], { label: string; icon: React.ReactNode; color: string; description: (g: Gargalo) => string; actionLabel?: string }> = {
+  overdue: {
+    label: 'Atraso',
+    icon: <Clock className="h-4 w-4" />,
+    color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
+    description: (g) => `Existem tarefas atrasadas. ${g.message}`,
+    actionLabel: 'Ver tarefas',
+  },
+  pending: {
+    label: 'Pendências',
+    icon: <AlertOctagon className="h-4 w-4" />,
+    color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
+    description: (g) => `Muitas tarefas pendentes. ${g.message}`,
+    actionLabel: 'Ver pendências',
+  },
+  balance: {
+    label: 'Saldo Negativo',
+    icon: <TrendingDownIcon className="h-4 w-4" />,
+    color: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300',
+    description: (g) => `O cliente está com saldo negativo. ${g.message}`,
+    actionLabel: 'Ver financeiro',
+  },
+  completion: {
+    label: 'Baixa Conclusão',
+    icon: <Percent className="h-4 w-4" />,
+    color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+    description: (g) => `A taxa de conclusão está baixa. ${g.message}`,
+    actionLabel: 'Ver tarefas',
+  },
+  noneDone: {
+    label: 'Sem Progresso',
+    icon: <AlertCircle className="h-4 w-4" />,
+    color: 'bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-200',
+    description: () => `Nenhuma tarefa foi concluída ainda.`,
+    actionLabel: 'Criar tarefa',
+  },
+  paymentLate: {
+    label: 'Pagamento Atrasado',
+    icon: <TrendingDown className="h-4 w-4" />,
+    color: 'bg-red-200 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+    description: (g) => `Pagamento pendente ou atrasado. ${g.message}`,
+    actionLabel: 'Cobrar pagamento',
+  },
+  meetingMissed: {
+    label: 'Reunião Não Realizada',
+    icon: <AlertTriangle className="h-4 w-4" />,
+    color: 'bg-yellow-200 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+    description: (g) => `Reunião marcada não foi realizada. ${g.message}`,
+    actionLabel: 'Remarcar reunião',
+  },
+  installmentLate: {
+    label: 'Parcela em Atraso',
+    icon: <XCircle className="h-4 w-4" />,
+    color: 'bg-rose-200 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300',
+    description: (g) => `Existem parcelas em atraso. ${g.message}`,
+    actionLabel: 'Ver parcelas',
+  },
+}
 
-  if (metrics.tasksOverdue && metrics.tasksOverdue > 0) {
-    bottlenecks.push(`${metrics.tasksOverdue} tarefas atrasadas`)
-  }
+export type ExtendedMetrics = ClientHealthMetrics & {
+  paymentsLate?: number
+  meetingsMissed?: number
+  installmentsLate?: number
+}
 
-  const pendingRatio = metrics.tasksTotal > 0 ? metrics.tasksPending / metrics.tasksTotal : 0
-  if (pendingRatio > 0.6) {
-    bottlenecks.push(`Mais de 60% das tarefas ainda pendentes`)
-  }
+export function getClientIssues(metrics: ExtendedMetrics): Gargalo[] {
+  const rules: Array<{
+    type: Gargalo['type'],
+    check: (metrics: ExtendedMetrics) => { active: boolean, message: string, severity: Gargalo['severity'], action?: string, amount?: number, count?: number }
+  }> = [
+      {
+        type: 'overdue',
+        check: (m) => {
+          const overdue = m.tasksOverdue ?? 0
+          return {
+            active: overdue > 0,
+            message: `${overdue} tarefa${overdue > 1 ? 's' : ''} atrasada${overdue > 1 ? 's' : ''}`,
+            severity: overdue > 3 ? 'high' : overdue > 0 ? 'medium' : 'low',
+            action: 'Ver tarefas',
+            count: overdue,
+          }
+        }
+      },
+      {
+        type: 'pending',
+        check: (m) => {
+          const pendingRatio = m.tasksTotal > 0 ? m.tasksPending / m.tasksTotal : 0
+          return {
+            active: pendingRatio > 0.6 && m.tasksPending > 5,
+            message: `${Math.round(pendingRatio * 100)}% das tarefas pendentes (${m.tasksPending})`,
+            severity: pendingRatio > 0.8 ? 'high' : pendingRatio > 0.6 ? 'medium' : 'low',
+            action: 'Ver pendências',
+            count: m.tasksPending,
+          }
+        }
+      },
+      {
+        type: 'balance',
+        check: (m) => {
+          return {
+            active: m.balance < 0,
+            message: `Saldo negativo: ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(m.balance)}`,
+            severity: m.balance < -5000 ? 'high' : m.balance < 0 ? 'medium' : 'low',
+            action: 'Ver financeiro',
+            amount: m.balance,
+          }
+        }
+      },
+      {
+        type: 'completion',
+        check: (m) => {
+          return {
+            active: m.completionRate < 40 && m.tasksTotal > 3,
+            message: `Taxa de conclusão baixa: ${m.completionRate.toFixed(0)}%`,
+            severity: m.completionRate < 20 ? 'high' : m.completionRate < 40 ? 'low' : 'medium',
+            action: 'Ver tarefas',
+          }
+        }
+      },
+      {
+        type: 'noneDone',
+        check: (m) => {
+          return {
+            active: m.tasksCompleted === 0 && m.tasksTotal > 5,
+            message: 'Nenhuma tarefa concluída',
+            severity: 'medium',
+            action: 'Criar tarefa',
+          }
+        }
+      },
+      {
+        type: 'paymentLate',
+        check: (m) => {
+          const late = m.paymentsLate ?? 0
+          return {
+            active: late > 0,
+            message: `${late} pagamento${late > 1 ? 's' : ''} pendente${late > 1 ? 's' : ''}`,
+            severity: late > 2 ? 'high' : 'medium',
+            action: 'Cobrar pagamento',
+            count: late,
+          }
+        }
+      },
+      {
+        type: 'meetingMissed',
+        check: (m) => {
+          const missed = m.meetingsMissed ?? 0
+          return {
+            active: missed > 0,
+            message: `${missed} reunião${missed > 1 ? 's' : ''} não realizada${missed > 1 ? 's' : ''}`,
+            severity: missed > 2 ? 'high' : 'medium',
+            action: 'Remarcar reunião',
+            count: missed,
+          }
+        }
+      },
+      {
+        type: 'installmentLate',
+        check: (m) => {
+          const late = m.installmentsLate ?? 0
+          return {
+            active: late > 0,
+            message: `${late} parcela${late > 1 ? 's' : ''} em atraso`,
+            severity: late > 2 ? 'high' : 'medium',
+            action: 'Ver parcelas',
+            count: late,
+          }
+        }
+      },
+    ]
 
-  return bottlenecks
+  return rules
+    .map(rule => {
+      const res = rule.check(metrics)
+      return res.active ? { type: rule.type, message: res.message, severity: res.severity, action: res.action, amount: res.amount, count: res.count } : null
+    })
+    .filter(Boolean) as Gargalo[]
 }
 
 function getHealthStatus(score: number): 'critical' | 'warning' | 'good' | 'excellent' {

@@ -1,5 +1,6 @@
 import { can } from '@/lib/permissions'
 import { prisma } from '@/lib/prisma'
+import { parseISOToLocal } from '@/lib/utils'
 import { getSessionProfile } from '@/services/auth/session'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -70,7 +71,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         status: body.status ?? 'todo',
         priority: body.priority ?? 'medium',
         assignee: body.assignee ?? null,
-        dueDate: body.dueDate ? new Date(body.dueDate) : null,
+        dueDate: body.dueDate ? parseISOToLocal(body.dueDate) : null,
       },
     })
 
@@ -114,7 +115,7 @@ export async function PATCH(request: NextRequest) {
         dueDate:
           body.dueDate !== undefined
             ? body.dueDate
-              ? new Date(body.dueDate)
+              ? parseISOToLocal(body.dueDate)
               : null
             : undefined,
       },

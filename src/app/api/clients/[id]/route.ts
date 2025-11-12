@@ -46,6 +46,8 @@ export async function PATCH(
       contractEnd,
       paymentDay,
       contractValue,
+      instagramUserId,
+      instagramUsername,
     } = body
 
     // Update client
@@ -62,6 +64,8 @@ export async function PATCH(
         contractEnd: contractEnd ? new Date(contractEnd) : null,
         paymentDay: paymentDay ? parseInt(paymentDay) : null,
         contractValue: contractValue ? parseFloat(contractValue) : null,
+        instagramUserId: instagramUserId?.trim() || null,
+        instagramUsername: instagramUsername?.trim() || null,
       },
     })
 

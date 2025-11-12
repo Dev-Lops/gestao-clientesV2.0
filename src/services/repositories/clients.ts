@@ -18,18 +18,29 @@ export async function listClientsByOrg(orgId: string): Promise<AppClient[]> {
     status: r.status as ClientStatus,
     plan: r.plan ?? null,
     main_channel: r.mainChannel ?? null,
+    instagram_user_id: r.instagramUserId ?? null,
+    instagram_username: r.instagramUsername ?? null,
+    instagram_access_token: r.instagramAccessToken ?? null,
+    instagram_token_expires_at:
+      r.instagramTokenExpiresAt?.toISOString() ?? null,
     orgId: r.orgId,
     clientUserId: r.clientUserId ?? null,
     contract_value: r.contractValue ?? null,
     payment_day: r.paymentDay ?? null,
     contract_start: r.contractStart?.toISOString() ?? null,
     contract_end: r.contractEnd?.toISOString() ?? null,
+    is_installment: r.isInstallment ?? false,
+    installment_count: r.installmentCount ?? null,
+    installment_value: r.installmentValue ?? null,
     created_at: r.createdAt.toISOString(),
     updated_at: r.updatedAt.toISOString(),
   }))
 }
 
-export async function getClientById(id: string): Promise<AppClient | null> {
+export async function getClientById(id?: string): Promise<AppClient | null> {
+  if (!id || typeof id !== 'string' || id.trim().length === 0) {
+    return null
+  }
   const client = await prisma.client.findUnique({
     where: { id },
   })
@@ -44,12 +55,20 @@ export async function getClientById(id: string): Promise<AppClient | null> {
     status: client.status as ClientStatus,
     plan: client.plan ?? null,
     main_channel: client.mainChannel ?? null,
+    instagram_user_id: client.instagramUserId ?? null,
+    instagram_username: client.instagramUsername ?? null,
+    instagram_access_token: client.instagramAccessToken ?? null,
+    instagram_token_expires_at:
+      client.instagramTokenExpiresAt?.toISOString() ?? null,
     orgId: client.orgId,
     clientUserId: client.clientUserId ?? null,
     contract_value: client.contractValue ?? null,
     payment_day: client.paymentDay ?? null,
     contract_start: client.contractStart?.toISOString() ?? null,
     contract_end: client.contractEnd?.toISOString() ?? null,
+    is_installment: client.isInstallment ?? false,
+    installment_count: client.installmentCount ?? null,
+    installment_value: client.installmentValue ?? null,
     created_at: client.createdAt.toISOString(),
     updated_at: client.updatedAt.toISOString(),
   }
@@ -96,12 +115,20 @@ export async function createClient(
     status: client.status as ClientStatus,
     plan: client.plan ?? null,
     main_channel: client.mainChannel ?? null,
+    instagram_user_id: client.instagramUserId ?? null,
+    instagram_username: client.instagramUsername ?? null,
+    instagram_access_token: client.instagramAccessToken ?? null,
+    instagram_token_expires_at:
+      client.instagramTokenExpiresAt?.toISOString() ?? null,
     orgId: client.orgId,
     clientUserId: client.clientUserId ?? null,
     contract_value: client.contractValue ?? null,
     payment_day: client.paymentDay ?? null,
     contract_start: client.contractStart?.toISOString() ?? null,
     contract_end: client.contractEnd?.toISOString() ?? null,
+    is_installment: client.isInstallment ?? false,
+    installment_count: client.installmentCount ?? null,
+    installment_value: client.installmentValue ?? null,
     created_at: client.createdAt.toISOString(),
     updated_at: client.updatedAt.toISOString(),
   }

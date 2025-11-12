@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { parseDateInput } from '@/lib/utils'
+import { parseDateInput, toLocalISOString } from '@/lib/utils'
 import {
   ArrowDownCircle,
   ArrowUpCircle,
@@ -69,9 +69,20 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
     clientId: '',
   })
 
+  // Installments for current month
+  const [installments, setInstallments] = useState<Array<{
+    id: string
+    number: number
+    amount: number
+    dueDate: string
+    clientId: string
+    client: { id: string; name: string }
+  }>>([])
+
   // Load finances and clients
   useEffect(() => {
     loadData()
+    loadInstallments()
   }, [orgId])
 
   const loadData = async () => {
@@ -99,6 +110,29 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
     }
   }
 
+  const loadInstallments = async () => {
+    try {
+      const res = await fetch('/api/installments', { cache: 'no-store' })
+      if (res.ok) {
+        const j = await res.json()
+        setInstallments(j.data || [])
+      }
+    } catch (err) {
+      console.error('Erro ao carregar parcelas:', err)
+    }
+  }
+
+  const confirmInstallment = async (id: string) => {
+    try {
+      const res = await fetch(`/api/installments?id=${encodeURIComponent(id)}`, { method: 'PATCH' })
+      if (!res.ok) throw new Error('Falha ao confirmar parcela')
+      toast.success('Parcela confirmada e recebimento registrado!')
+      await Promise.all([loadInstallments(), loadData()])
+    } catch {
+      toast.error('Não foi possível confirmar a parcela')
+    }
+  }
+
   const resetForm = () => {
     setFormData({
       type: 'income',
@@ -123,7 +157,7 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
     setSubmitting(true)
 
     // Converte a data corretamente para evitar diferença de timezone
-    const dateToSave = parseDateInput(formData.date).toISOString()
+    const dateToSave = toLocalISOString(parseDateInput(formData.date))
 
     try {
       if (editingItem) {
@@ -242,6 +276,27 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
       .slice(0, 5)
   }, [finances])
 
+  // Map percentage to a Tailwind width utility class without inline styles
+  const PCT_WIDTH_CLASSES: Record<number, string> = {
+    0: 'w-[0%]',
+    10: 'w-[10%]',
+    20: 'w-[20%]',
+    30: 'w-[30%]',
+    40: 'w-[40%]',
+    50: 'w-[50%]',
+    60: 'w-[60%]',
+    70: 'w-[70%]',
+    80: 'w-[80%]',
+    90: 'w-[90%]',
+    100: 'w-[100%]',
+  }
+  const getWidthClass = (value: number, maxAbs: number) => {
+    if (maxAbs <= 0) return PCT_WIDTH_CLASSES[0]
+    const pct = Math.min(100, Math.max(0, Math.round((Math.abs(value) / maxAbs) * 100)))
+    const step = Math.round(pct / 10) * 10
+    return PCT_WIDTH_CLASSES[step as keyof typeof PCT_WIDTH_CLASSES] || PCT_WIDTH_CLASSES[0]
+  }
+
   const filteredFinances = useMemo(() => {
     let result = [...finances]
 
@@ -306,38 +361,15 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
         </div>
 
         <div className="relative space-y-6 p-6 max-w-7xl mx-auto">
-          {/* Header com botão voltar */}
+          {/* Header */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => window.history.back()}
-                className="backdrop-blur-sm bg-white/80 hover:bg-white"
-              >
-                <svg
-                  className="w-4 h-4 mr-1"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                  />
-                </svg>
-                Voltar
-              </Button>
-              <div>
-                <h1 className="text-3xl font-bold text-slate-900">
-                  Financeiro da Organização
-                </h1>
-                <p className="text-sm text-slate-600 mt-1">
-                  Gestão completa de receitas e despesas
-                </p>
-              </div>
+            <div>
+              <h1 className="text-3xl font-bold text-slate-900">
+                Financeiro da Organização
+              </h1>
+              <p className="text-sm text-slate-600 mt-1">
+                Gestão completa de receitas e despesas
+              </p>
             </div>
             <Button
               onClick={() => {
@@ -467,11 +499,39 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
                           className={`h-full rounded-full ${stat.amount >= 0
                             ? 'bg-linear-to-r from-green-500 to-emerald-500'
                             : 'bg-linear-to-r from-red-500 to-rose-500'
-                            }`}
-                          style={{
-                            width: `${Math.min(100, (Math.abs(stat.amount) / Math.max(...categoryStats.map(s => Math.abs(s.amount)))) * 100)}%`
-                          }}
+                            } ${getWidthClass(stat.amount, Math.max(...categoryStats.map(s => Math.abs(s.amount))))}`}
                         />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Parcelas deste mês */}
+          {installments.length > 0 && (
+            <Card className="shadow-lg bg-white/80 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <DollarSign className="h-5 w-5 text-violet-600" />
+                  Parcelas deste mês
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {installments.map((i) => (
+                    <div key={i.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="text-sm font-medium text-slate-900">{i.client.name}</div>
+                        <span className="text-xs text-slate-500">Parcela {i.number}</span>
+                        <span className="text-xs text-slate-500">{new Date(i.dueDate).toLocaleDateString('pt-BR')}</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="font-bold text-green-600">{formatCurrency(i.amount)}</div>
+                        <Button size="sm" onClick={() => confirmInstallment(i.id)}>
+                          Registrar pagamento
+                        </Button>
                       </div>
                     </div>
                   ))}

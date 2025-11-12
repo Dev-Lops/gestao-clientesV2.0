@@ -51,3 +51,39 @@ export function formatDateInput(
 
   return `${year}-${month}-${day}`
 }
+
+/**
+ * Converte uma data local para ISO string preservando a data local
+ * (não converte para UTC, evitando mudança de dia)
+ *
+ * @param date - Objeto Date no timezone local
+ * @returns String ISO com a data local preservada
+ */
+export function toLocalISOString(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  const seconds = String(date.getSeconds()).padStart(2, '0')
+  const ms = String(date.getMilliseconds()).padStart(3, '0')
+
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${ms}Z`
+}
+
+/**
+ * Converte string ISO para Date local, tratando corretamente o timezone
+ * para evitar problemas com mudança de dia na exibição
+ *
+ * @param isoString - String no formato ISO
+ * @returns Date object com a data correta
+ */
+export function parseISOToLocal(isoString: string): Date {
+  // Se a string vier no formato YYYY-MM-DD (sem hora), trata como data local
+  if (/^\d{4}-\d{2}-\d{2}$/.test(isoString)) {
+    const [year, month, day] = isoString.split('-').map(Number)
+    return new Date(year, month - 1, day)
+  }
+  // Caso contrário, converte normalmente
+  return new Date(isoString)
+}

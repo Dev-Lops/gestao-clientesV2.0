@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { parseDateInput } from '@/lib/utils'
+import { parseDateInput, toLocalISOString } from '@/lib/utils'
 import { Installment } from '@/types/tables'
 import { CalendarDays, CheckCircle2, CreditCard, DollarSign, Plus, Trash2, X, XCircle } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -36,16 +36,21 @@ export function InstallmentManager({ clientId, canEdit }: InstallmentManagerProp
 
   useEffect(() => {
     loadInstallments()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clientId])
 
   const loadInstallments = async () => {
     try {
       const res = await fetch(`/api/clients/${clientId}/installments`)
-      if (!res.ok) throw new Error('Falha ao carregar parcelas')
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Falha ao carregar parcelas')
+      }
       const data = await res.json()
       setInstallments(data)
     } catch (error) {
       console.error('Erro ao carregar parcelas:', error)
+      toast.error(error instanceof Error ? error.message : 'Erro ao carregar parcelas')
     } finally {
       setLoading(false)
     }
@@ -69,7 +74,7 @@ export function InstallmentManager({ clientId, canEdit }: InstallmentManagerProp
     setSubmitting(true)
 
     try {
-      const startDateToSave = parseDateInput(formData.startDate).toISOString()
+      const startDateToSave = toLocalISOString(parseDateInput(formData.startDate))
 
       const res = await fetch(`/api/clients/${clientId}/installments`, {
         method: 'POST',
@@ -102,7 +107,7 @@ export function InstallmentManager({ clientId, canEdit }: InstallmentManagerProp
     setSubmitting(true)
 
     try {
-      const paidAtToSave = editForm.paidAt ? parseDateInput(editForm.paidAt).toISOString() : null
+      const paidAtToSave = editForm.paidAt ? toLocalISOString(parseDateInput(editForm.paidAt)) : null
 
       const res = await fetch(`/api/clients/${clientId}/installments?installmentId=${editingInstallment.id}`, {
         method: 'PATCH',
@@ -446,7 +451,12 @@ export function InstallmentManager({ clientId, canEdit }: InstallmentManagerProp
                 <Select
                   id="status"
                   value={editForm.status}
-                  onChange={(e) => setEditForm({ ...editForm, status: e.target.value as any })}
+                  onChange={(e) =>
+                    setEditForm({
+                      ...editForm,
+                      status: e.target.value as 'PENDING' | 'CONFIRMED' | 'LATE',
+                    })
+                  }
                 >
                   <option value="PENDING">Pendente</option>
                   <option value="CONFIRMED">Pago</option>

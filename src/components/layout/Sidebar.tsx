@@ -1,5 +1,6 @@
 'use client'
 
+import { BibleVerseWidget } from '@/features/verses/BibleVerseWidget'
 import { cn } from '@/lib/utils'
 import {
   ChevronDown,
@@ -120,11 +121,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       href: '/finance',
       badge: stats?.counters.finance.overdueInstallments,
       badgeColor: stats?.counters.finance.overdueInstallments ? 'red' : undefined,
-      submenu: [
-        { label: 'Visão Geral', href: '/finance' },
-        { label: 'Receitas', href: '/finance?type=income' },
-        { label: 'Despesas', href: '/finance?type=expense' },
-      ],
     },
     {
       label: 'Admin',
@@ -245,14 +241,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
           {/* Sidebar Footer */}
           <div className="p-2 border-t border-slate-200 dark:border-slate-800">
-            <div className="p-2 rounded-lg bg-linear-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-100 dark:border-blue-800">
-              <p className="text-xs font-medium text-slate-900 dark:text-white mb-0.5">
-                💡 Dica do dia
-              </p>
-              <p className="text-xs text-slate-600 dark:text-slate-400">
-                Use atalhos de teclado para navegar mais rápido!
-              </p>
-            </div>
+            <BibleVerseWidget compact />
           </div>
         </div>
       </aside>

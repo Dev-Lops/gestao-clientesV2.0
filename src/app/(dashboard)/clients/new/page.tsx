@@ -1,5 +1,9 @@
 'use client'
 
+import AppShell from '@/components/layout/AppShell'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { PageLayout } from '@/components/layout/PageLayout'
+import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -7,7 +11,7 @@ import { Label } from '@/components/ui/label'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { Select } from '@/components/ui/select'
 import { parseDateInput } from '@/lib/utils'
-import { ArrowLeft, Save, Sparkles } from 'lucide-react'
+import { ArrowLeft, Save, UserPlus } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -63,43 +67,23 @@ export default function NewClientPage() {
   }
 
   return (
-    <div className="relative min-h-screen bg-linear-to-br from-slate-50 via-blue-50/30 to-slate-100 dark:from-slate-950 dark:via-blue-950/20 dark:to-slate-900">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 -left-4 w-96 h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob" />
-        <div className="absolute top-0 -right-4 w-96 h-96 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-2000" />
-        <div className="absolute -bottom-8 left-20 w-96 h-96 bg-pink-400 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-4000" />
-      </div>
-
-      <div className="relative max-w-3xl mx-auto space-y-8 p-8">
-        <div className="flex items-center gap-4">
-          <Link href="/clients">
-            <Button variant="outline" size="sm" className="rounded-full gap-2 backdrop-blur-sm bg-white/80 dark:bg-slate-900/80 border-slate-200 dark:border-slate-700">
-              <ArrowLeft className="h-4 w-4" />
-              Voltar
-            </Button>
-          </Link>
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="relative">
-                <div className="absolute inset-0 bg-linear-to-tr from-blue-600 to-purple-600 rounded-xl blur-md opacity-50" />
-                <div className="relative w-10 h-10 bg-linear-to-tr from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-white" />
-                </div>
-              </div>
-              <div>
-                <h1 className="text-4xl font-bold bg-linear-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
-                  Novo Cliente
-                </h1>
-              </div>
-            </div>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              Cadastre um novo cliente na sua organização
-            </p>
-          </div>
-        </div>
-
-        <div className="relative">
+    <ProtectedRoute>
+      <AppShell>
+        <PageLayout maxWidth="3xl">
+          <PageHeader
+            title="Novo Cliente"
+            description="Cadastre um novo cliente na sua organização"
+            icon={UserPlus}
+            iconColor="bg-green-600"
+            actions={
+              <Link href="/clients">
+                <Button variant="outline" size="sm" className="rounded-full gap-2">
+                  <ArrowLeft className="h-4 w-4" />
+                  Voltar
+                </Button>
+              </Link>
+            }
+          />
           {/* Glow effect */}
           <div className="absolute -inset-1 bg-linear-to-r from-blue-600 to-purple-600 rounded-3xl blur opacity-20" />
 
@@ -330,7 +314,7 @@ export default function NewClientPage() {
                       type="button"
                       variant="outline"
                       disabled={loading}
-                      className="rounded-full backdrop-blur-sm bg-white/80 dark:bg-slate-900/80 border-slate-200 dark:border-slate-700"
+                      className="rounded-full"
                     >
                       Cancelar
                     </Button>
@@ -339,8 +323,8 @@ export default function NewClientPage() {
               </form>
             </CardContent>
           </Card>
-        </div>
-      </div>
-    </div>
+        </PageLayout>
+      </AppShell>
+    </ProtectedRoute>
   )
 }

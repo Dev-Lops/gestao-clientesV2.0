@@ -8,22 +8,25 @@ import { ClientHealthMetrics } from './ClientHealthCard'
 interface ClientsWithBottlenecksProps {
   clients: ClientHealthMetrics[]
   maxDisplay?: number
+  showOnlyIssues?: boolean // quando false, mostra top N piores por score, mesmo sem issues
 }
 
-export function ClientsWithBottlenecks({ clients, maxDisplay = 5 }: ClientsWithBottlenecksProps) {
-  // Ordenar clientes por score de saúde (menor = mais gargalos)
+export function ClientsWithBottlenecks({ clients, maxDisplay = 5, showOnlyIssues = true }: ClientsWithBottlenecksProps) {
+  // Ordenar clientes do pior para o melhor pela pontuação de saúde
   const sortedClients = [...clients].sort((a, b) => {
     const scoreA = calculateHealthScore(a)
     const scoreB = calculateHealthScore(b)
     return scoreA - scoreB
   })
 
-  const clientsWithIssues = sortedClients.filter(client => {
-    const score = calculateHealthScore(client)
-    return score < 70 // Apenas clientes com score abaixo de 70
-  }).slice(0, maxDisplay)
+  // Lista filtrada conforme modo
+  const filtered = showOnlyIssues
+    ? sortedClients.filter((client) => getClientIssues(client).length > 0)
+    : sortedClients
 
-  if (clientsWithIssues.length === 0) {
+  const clientsToShow = filtered.slice(0, maxDisplay)
+
+  if (clientsToShow.length === 0) {
     return (
       <Card className="border-2 border-green-200/60 bg-linear-to-br from-green-50/50 to-emerald-50/50 dark:from-green-950/20 dark:to-emerald-950/20">
         <CardContent className="p-4 sm:p-6">
@@ -33,7 +36,7 @@ export function ClientsWithBottlenecks({ clients, maxDisplay = 5 }: ClientsWithB
             </div>
             <p className="text-base sm:text-lg font-semibold text-green-900 dark:text-green-100 mb-1">Tudo em Ordem!</p>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-              Todos os clientes estão com boa saúde
+              {showOnlyIssues ? 'Nenhum cliente com gargalos detectados' : 'Sem dados para exibir'}
             </p>
           </div>
         </CardContent>
@@ -52,20 +55,27 @@ export function ClientsWithBottlenecks({ clients, maxDisplay = 5 }: ClientsWithB
             <div>
               <CardTitle className="text-base sm:text-lg">Clientes Precisando de Atenção</CardTitle>
               <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-                {clientsWithIssues.length} {clientsWithIssues.length === 1 ? 'cliente' : 'clientes'} com problemas
+                {clientsToShow.length} {clientsToShow.length === 1 ? 'cliente' : 'clientes'} {showOnlyIssues ? 'com problemas' : 'em destaque'}
               </p>
             </div>
           </div>
           <div className="px-3 py-1.5 rounded-full bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-300 text-sm font-bold self-start sm:self-center">
-            {clientsWithIssues.length}
+            {clientsToShow.length}
           </div>
         </div>
       </CardHeader>
       <CardContent className="p-4 sm:p-6 pt-0">
         <div className="space-y-3">
-          {clientsWithIssues.map((client) => {
+          {clientsToShow.map((client) => {
             const score = calculateHealthScore(client)
             const issues = getClientIssues(client)
+            const hasHigh = issues.some(i => i.severity === 'high')
+            const hasMedium = issues.some(i => i.severity === 'medium')
+            const chipClass = hasHigh
+              ? 'bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-300'
+              : hasMedium
+                ? 'bg-orange-100 dark:bg-orange-950/50 text-orange-700 dark:text-orange-300'
+                : 'bg-yellow-100 dark:bg-yellow-950/50 text-yellow-700 dark:text-yellow-300'
 
             return (
               <Link
@@ -84,15 +94,7 @@ export function ClientsWithBottlenecks({ clients, maxDisplay = 5 }: ClientsWithB
                         {issues.length} {issues.length === 1 ? 'problema identificado' : 'problemas identificados'}
                       </p>
                     </div>
-                    <div className={`
-                      px-2.5 py-1 rounded-lg text-xs font-bold shrink-0
-                      ${score < 40
-                        ? 'bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-300'
-                        : score < 60
-                          ? 'bg-orange-100 dark:bg-orange-950/50 text-orange-700 dark:text-orange-300'
-                          : 'bg-yellow-100 dark:bg-yellow-950/50 text-yellow-700 dark:text-yellow-300'
-                      }
-                    `}>
+                    <div className={`px-2.5 py-1 rounded-lg text-xs font-bold shrink-0 ${chipClass}`}>
                       {score}%
                     </div>
                   </div>
@@ -137,7 +139,7 @@ export function ClientsWithBottlenecks({ clients, maxDisplay = 5 }: ClientsWithB
                         <span className="text-[10px] text-slate-600 dark:text-slate-400">Saldo</span>
                       </div>
                       <p className={`text-sm font-bold ${client.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {client.balance >= 0 ? '+' : ''}{(client.balance / 1000).toFixed(1)}k
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(client.balance)}
                       </p>
                     </div>
                   </div>
@@ -147,10 +149,10 @@ export function ClientsWithBottlenecks({ clients, maxDisplay = 5 }: ClientsWithB
           })}
         </div>
 
-        {sortedClients.length > maxDisplay && (
+        {filtered.length > maxDisplay && (
           <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 text-center">
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-              Mostrando {clientsWithIssues.length} de {sortedClients.filter(c => calculateHealthScore(c) < 70).length} clientes
+              Mostrando {clientsToShow.length} de {filtered.length} {showOnlyIssues ? 'clientes com gargalos' : 'clientes'}
             </p>
           </div>
         )}

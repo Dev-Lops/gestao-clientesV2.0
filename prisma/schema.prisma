@@ -100,38 +100,43 @@ model Member {
 }
 
 model Client {
-  id               String         @id @default(cuid())
-  name             String
-  email            String?
-  phone            String?
-  status           String         @default("new") // new | onboarding | active | paused | closed
-  plan             ClientPlan? // plano do cliente
-  mainChannel      SocialChannel? // canal principal
+  id                      String         @id @default(cuid())
+  name                    String
+  email                   String?
+  phone                   String?
+  status                  String         @default("new") // new | onboarding | active | paused | closed
+  plan                    ClientPlan? // plano do cliente
+  mainChannel             SocialChannel? // canal principal
+  // Redes sociais
+  instagramUserId         String? // ID do usuário no Instagram (para API)
+  instagramUsername       String? // @username do Instagram
+  instagramAccessToken    String? // Token de acesso OAuth do Instagram
+  instagramTokenExpiresAt DateTime? // Data de expiração do token
   // Informações de contrato (sensíveis - apenas OWNER)
-  contractValue    Float? // valor mensal do contrato
-  paymentDay       Int? // dia do mês para pagamento (1-31)
-  contractStart    DateTime? // início do contrato
-  contractEnd      DateTime? // fim do contrato (null = indefinido)
-  paymentStatus    PaymentStatus  @default(PENDING) // status do pagamento
+  contractValue           Float? // valor mensal do contrato
+  paymentDay              Int? // dia do mês para pagamento (1-31)
+  contractStart           DateTime? // início do contrato
+  contractEnd             DateTime? // fim do contrato (null = indefinido)
+  paymentStatus           PaymentStatus  @default(PENDING) // status do pagamento
   // Pagamento parcelado
-  isInstallment    Boolean        @default(false) // se o pagamento é parcelado
-  installmentCount Int? // número total de parcelas
-  installmentValue Float? // valor de cada parcela
-  orgId            String
-  org              Org            @relation(fields: [orgId], references: [id])
-  clientUserId     String? // Usuário (role CLIENT) associado exclusivamente a este cliente
-  clientUser       User?          @relation(fields: [clientUserId], references: [id])
-  tasks            Task[]
-  media            Media[]
-  mediaFolders     MediaFolder[]
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
-  invites          Invite[]
-  strategies       Strategy[]
-  brandings        Branding[]
-  finances         Finance[]
-  meetings         Meeting[]
-  installments     Installment[]
+  isInstallment           Boolean        @default(false) // se o pagamento é parcelado
+  installmentCount        Int? // número total de parcelas
+  installmentValue        Float? // valor de cada parcela
+  orgId                   String
+  org                     Org            @relation(fields: [orgId], references: [id])
+  clientUserId            String? // Usuário (role CLIENT) associado exclusivamente a este cliente
+  clientUser              User?          @relation(fields: [clientUserId], references: [id])
+  tasks                   Task[]
+  media                   Media[]
+  mediaFolders            MediaFolder[]
+  createdAt               DateTime       @default(now())
+  updatedAt               DateTime       @updatedAt
+  invites                 Invite[]
+  strategies              Strategy[]
+  brandings               Branding[]
+  finances                Finance[]
+  meetings                Meeting[]
+  installments            Installment[]
 
   @@unique([clientUserId])
 }

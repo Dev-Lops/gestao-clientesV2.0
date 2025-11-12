@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { parseDateInput } from '@/lib/utils'
+import { parseDateInput, toLocalISOString } from '@/lib/utils'
 import { CalendarDays, CheckCircle2, Clock, Edit, Flag, ListTodo, Plus, Trash2, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
@@ -104,7 +104,7 @@ export function TasksManager({ clientId, initialTasks = [] }: TasksManagerProps)
     // Converte a data do input para objeto Date correto
     const taskData = {
       ...form,
-      dueDate: form.dueDate ? parseDateInput(form.dueDate).toISOString() : null,
+      dueDate: form.dueDate ? toLocalISOString(parseDateInput(form.dueDate)) : null,
     }
 
     if (editing) {

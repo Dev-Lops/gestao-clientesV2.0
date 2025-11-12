@@ -5,13 +5,12 @@ import { motion } from 'framer-motion'
 import {
   Bell,
   ChevronDown,
-  DollarSign, LayoutDashboard,
   LogOut,
   Menu,
   Search,
   Settings,
+  Sparkles,
   User,
-  Users,
   X,
 } from 'lucide-react'
 import Link from 'next/link'
@@ -100,13 +99,13 @@ export function Navbar({ onMenuClick, isSidebarOpen }: NavbarProps) {
             )}
           </button>
 
-          {/* Logo / Brand */}
+          {/* Logo / Brand (sparkles) */}
           <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded-lg bg-linear-to-tr from-blue-600 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:shadow-blue-500/40 transition-shadow">
-              <span className="text-white font-bold text-sm">MG</span>
+            <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center shadow-lg shadow-violet-500/20 group-hover:shadow-violet-500/40 transition-shadow">
+              <Sparkles className="w-4 h-4 text-white" />
             </div>
-            <span className="hidden sm:block text-lg font-bold bg-linear-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              MyGest
+            <span className="hidden sm:block text-lg font-bold bg-linear-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
+              myGest
             </span>
           </Link>
 
@@ -130,33 +129,6 @@ export function Navbar({ onMenuClick, isSidebarOpen }: NavbarProps) {
 
         {/* Right Section */}
         <div className="flex items-center gap-2">
-          {/* Quick Nav (Desktop) */}
-          <div className="hidden md:flex items-center gap-1 mr-2">
-            <Link
-              href="/clients"
-              className="inline-flex items-center gap-2 px-3 py-1.5 text-sm rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
-              title="Clientes"
-            >
-              <Users className="w-4 h-4" />
-              <span className="hidden lg:inline">Clientes</span>
-            </Link>
-            <Link
-              href="/finance"
-              className="inline-flex items-center gap-2 px-3 py-1.5 text-sm rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
-              title="Financeiro"
-            >
-              <DollarSign className="w-4 h-4" />
-              <span className="hidden lg:inline">Financeiro</span>
-            </Link>
-            <Link
-              href="/admin"
-              className="inline-flex items-center gap-2 px-3 py-1.5 text-sm rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
-              title="Admin"
-            >
-              <LayoutDashboard className="w-4 h-4" />
-              <span className="hidden lg:inline">Admin</span>
-            </Link>
-          </div>
           {/* Search Button - Mobile */}
           <button
             className="md:hidden p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
@@ -272,7 +244,7 @@ export function Navbar({ onMenuClick, isSidebarOpen }: NavbarProps) {
               </div>
               <div className="hidden sm:block text-left">
                 <p className="text-sm font-medium text-slate-900 dark:text-white">
-                  {user?.email ?? 'Usuário'}
+                  {user?.displayName || user?.email || 'Usuário'}
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   {user?.email}
@@ -295,7 +267,7 @@ export function Navbar({ onMenuClick, isSidebarOpen }: NavbarProps) {
                 >
                   <div className="p-3 border-b border-slate-200 dark:border-slate-700">
                     <p className="text-sm font-medium text-slate-900 dark:text-white">
-                      {user?.email ?? 'Usuário'}
+                      {user?.displayName || user?.email || 'Usuário'}
                     </p>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                       {user?.email}

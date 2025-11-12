@@ -8,6 +8,10 @@ export interface AppClient {
   status: ClientStatus
   plan: string | null
   main_channel: string | null
+  instagram_user_id: string | null
+  instagram_username: string | null
+  instagram_access_token: string | null
+  instagram_token_expires_at: string | null
   orgId: string
   clientUserId: string | null
   contract_value: number | null

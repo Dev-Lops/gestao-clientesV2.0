@@ -5,11 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
-import { parseDateInput } from '@/lib/utils'
+import { parseDateInput, toLocalISOString } from '@/lib/utils'
 import { ClientStatus } from '@/types/client'
 import { AppClient } from '@/types/tables'
 import { Edit2, Save, X } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 interface ClientInfoDisplayProps {
@@ -20,6 +20,30 @@ interface ClientInfoDisplayProps {
 export function ClientInfoDisplay({ client, canEdit }: ClientInfoDisplayProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [connectingInstagram, setConnectingInstagram] = useState(false)
+
+  // Verificar se retornou do OAuth do Instagram
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const instagramSuccess = params.get('instagram_success')
+    const instagramError = params.get('instagram_error')
+    const instagramWarning = params.get('instagram_warning')
+
+    if (instagramSuccess === 'true') {
+      toast.success('Instagram conectado com sucesso!')
+      if (instagramWarning) {
+        toast.warning(instagramWarning)
+      }
+      // Limpar query params da URL
+      window.history.replaceState({}, '', window.location.pathname)
+      // Recarregar página para mostrar dados atualizados
+      window.location.reload()
+    } else if (instagramError) {
+      toast.error(instagramError)
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [])
+
   const [formData, setFormData] = useState({
     name: client.name,
     email: client.email || '',
@@ -27,6 +51,8 @@ export function ClientInfoDisplay({ client, canEdit }: ClientInfoDisplayProps) {
     status: client.status,
     plan: client.plan || '',
     mainChannel: client.main_channel || '',
+    instagramUserId: client.instagram_user_id || '',
+    instagramUsername: client.instagram_username || '',
     contractStart: client.contract_start
       ? new Date(client.contract_start).toISOString().split('T')[0]
       : '',
@@ -42,8 +68,8 @@ export function ClientInfoDisplay({ client, canEdit }: ClientInfoDisplayProps) {
     setLoading(true)
 
     try {
-      const contractStartToSave = formData.contractStart ? parseDateInput(formData.contractStart).toISOString() : null
-      const contractEndToSave = formData.contractEnd ? parseDateInput(formData.contractEnd).toISOString() : null
+      const contractStartToSave = formData.contractStart ? toLocalISOString(parseDateInput(formData.contractStart)) : null
+      const contractEndToSave = formData.contractEnd ? toLocalISOString(parseDateInput(formData.contractEnd)) : null
 
       const response = await fetch(`/api/clients/${client.id}`, {
         method: 'PATCH',
@@ -82,6 +108,8 @@ export function ClientInfoDisplay({ client, canEdit }: ClientInfoDisplayProps) {
       status: client.status,
       plan: client.plan || '',
       mainChannel: client.main_channel || '',
+      instagramUserId: client.instagram_user_id || '',
+      instagramUsername: client.instagram_username || '',
       contractStart: client.contract_start
         ? new Date(client.contract_start).toISOString().split('T')[0]
         : '',
@@ -93,6 +121,27 @@ export function ClientInfoDisplay({ client, canEdit }: ClientInfoDisplayProps) {
     })
   }
 
+  const handleConnectInstagram = async () => {
+    setConnectingInstagram(true)
+    try {
+      // Solicitar URL de autorização do Instagram
+      const response = await fetch(`/api/instagram/connect?clientId=${client.id}`)
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Erro ao conectar Instagram')
+      }
+
+      const { authUrl } = await response.json()
+
+      // Abrir popup ou redirecionar para autorização do Instagram
+      window.location.href = authUrl
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Erro ao conectar Instagram')
+      setConnectingInstagram(false)
+    }
+  }
+
   if (!isEditing) {
     return (
       <div className="relative">
@@ -100,9 +149,7 @@ export function ClientInfoDisplay({ client, canEdit }: ClientInfoDisplayProps) {
         <Card className="relative bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-slate-200 dark:border-slate-700">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-2xl bg-linear-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
-                {client.name}
-              </CardTitle>
+              <CardTitle className="text-lg">Informações do Cliente</CardTitle>
               {canEdit && (
                 <Button
                   onClick={() => setIsEditing(true)}
@@ -266,6 +313,57 @@ export function ClientInfoDisplay({ client, canEdit }: ClientInfoDisplayProps) {
                     <option value="TWITTER">Twitter</option>
                     <option value="OUTRO">Outro</option>
                   </Select>
+                </div>
+              </div>
+
+              {/* Instagram Info */}
+              <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold">Instagram</h4>
+                  <Button
+                    type="button"
+                    onClick={handleConnectInstagram}
+                    disabled={loading || connectingInstagram}
+                    variant="outline"
+                    size="sm"
+                    className="text-xs"
+                  >
+                    {connectingInstagram ? 'Conectando...' : 'Conectar Instagram'}
+                  </Button>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="instagramUserId">Instagram User ID</Label>
+                    <Input
+                      id="instagramUserId"
+                      type="text"
+                      value={formData.instagramUserId}
+                      onChange={(e) => setFormData({ ...formData, instagramUserId: e.target.value })}
+                      disabled={true}
+                      placeholder="Automático após conectar"
+                      className="border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-500 bg-slate-50 dark:bg-slate-900"
+                    />
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Preenchido automaticamente após conectar
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="instagramUsername">Instagram Username</Label>
+                    <Input
+                      id="instagramUsername"
+                      type="text"
+                      value={formData.instagramUsername}
+                      onChange={(e) => setFormData({ ...formData, instagramUsername: e.target.value })}
+                      disabled={true}
+                      placeholder="Automático após conectar"
+                      className="border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-500 bg-slate-50 dark:bg-slate-900"
+                    />
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Preenchido automaticamente após conectar
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>

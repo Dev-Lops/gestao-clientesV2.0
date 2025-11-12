@@ -7,7 +7,6 @@ import { ClientsWithBottlenecks, type ClientHealthMetrics } from '@/features/cli
 import { ActivitiesCalendar } from '@/features/dashboard/components/ActivitiesCalendar'
 
 import { motion } from 'framer-motion'
-import { Sparkles } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -78,6 +77,7 @@ function RealtimeDashboard() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showOnlyIssues, setShowOnlyIssues] = useState(true)
 
   useEffect(() => {
     async function loadDashboard() {
@@ -149,21 +149,13 @@ function RealtimeDashboard() {
     >
       {/* HEADER COMPACTO */}
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-        <div className="flex items-center gap-2 sm:gap-3">
-          <div className="relative">
-            <div className="absolute inset-0 bg-linear-to-tr from-blue-600 to-purple-600 rounded-xl blur-md opacity-50" />
-            <div className="relative w-10 h-10 bg-linear-to-tr from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
-          </div>
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
-              Painel de Gestão
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-              Bem-vindo de volta!
-            </p>
-          </div>
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">
+            Painel de Gestão
+          </h1>
+          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+            Bem-vindo de volta! Veja um resumo da sua organização.
+          </p>
         </div>
       </header>
 
@@ -203,7 +195,26 @@ function RealtimeDashboard() {
       <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
         {/* Coluna 1 - Clientes com Gargalos */}
         {data.clientsHealth && data.clientsHealth.length > 0 && (
-          <ClientsWithBottlenecks clients={data.clientsHealth} maxDisplay={3} />
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">Clientes</h2>
+              <div className="inline-flex rounded-full border border-slate-200 dark:border-slate-700 p-0.5 bg-white/60 dark:bg-slate-800/60">
+                <button
+                  className={`px-3 py-1.5 text-xs rounded-full ${showOnlyIssues ? 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300' : 'text-slate-600 dark:text-slate-300'}`}
+                  onClick={() => setShowOnlyIssues(true)}
+                >
+                  Somente gargalos
+                </button>
+                <button
+                  className={`px-3 py-1.5 text-xs rounded-full ${!showOnlyIssues ? 'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300' : 'text-slate-600 dark:text-slate-300'}`}
+                  onClick={() => setShowOnlyIssues(false)}
+                >
+                  Exibir todos
+                </button>
+              </div>
+            </div>
+            <ClientsWithBottlenecks clients={data.clientsHealth} maxDisplay={3} showOnlyIssues={showOnlyIssues} />
+          </div>
         )}
 
         {/* Coluna 2 - Calendário */}
