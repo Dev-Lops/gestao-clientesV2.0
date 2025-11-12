@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { parseDateInput } from '@/lib/utils'
 import {
   ArrowDownCircle,
   ArrowUpCircle,
@@ -96,6 +97,8 @@ export function FinanceManagerV2({ clientId }: FinanceManagerProps) {
     setSubmitting(true)
 
     try {
+      const dateToSave = parseDateInput(formData.date).toISOString()
+
       if (editingItem) {
         const res = await fetch(`/api/clients/${clientId}/finance?id=${editingItem.id}`, {
           method: 'PATCH',
@@ -105,7 +108,7 @@ export function FinanceManagerV2({ clientId }: FinanceManagerProps) {
             amount,
             description: formData.description,
             category: formData.category,
-            date: formData.date,
+            date: dateToSave,
           }),
         })
 
@@ -124,7 +127,7 @@ export function FinanceManagerV2({ clientId }: FinanceManagerProps) {
             amount,
             description: formData.description,
             category: formData.category,
-            date: formData.date,
+            date: dateToSave,
           }),
         })
 

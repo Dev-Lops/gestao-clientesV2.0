@@ -1,23 +1,18 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ProgressBar } from '@/components/ui/progress-bar'
+import { ClientHealthMetrics } from '@/features/clients/components'
+import { ClientHealthCardWrapper } from '@/features/clients/components/ClientHealthCardWrapper'
 import { ClientInfoDisplay } from '@/features/clients/components/ClientInfoDisplay'
 import ContractManager from '@/features/clients/components/ContractManager'
-import { StatusBadge } from '@/features/clients/components/StatusBadge'
+import { InstallmentManager } from '@/features/clients/components/InstallmentManager'
 import { can } from '@/lib/permissions'
 import { formatDate } from '@/lib/utils'
 import { getSessionProfile } from '@/services/auth/session'
 import { getClientById } from '@/services/repositories/clients'
-import { ClientStatus } from '@/types/client'
 import {
-  CalendarDays,
-  Clock,
-  DollarSign,
   FileText,
   FolderKanban,
   Image as ImageIcon,
   Lightbulb,
-  TrendingUp,
-  Users,
   Video,
 } from 'lucide-react'
 
@@ -113,35 +108,30 @@ export default async function ClientInfoPage({ params }: ClientInfoPageProps) {
 
   const isOwner = can(role, 'update', 'finance')
 
-  const nextPayment = client.payment_day
-    ? (() => {
-      const today = new Date()
-      const currentMonth = today.getMonth()
-      const currentYear = today.getFullYear()
-      let nextPaymentDate = new Date(currentYear, currentMonth, client.payment_day)
-
-      if (nextPaymentDate < today) {
-        nextPaymentDate = new Date(currentYear, currentMonth + 1, client.payment_day)
-      }
-
-      const daysUntil = Math.ceil((nextPaymentDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-      return { date: nextPaymentDate, daysUntil }
-    })()
-    : null
-
-  const contractDuration =
-    client.contract_start && client.contract_end
-      ? (() => {
-        const diffMs = new Date(client.contract_end).getTime() - new Date(client.contract_start).getTime()
-        const diffMonths = Math.round(diffMs / (1000 * 60 * 60 * 24 * 30))
-        return diffMonths
-      })()
-      : null
+  // Preparar métricas para o ClientHealthCard
+  const healthMetrics: ClientHealthMetrics = {
+    clientId: client.id,
+    clientName: client.name,
+    completionRate: dash?.counts.tasks.total
+      ? Math.round((dash.counts.tasks.done / dash.counts.tasks.total) * 100)
+      : 0,
+    balance: dash?.counts.finance.net || 0,
+    daysActive: client.created_at
+      ? Math.floor((new Date().getTime() - new Date(client.created_at).getTime()) / (1000 * 60 * 60 * 24))
+      : 0,
+    tasksTotal: dash?.counts.tasks.total || 0,
+    tasksCompleted: dash?.counts.tasks.done || 0,
+    tasksPending: dash?.counts.tasks.todo || 0,
+    tasksOverdue: dash?.counts.tasks.overdue || 0,
+  }
 
   return (
     <div className="space-y-6">
       {/* Editor de informações básicas */}
       <ClientInfoDisplay client={client} canEdit={isOwner} />
+
+      {/* Health Card - Indicadores de saúde do cliente */}
+      <ClientHealthCardWrapper metrics={healthMetrics} />
 
       {/* Contract Manager */}
       {isOwner && (
@@ -155,114 +145,63 @@ export default async function ClientInfoPage({ params }: ClientInfoPageProps) {
         />
       )}
 
+      {/* Installment Manager */}
       {isOwner && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            icon={DollarSign}
-            label="Valor do Contrato"
-            value={
-              client.contract_value
-                ? `R$ ${client.contract_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-                : 'Não definido'
-            }
-            subtitle={client.plan ? `Plano: ${client.plan}` : undefined}
-          />
-          <StatCard
-            icon={CalendarDays}
-            label="Próximo Pagamento"
-            value={nextPayment ? `${nextPayment.daysUntil} dias` : 'Não definido'}
-            subtitle={
-              nextPayment
-                ? new Date(nextPayment.date).toLocaleDateString('pt-BR', {
-                  day: '2-digit',
-                  month: 'short',
-                })
-                : client.payment_day
-                  ? `Dia ${client.payment_day} de cada mês`
-                  : undefined
-            }
-            trend={nextPayment && nextPayment.daysUntil <= 5 ? 'down' : 'neutral'}
-          />
-          <StatCard
-            icon={Clock}
-            label="Duração do Contrato"
-            value={contractDuration ? `${contractDuration} meses` : 'Indefinido'}
-            subtitle={
-              client.contract_end
-                ? `Até ${new Date(client.contract_end).toLocaleDateString('pt-BR')}`
-                : 'Sem data de término'
-            }
-          />
-          <StatCard
-            icon={TrendingUp}
-            label="Receita vs Despesa"
-            value={
-              dash && dash.counts.finance.net !== 0
-                ? `R$ ${Math.abs(dash.counts.finance.net).toLocaleString('pt-BR')}`
-                : 'R$ 0'
-            }
-            subtitle={
-              dash
-                ? `Receita: R$ ${dash.counts.finance.income} | Despesa: R$ ${dash.counts.finance.expense}`
-                : undefined
-            }
-            trend={
-              dash && dash.counts.finance.net > 0
-                ? 'up'
-                : dash && dash.counts.finance.net < 0
-                  ? 'down'
-                  : 'neutral'
-            }
-          />
-        </div>
+        <InstallmentManager
+          clientId={client.id}
+          canEdit={isOwner}
+        />
       )}
 
+      {/* KPIs em Grid Compacto */}
       {dash && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
             icon={FolderKanban}
             label="Tarefas Ativas"
             value={dash.counts.tasks.total - dash.counts.tasks.done}
-            subtitle={`${dash.counts.tasks.done} concluídas de ${dash.counts.tasks.total} total`}
+            subtitle={`${dash.counts.tasks.done} concluídas`}
             trend={dash.counts.tasks.overdue > 0 ? 'down' : 'up'}
           />
           <StatCard
             icon={ImageIcon}
             label="Mídias"
             value={dash.counts.media}
-            subtitle="Arquivos no sistema"
+            subtitle="Arquivos"
           />
           <StatCard
             icon={Lightbulb}
             label="Estratégias"
             value={dash.counts.strategies}
-            subtitle="Documentos estratégicos"
+            subtitle="Documentos"
           />
           <StatCard
             icon={FileText}
             label="Brandings"
             value={dash.counts.brandings}
-            subtitle="Materiais de marca"
+            subtitle="Materiais"
           />
         </div>
       )}
 
+      {/* Layout em 2 colunas */}
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
+          {/* Tarefas Urgentes */}
           {dash && dash.urgentTasks.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <FolderKanban className="h-5 w-5" />
+                  <FolderKanban className="h-5 w-5 text-red-600" />
                   Tarefas Urgentes
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {dash.urgentTasks.slice(0, 5).map((task) => (
                     <div
                       key={task.id}
-                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50 transition-colors"
+                      className="flex items-center justify-between p-3 border border-red-100 rounded-lg hover:bg-red-50 transition-colors"
                     >
                       <div className="flex-1 min-w-0">
                         <h4 className="font-medium text-sm text-slate-900 truncate">
@@ -277,23 +216,17 @@ export default async function ClientInfoPage({ params }: ClientInfoPageProps) {
                                 : 'bg-slate-100 text-slate-700'
                               }`}
                           >
-                            {task.priority === 'high'
-                              ? 'Alta'
-                              : task.priority === 'medium'
-                                ? 'Média'
-                                : 'Baixa'}
+                            {task.priority === 'high' ? 'Alta' : task.priority === 'medium' ? 'Média' : 'Baixa'}
                           </span>
                           {task.dueDate && (
                             <span className="text-xs text-slate-500">
-                              Prazo: {new Date(task.dueDate).toLocaleDateString('pt-BR')}
+                              {new Date(task.dueDate).toLocaleDateString('pt-BR')}
                             </span>
                           )}
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="text-xs font-medium text-slate-500">
-                          Urgência
-                        </div>
+                      <div className="text-right ml-3">
+                        <div className="text-xs text-slate-500">Score</div>
                         <div className="text-lg font-bold text-red-600">
                           {task.urgencyScore.toFixed(0)}
                         </div>
@@ -305,124 +238,6 @@ export default async function ClientInfoPage({ params }: ClientInfoPageProps) {
             </Card>
           )}
 
-          {dash && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Progresso de Tarefas</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-slate-700">Pendentes</span>
-                    <span className="text-sm font-bold text-amber-600">
-                      {dash.counts.tasks.todo}
-                    </span>
-                  </div>
-                  <ProgressBar
-                    value={dash.counts.tasks.todo}
-                    max={dash.counts.tasks.total}
-                    color="amber"
-                  />
-                </div>
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-slate-700">Em Progresso</span>
-                    <span className="text-sm font-bold text-blue-600">
-                      {dash.counts.tasks.inProgress}
-                    </span>
-                  </div>
-                  <ProgressBar
-                    value={dash.counts.tasks.inProgress}
-                    max={dash.counts.tasks.total}
-                    color="blue"
-                  />
-                </div>
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-slate-700">Concluídas</span>
-                    <span className="text-sm font-bold text-green-600">
-                      {dash.counts.tasks.done}
-                    </span>
-                  </div>
-                  <ProgressBar
-                    value={dash.counts.tasks.done}
-                    max={dash.counts.tasks.total}
-                    color="green"
-                  />
-                </div>
-                {dash.counts.tasks.overdue > 0 && (
-                  <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-sm text-red-700 font-medium">
-                      ⚠️ {dash.counts.tasks.overdue} tarefa(s) atrasada(s)
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Informações de Contato
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">
-                    Email
-                  </div>
-                  <div className="text-sm text-slate-900">
-                    {client.email ? (
-                      <a
-                        href={`mailto:${client.email}`}
-                        className="hover:underline text-blue-600"
-                      >
-                        {client.email}
-                      </a>
-                    ) : (
-                      <span className="text-slate-400">Não informado</span>
-                    )}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">
-                    Telefone
-                  </div>
-                  <div className="text-sm text-slate-900">
-                    {client.phone ? (
-                      <a
-                        href={`tel:${client.phone}`}
-                        className="hover:underline text-blue-600"
-                      >
-                        {client.phone}
-                      </a>
-                    ) : (
-                      <span className="text-slate-400">Não informado</span>
-                    )}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">
-                    Canal Principal
-                  </div>
-                  <div className="text-sm text-slate-900">
-                    {client.main_channel || <span className="text-slate-400">Não definido</span>}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">
-                    Status
-                  </div>
-                  <div className="text-sm text-slate-900">
-                    <StatusBadge status={client.status as ClientStatus} />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
         <div className="space-y-6">
@@ -459,47 +274,6 @@ export default async function ClientInfoPage({ params }: ClientInfoPageProps) {
                       )}
                     </div>
                   ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {isOwner && (
-            <Card className="border-amber-200 bg-amber-50/50">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-amber-900">
-                  <FileText className="h-5 w-5" />
-                  Dados do Contrato
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div>
-                  <div className="text-xs font-medium text-amber-700 uppercase tracking-wider mb-1">
-                    Início do Contrato
-                  </div>
-                  <div className="text-sm text-amber-900">
-                    {client.contract_start
-                      ? new Date(client.contract_start).toLocaleDateString('pt-BR')
-                      : 'Não definido'}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-xs font-medium text-amber-700 uppercase tracking-wider mb-1">
-                    Término do Contrato
-                  </div>
-                  <div className="text-sm text-amber-900">
-                    {client.contract_end
-                      ? new Date(client.contract_end).toLocaleDateString('pt-BR')
-                      : 'Indefinido'}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-xs font-medium text-amber-700 uppercase tracking-wider mb-1">
-                    Dia de Pagamento
-                  </div>
-                  <div className="text-sm text-amber-900">
-                    {client.payment_day ? `Dia ${client.payment_day}` : 'Não definido'}
-                  </div>
                 </div>
               </CardContent>
             </Card>

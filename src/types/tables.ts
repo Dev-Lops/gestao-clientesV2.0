@@ -14,6 +14,22 @@ export interface AppClient {
   payment_day: number | null
   contract_start: string | null
   contract_end: string | null
+  is_installment: boolean
+  installment_count: number | null
+  installment_value: number | null
   created_at: string
   updated_at: string
+}
+
+export interface Installment {
+  id: string
+  number: number
+  amount: number
+  dueDate: string
+  status: 'PENDING' | 'CONFIRMED' | 'LATE'
+  paidAt: string | null
+  notes: string | null
+  clientId: string
+  createdAt: string
+  updatedAt: string
 }

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
+import { parseDateInput } from '@/lib/utils'
 import { ClientStatus } from '@/types/client'
 import { AppClient } from '@/types/tables'
 import { Edit2, Save, X } from 'lucide-react'
@@ -41,13 +42,16 @@ export function ClientInfoDisplay({ client, canEdit }: ClientInfoDisplayProps) {
     setLoading(true)
 
     try {
+      const contractStartToSave = formData.contractStart ? parseDateInput(formData.contractStart).toISOString() : null
+      const contractEndToSave = formData.contractEnd ? parseDateInput(formData.contractEnd).toISOString() : null
+
       const response = await fetch(`/api/clients/${client.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
-          contractStart: formData.contractStart || null,
-          contractEnd: formData.contractEnd || null,
+          contractStart: contractStartToSave,
+          contractEnd: contractEndToSave,
           paymentDay: formData.paymentDay ? parseInt(formData.paymentDay) : null,
           contractValue: formData.contractValue ? parseFloat(formData.contractValue) : null,
         }),

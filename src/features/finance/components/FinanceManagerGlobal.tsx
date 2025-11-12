@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { parseDateInput } from '@/lib/utils'
 import {
   ArrowDownCircle,
   ArrowUpCircle,
@@ -121,6 +122,9 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
 
     setSubmitting(true)
 
+    // Converte a data corretamente para evitar diferença de timezone
+    const dateToSave = parseDateInput(formData.date).toISOString()
+
     try {
       if (editingItem) {
         const res = await fetch(`/api/finance?id=${editingItem.id}`, {
@@ -131,7 +135,7 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
             amount,
             description: formData.description,
             category: formData.category,
-            date: formData.date,
+            date: dateToSave,
             clientId: formData.clientId || null,
           }),
         })
@@ -151,7 +155,7 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
             amount,
             description: formData.description,
             category: formData.category,
-            date: formData.date,
+            date: dateToSave,
             clientId: formData.clientId || null,
           }),
         })
@@ -215,7 +219,27 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
       income,
       expense,
       balance: income - expense,
+      incomeCount: finances.filter((f) => f.type === 'income').length,
+      expenseCount: finances.filter((f) => f.type === 'expense').length,
     }
+  }, [finances])
+
+  const categoryStats = useMemo(() => {
+    const stats: Record<string, { amount: number; count: number }> = {}
+
+    finances.forEach((f) => {
+      const category = f.category || 'Sem categoria'
+      if (!stats[category]) {
+        stats[category] = { amount: 0, count: 0 }
+      }
+      stats[category].amount += f.type === 'income' ? f.amount : -f.amount
+      stats[category].count += 1
+    })
+
+    return Object.entries(stats)
+      .map(([category, data]) => ({ category, ...data }))
+      .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount))
+      .slice(0, 5)
   }, [finances])
 
   const filteredFinances = useMemo(() => {
@@ -273,358 +297,234 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
 
   return (
     <>
-      <div className="space-y-6 p-8">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-bold bg-linear-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
-              Financeiro da Organização
-            </h1>
-            <p className="text-sm text-slate-500 mt-2">
-              Gestão completa de receitas e despesas
-            </p>
-          </div>
-          <Button
-            onClick={() => {
-              resetForm()
-              setIsModalOpen(true)
-            }}
-            size="lg"
-            className="gap-2 bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-xl shadow-blue-500/30"
-          >
-            <Plus className="h-5 w-5" />
-            Nova Transação
-          </Button>
+      <div className="relative min-h-screen bg-linear-to-br from-slate-50 via-blue-50/30 to-slate-100">
+        {/* Animated background */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 -left-4 w-96 h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob" />
+          <div className="absolute top-0 -right-4 w-96 h-96 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-2000" />
+          <div className="absolute -bottom-8 left-20 w-96 h-96 bg-pink-400 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-4000" />
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid gap-6 md:grid-cols-3">
-          <Card className="relative overflow-hidden border-2 border-green-200/60 shadow-2xl shadow-green-200/50">
-            <div className="absolute top-0 left-0 w-full h-2 bg-linear-to-r from-green-500 to-emerald-500" />
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-700">
-                Receita Total
-              </CardTitle>
-              <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
-                <TrendingUp className="h-6 w-6 text-green-600" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-bold text-green-600">
-                {formatCurrency(totals.income)}
-              </div>
-              <p className="text-xs text-slate-500 mt-2">
-                Total de entradas
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="relative overflow-hidden border-2 border-red-200/60 shadow-2xl shadow-red-200/50">
-            <div className="absolute top-0 left-0 w-full h-2 bg-linear-to-r from-red-500 to-rose-500" />
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-700">
-                Despesas
-              </CardTitle>
-              <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center">
-                <TrendingDown className="h-6 w-6 text-red-600" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-bold text-red-600">
-                {formatCurrency(totals.expense)}
-              </div>
-              <p className="text-xs text-slate-500 mt-2">
-                Total de saídas
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card
-            className={`relative overflow-hidden border-2 shadow-2xl ${totals.balance >= 0
-              ? 'border-blue-200/60 shadow-blue-200/50'
-              : 'border-orange-200/60 shadow-orange-200/50'
-              }`}
-          >
-            <div
-              className={`absolute top-0 left-0 w-full h-2 bg-linear-to-r ${totals.balance >= 0
-                ? 'from-blue-500 to-purple-500'
-                : 'from-orange-500 to-red-500'
-                }`}
-            />
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-700">
-                Saldo
-              </CardTitle>
-              <div
-                className={`h-12 w-12 rounded-full flex items-center justify-center ${totals.balance >= 0 ? 'bg-blue-100' : 'bg-orange-100'
-                  }`}
+        <div className="relative space-y-6 p-6 max-w-7xl mx-auto">
+          {/* Header com botão voltar */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.history.back()}
+                className="backdrop-blur-sm bg-white/80 hover:bg-white"
               >
-                <DollarSign
-                  className={`h-6 w-6 ${totals.balance >= 0 ? 'text-blue-600' : 'text-orange-600'
-                    }`}
-                />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div
-                className={`text-4xl font-bold ${totals.balance >= 0 ? 'text-blue-600' : 'text-orange-600'
-                  }`}
-              >
-                {formatCurrency(totals.balance)}
-              </div>
-              <p className="text-xs text-slate-500 mt-2">
-                {totals.balance >= 0 ? 'Balanço positivo' : 'Balanço negativo'}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Filters */}
-        <Card className="shadow-xl">
-          <CardContent className="pt-6">
-            <div className="flex flex-wrap items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-slate-500" />
-                <span className="text-sm font-medium text-slate-700">Filtros:</span>
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant={filter === 'all' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setFilter('all')}
-                  className="text-xs"
+                <svg
+                  className="w-4 h-4 mr-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  Todas
-                </Button>
-                <Button
-                  variant={filter === 'income' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setFilter('income')}
-                  className="text-xs gap-1"
-                >
-                  <ArrowUpCircle className="h-3 w-3" />
-                  Receitas
-                </Button>
-                <Button
-                  variant={filter === 'expense' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setFilter('expense')}
-                  className="text-xs gap-1"
-                >
-                  <ArrowDownCircle className="h-3 w-3" />
-                  Despesas
-                </Button>
-              </div>
-              <div className="flex items-center gap-2">
-                <Building2 className="h-4 w-4 text-slate-500" />
-                <Select
-                  value={clientFilter}
-                  onChange={(e) => setClientFilter(e.target.value)}
-                  className="w-48 h-8 text-xs"
-                >
-                  <option value="all">Todos os clientes</option>
-                  <option value="">Sem cliente</option>
-                  {clients.map((client) => (
-                    <option key={client.id} value={client.id}>
-                      {client.name}
-                    </option>
-                  ))}
-                </Select>
-              </div>
-              <div className="flex items-center gap-2 ml-auto">
-                <Calendar className="h-4 w-4 text-slate-500" />
-                <Input
-                  type="month"
-                  value={dateFilter}
-                  onChange={(e) => setDateFilter(e.target.value)}
-                  className="w-40 h-8 text-xs"
-                />
-                {dateFilter && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setDateFilter('')}
-                    className="h-8 px-2"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Transactions List */}
-        <Card className="shadow-xl">
-          <CardHeader>
-            <CardTitle className="text-xl">Histórico de Transações</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {filteredFinances.length === 0 ? (
-              <div className="text-center py-12 text-slate-500">
-                <DollarSign className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p className="font-medium">Nenhuma transação encontrada</p>
-                <p className="text-sm mt-1">
-                  {filter !== 'all' || dateFilter || clientFilter !== 'all'
-                    ? 'Tente ajustar os filtros'
-                    : 'Comece adicionando uma transação'}
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                  />
+                </svg>
+                Voltar
+              </Button>
+              <div>
+                <h1 className="text-3xl font-bold text-slate-900">
+                  Financeiro da Organização
+                </h1>
+                <p className="text-sm text-slate-600 mt-1">
+                  Gestão completa de receitas e despesas
                 </p>
               </div>
-            ) : (
-              <div className="space-y-3">
-                {filteredFinances.map((finance) => (
-                  <div
-                    key={finance.id}
-                    className={`flex items-center justify-between p-4 rounded-xl border-2 transition-all hover:shadow-lg ${finance.type === 'income'
-                      ? 'border-green-200 bg-green-50/50 hover:border-green-300'
-                      : 'border-red-200 bg-red-50/50 hover:border-red-300'
-                      }`}
-                  >
-                    <div className="flex items-center gap-4 flex-1">
-                      <div
-                        className={`h-14 w-14 rounded-full flex items-center justify-center ${finance.type === 'income'
-                          ? 'bg-green-100'
-                          : 'bg-red-100'
-                          }`}
-                      >
-                        {finance.type === 'income' ? (
-                          <ArrowUpCircle className="h-7 w-7 text-green-600" />
-                        ) : (
-                          <ArrowDownCircle className="h-7 w-7 text-red-600" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h4 className="font-semibold text-slate-900 text-base">
-                            {finance.description || 'Sem descrição'}
-                          </h4>
-                          {finance.category && (
-                            <span className="text-xs px-2 py-1 rounded-full bg-slate-200 text-slate-700 font-medium">
-                              {finance.category}
-                            </span>
-                          )}
-                          {finance.client && (
-                            <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700 font-medium flex items-center gap-1">
-                              <Building2 className="h-3 w-3" />
-                              {finance.client.name}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-slate-500 mt-1">
-                          {formatDate(finance.date)}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <div
-                          className={`text-2xl font-bold ${finance.type === 'income'
-                            ? 'text-green-600'
-                            : 'text-red-600'
-                            }`}
-                        >
-                          {finance.type === 'income' ? '+' : '-'}
-                          {formatCurrency(finance.amount)}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 ml-4">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEdit(finance)}
-                        className="h-9 w-9 p-0"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(finance.id)}
-                        className="h-9 w-9 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+            </div>
+            <Button
+              onClick={() => {
+                resetForm()
+                setIsModalOpen(true)
+              }}
+              size="lg"
+              className="gap-2 bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg shadow-blue-500/20"
+            >
+              <Plus className="h-5 w-5" />
+              Nova Transação
+            </Button>
+          </div>
 
-      {/* Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-lg shadow-2xl">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-xl">
-                  {editingItem ? 'Editar Transação' : 'Nova Transação'}
+          {/* Stats Cards */}
+          <div className="grid gap-6 md:grid-cols-3">
+            <Card className="relative overflow-hidden border-2 border-green-200/60 shadow-2xl shadow-green-200/50">
+              <div className="absolute top-0 left-0 w-full h-2 bg-linear-to-r from-green-500 to-emerald-500" />
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-slate-700">
+                  Receita Total
                 </CardTitle>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setIsModalOpen(false)
-                    resetForm()
-                  }}
-                  className="h-8 w-8 p-0"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="type">Tipo</Label>
-                  <Select
-                    id="type"
-                    value={formData.type}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        type: e.target.value as 'income' | 'expense',
-                        category: '',
-                      })
-                    }
-                    disabled={submitting}
-                  >
-                    <option value="income">Receita</option>
-                    <option value="expense">Despesa</option>
-                  </Select>
+                <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
+                  <TrendingUp className="h-6 w-6 text-green-600" />
                 </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-green-600">
+                  {formatCurrency(totals.income)}
+                </div>
+                <p className="text-xs text-slate-500 mt-2">
+                  {totals.incomeCount} transação{totals.incomeCount !== 1 ? 'ões' : ''}
+                </p>
+              </CardContent>
+            </Card>
 
-                <div className="space-y-2">
-                  <Label htmlFor="amount">
-                    Valor <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="amount"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    required
-                    value={formData.amount}
-                    onChange={(e) =>
-                      setFormData({ ...formData, amount: e.target.value })
-                    }
-                    placeholder="0.00"
-                    disabled={submitting}
+            <Card className="relative overflow-hidden border-2 border-red-200/60 shadow-2xl shadow-red-200/50">
+              <div className="absolute top-0 left-0 w-full h-2 bg-linear-to-r from-red-500 to-rose-500" />
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-slate-700">
+                  Despesas
+                </CardTitle>
+                <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center">
+                  <TrendingDown className="h-6 w-6 text-red-600" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-red-600">
+                  {formatCurrency(totals.expense)}
+                </div>
+                <p className="text-xs text-slate-500 mt-2">
+                  {totals.expenseCount} transação{totals.expenseCount !== 1 ? 'ões' : ''}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card
+              className={`relative overflow-hidden border-2 shadow-2xl ${totals.balance >= 0
+                ? 'border-blue-200/60 shadow-blue-200/50'
+                : 'border-orange-200/60 shadow-orange-200/50'
+                }`}
+            >
+              <div
+                className={`absolute top-0 left-0 w-full h-2 bg-linear-to-r ${totals.balance >= 0
+                  ? 'from-blue-500 to-purple-500'
+                  : 'from-orange-500 to-red-500'
+                  }`}
+              />
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-slate-700">
+                  Saldo
+                </CardTitle>
+                <div
+                  className={`h-12 w-12 rounded-full flex items-center justify-center ${totals.balance >= 0 ? 'bg-blue-100' : 'bg-orange-100'
+                    }`}
+                >
+                  <DollarSign
+                    className={`h-6 w-6 ${totals.balance >= 0 ? 'text-blue-600' : 'text-orange-600'
+                      }`}
                   />
                 </div>
+              </CardHeader>
+              <CardContent>
+                <div
+                  className={`text-3xl font-bold ${totals.balance >= 0 ? 'text-blue-600' : 'text-orange-600'
+                    }`}
+                >
+                  {formatCurrency(totals.balance)}
+                </div>
+                <p className="text-xs text-slate-500 mt-2">
+                  {totals.balance >= 0 ? '✓ Positivo' : '⚠ Negativo'} • {totals.incomeCount + totals.expenseCount} total
+                </p>
+              </CardContent>
+            </Card>
+          </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="clientId">Cliente (opcional)</Label>
-                  <Select
-                    id="clientId"
-                    value={formData.clientId}
-                    onChange={(e) =>
-                      setFormData({ ...formData, clientId: e.target.value })
-                    }
-                    disabled={submitting}
+          {/* Top Categorias - Resumo Visual */}
+          {categoryStats.length > 0 && (
+            <Card className="shadow-lg bg-white/80 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Filter className="h-5 w-5 text-blue-600" />
+                  Top 5 Categorias
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {categoryStats.map((stat, index) => (
+                    <div key={stat.category} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <span className="text-xs font-bold text-slate-400">#{index + 1}</span>
+                          <p className="text-sm font-medium text-slate-900 truncate">
+                            {stat.category}
+                          </p>
+                          <span className="text-xs text-slate-500">
+                            ({stat.count})
+                          </span>
+                        </div>
+                        <div className={`text-sm font-bold ${stat.amount >= 0 ? 'text-green-600' : 'text-red-600'
+                          }`}>
+                          {stat.amount >= 0 ? '+' : '-'}{formatCurrency(Math.abs(stat.amount))}
+                        </div>
+                      </div>
+                      <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${stat.amount >= 0
+                            ? 'bg-linear-to-r from-green-500 to-emerald-500'
+                            : 'bg-linear-to-r from-red-500 to-rose-500'
+                            }`}
+                          style={{
+                            width: `${Math.min(100, (Math.abs(stat.amount) / Math.max(...categoryStats.map(s => Math.abs(s.amount)))) * 100)}%`
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Filters */}
+          <Card className="shadow-lg bg-white/80 backdrop-blur-sm">
+            <CardContent className="pt-6">
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Filter className="h-4 w-4 text-slate-500" />
+                  <span className="text-sm font-medium text-slate-700">Filtros:</span>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant={filter === 'all' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setFilter('all')}
+                    className="text-xs"
                   >
-                    <option value="">Sem cliente específico</option>
+                    Todas
+                  </Button>
+                  <Button
+                    variant={filter === 'income' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setFilter('income')}
+                    className="text-xs gap-1"
+                  >
+                    <ArrowUpCircle className="h-3 w-3" />
+                    Receitas
+                  </Button>
+                  <Button
+                    variant={filter === 'expense' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setFilter('expense')}
+                    className="text-xs gap-1"
+                  >
+                    <ArrowDownCircle className="h-3 w-3" />
+                    Despesas
+                  </Button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Building2 className="h-4 w-4 text-slate-500" />
+                  <Select
+                    value={clientFilter}
+                    onChange={(e) => setClientFilter(e.target.value)}
+                    className="w-48 h-8 text-xs"
+                  >
+                    <option value="all">Todos os clientes</option>
+                    <option value="">Sem cliente</option>
                     {clients.map((client) => (
                       <option key={client.id} value={client.id}>
                         {client.name}
@@ -632,80 +532,282 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
                     ))}
                   </Select>
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="category">Categoria</Label>
-                  <Select
-                    id="category"
-                    value={formData.category}
-                    onChange={(e) =>
-                      setFormData({ ...formData, category: e.target.value })
-                    }
-                    disabled={submitting}
-                  >
-                    <option value="">Selecione...</option>
-                    {CATEGORIES[formData.type].map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="description">Descrição</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) =>
-                      setFormData({ ...formData, description: e.target.value })
-                    }
-                    placeholder="Detalhes da transação"
-                    rows={3}
-                    disabled={submitting}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="date">Data</Label>
+                <div className="flex items-center gap-2 ml-auto">
+                  <Calendar className="h-4 w-4 text-slate-500" />
                   <Input
-                    id="date"
-                    type="date"
-                    required
-                    value={formData.date}
-                    onChange={(e) =>
-                      setFormData({ ...formData, date: e.target.value })
-                    }
-                    disabled={submitting}
+                    type="month"
+                    value={dateFilter}
+                    onChange={(e) => setDateFilter(e.target.value)}
+                    className="w-40 h-8 text-xs"
                   />
+                  {dateFilter && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setDateFilter('')}
+                      className="h-8 px-2"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
-
-                <div className="flex gap-3 pt-4">
-                  <Button
-                    type="submit"
-                    disabled={submitting}
-                    className="flex-1 bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                  >
-                    {submitting && <LoadingSpinner size="sm" className="mr-2" />}
-                    {editingItem ? 'Salvar' : 'Criar'}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setIsModalOpen(false)
-                      resetForm()
-                    }}
-                    disabled={submitting}
-                  >
-                    Cancelar
-                  </Button>
-                </div>
-              </form>
+              </div>
             </CardContent>
           </Card>
+
+          {/* Transactions List */}
+          <Card className="shadow-xl">
+            <CardHeader>
+              <CardTitle className="text-xl">Histórico de Transações</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {filteredFinances.length === 0 ? (
+                <div className="text-center py-12 text-slate-500">
+                  <DollarSign className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p className="font-medium">Nenhuma transação encontrada</p>
+                  <p className="text-sm mt-1">
+                    {filter !== 'all' || dateFilter || clientFilter !== 'all'
+                      ? 'Tente ajustar os filtros'
+                      : 'Comece adicionando uma transação'}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {filteredFinances.map((finance) => (
+                    <div
+                      key={finance.id}
+                      className={`flex items-center justify-between p-4 rounded-xl border-2 transition-all hover:shadow-lg ${finance.type === 'income'
+                        ? 'border-green-200 bg-green-50/50 hover:border-green-300'
+                        : 'border-red-200 bg-red-50/50 hover:border-red-300'
+                        }`}
+                    >
+                      <div className="flex items-center gap-4 flex-1">
+                        <div
+                          className={`h-14 w-14 rounded-full flex items-center justify-center ${finance.type === 'income'
+                            ? 'bg-green-100'
+                            : 'bg-red-100'
+                            }`}
+                        >
+                          {finance.type === 'income' ? (
+                            <ArrowUpCircle className="h-7 w-7 text-green-600" />
+                          ) : (
+                            <ArrowDownCircle className="h-7 w-7 text-red-600" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h4 className="font-semibold text-slate-900 text-base">
+                              {finance.description || 'Sem descrição'}
+                            </h4>
+                            {finance.category && (
+                              <span className="text-xs px-2 py-1 rounded-full bg-slate-200 text-slate-700 font-medium">
+                                {finance.category}
+                              </span>
+                            )}
+                            {finance.client && (
+                              <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700 font-medium flex items-center gap-1">
+                                <Building2 className="h-3 w-3" />
+                                {finance.client.name}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-slate-500 mt-1">
+                            {formatDate(finance.date)}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <div
+                            className={`text-2xl font-bold ${finance.type === 'income'
+                              ? 'text-green-600'
+                              : 'text-red-600'
+                              }`}
+                          >
+                            {finance.type === 'income' ? '+' : '-'}
+                            {formatCurrency(finance.amount)}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 ml-4">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(finance)}
+                          className="h-9 w-9 p-0"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(finance.id)}
+                          className="h-9 w-9 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Modal */}
+          {isModalOpen && (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+              <Card className="w-full max-w-lg shadow-2xl">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-xl">
+                      {editingItem ? 'Editar Transação' : 'Nova Transação'}
+                    </CardTitle>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setIsModalOpen(false)
+                        resetForm()
+                      }}
+                      className="h-8 w-8 p-0"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="type">Tipo</Label>
+                      <Select
+                        id="type"
+                        value={formData.type}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            type: e.target.value as 'income' | 'expense',
+                            category: '',
+                          })
+                        }
+                        disabled={submitting}
+                      >
+                        <option value="income">Receita</option>
+                        <option value="expense">Despesa</option>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="amount">
+                        Valor <span className="text-red-500">*</span>
+                      </Label>
+                      <Input
+                        id="amount"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        required
+                        value={formData.amount}
+                        onChange={(e) =>
+                          setFormData({ ...formData, amount: e.target.value })
+                        }
+                        placeholder="0.00"
+                        disabled={submitting}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="clientId">Cliente (opcional)</Label>
+                      <Select
+                        id="clientId"
+                        value={formData.clientId}
+                        onChange={(e) =>
+                          setFormData({ ...formData, clientId: e.target.value })
+                        }
+                        disabled={submitting}
+                      >
+                        <option value="">Sem cliente específico</option>
+                        {clients.map((client) => (
+                          <option key={client.id} value={client.id}>
+                            {client.name}
+                          </option>
+                        ))}
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="category">Categoria</Label>
+                      <Select
+                        id="category"
+                        value={formData.category}
+                        onChange={(e) =>
+                          setFormData({ ...formData, category: e.target.value })
+                        }
+                        disabled={submitting}
+                      >
+                        <option value="">Selecione...</option>
+                        {CATEGORIES[formData.type].map((cat) => (
+                          <option key={cat} value={cat}>
+                            {cat}
+                          </option>
+                        ))}
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="description">Descrição</Label>
+                      <Textarea
+                        id="description"
+                        value={formData.description}
+                        onChange={(e) =>
+                          setFormData({ ...formData, description: e.target.value })
+                        }
+                        placeholder="Detalhes da transação"
+                        rows={3}
+                        disabled={submitting}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="date">Data</Label>
+                      <Input
+                        id="date"
+                        type="date"
+                        required
+                        value={formData.date}
+                        onChange={(e) =>
+                          setFormData({ ...formData, date: e.target.value })
+                        }
+                        disabled={submitting}
+                      />
+                    </div>
+
+                    <div className="flex gap-3 pt-4">
+                      <Button
+                        type="submit"
+                        disabled={submitting}
+                        className="flex-1 bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                      >
+                        {submitting && <LoadingSpinner size="sm" className="mr-2" />}
+                        {editingItem ? 'Salvar' : 'Criar'}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setIsModalOpen(false)
+                          resetForm()
+                        }}
+                        disabled={submitting}
+                      >
+                        Cancelar
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </>
   )
 }

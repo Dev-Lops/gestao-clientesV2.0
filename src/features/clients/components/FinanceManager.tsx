@@ -3,11 +3,12 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
-import { useState, useMemo } from 'react'
-import { CreditCard, Plus, TrendingDown, TrendingUp, Trash2, Edit, X, DollarSign } from 'lucide-react'
+import { Textarea } from '@/components/ui/textarea'
+import { parseDateInput } from '@/lib/utils'
+import { CreditCard, DollarSign, Edit, Plus, Trash2, TrendingDown, TrendingUp, X } from 'lucide-react'
+import { useMemo, useState } from 'react'
 
 interface Finance {
   id: string
@@ -28,7 +29,7 @@ export function FinanceManager({ clientId, initialFinances = [] }: FinanceManage
   const [finances, setFinances] = useState<Finance[]>(initialFinances)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<Finance | null>(null)
-  
+
   const [formData, setFormData] = useState({
     type: 'income' as Finance['type'],
     amount: '',
@@ -50,25 +51,27 @@ export function FinanceManager({ clientId, initialFinances = [] }: FinanceManage
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     const amount = parseFloat(formData.amount)
     if (isNaN(amount) || amount <= 0) {
       alert('Por favor, insira um valor válido')
       return
     }
 
+    const dateToSave = parseDateInput(formData.date)
+
     if (editingItem) {
       setFinances(prev =>
         prev.map(item =>
           item.id === editingItem.id
             ? {
-                ...item,
-                type: formData.type,
-                amount,
-                description: formData.description,
-                category: formData.category,
-                date: new Date(formData.date),
-              }
+              ...item,
+              type: formData.type,
+              amount,
+              description: formData.description,
+              category: formData.category,
+              date: dateToSave,
+            }
             : item
         )
       )
@@ -79,13 +82,11 @@ export function FinanceManager({ clientId, initialFinances = [] }: FinanceManage
         amount,
         description: formData.description,
         category: formData.category,
-        date: new Date(formData.date),
+        date: dateToSave,
         createdAt: new Date(),
       }
       setFinances(prev => [newItem, ...prev])
-    }
-    
-    setIsModalOpen(false)
+    } setIsModalOpen(false)
     resetForm()
   }
 
@@ -111,11 +112,11 @@ export function FinanceManager({ clientId, initialFinances = [] }: FinanceManage
     const income = finances
       .filter(f => f.type === 'income')
       .reduce((sum, f) => sum + f.amount, 0)
-    
+
     const expense = finances
       .filter(f => f.type === 'expense')
       .reduce((sum, f) => sum + f.amount, 0)
-    
+
     return {
       income,
       expense,

@@ -249,299 +249,319 @@ export function MediaManager({ clientId }: MediaManagerProps) {
 
   return (
     <>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-semibold text-slate-900">Mídias</h2>
-            <p className="text-sm text-slate-500 mt-1">Upload e organização de arquivos do cliente</p>
-          </div>
-          <div className="flex gap-2">
-            {canCreate && (
-              <>
-                <Button
-                  variant="outline"
-                  className="gap-2"
-                  onClick={() => {
-                    resetFolderForm()
-                    setIsFolderModalOpen(true)
-                  }}
-                >
-                  <FolderPlus className="h-4 w-4" /> Nova Pasta
-                </Button>
-                <Button
-                  className="gap-2"
-                  onClick={() => {
-                    resetUploadForm()
-                    setIsUploadModalOpen(true)
-                  }}
-                >
-                  <Upload className="h-4 w-4" /> Upload
-                </Button>
-              </>
-            )}
-          </div>
+      <div className="relative min-h-screen bg-linear-to-br from-slate-50 via-blue-50/30 to-slate-100 dark:from-slate-950 dark:via-blue-950/20 dark:to-slate-900">
+        {/* Animated background blobs */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 -left-4 w-96 h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob" />
+          <div className="absolute top-0 -right-4 w-96 h-96 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-2000" />
+          <div className="absolute -bottom-8 left-20 w-96 h-96 bg-pink-400 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-4000" />
         </div>
 
-        {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-sm text-slate-600">
-          {breadcrumb.map((crumb, idx) => (
-            <div key={crumb.id || 'root'} className="flex items-center gap-2">
-              {idx > 0 && <ChevronRight className="h-4 w-4" />}
-              <button
-                onClick={() => setCurrentFolderId(crumb.id)}
-                className="hover:underline hover:text-slate-900 flex items-center gap-1"
-              >
-                {idx === 0 ? <Home className="h-4 w-4" /> : <Folder className="h-4 w-4" />}
-                {crumb.name}
-              </button>
+        <div className="relative space-y-6 p-6">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Mídias</h2>
+              <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Upload e organização de arquivos do cliente</p>
             </div>
-          ))}
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <ImageIcon className="h-5 w-5" /> Biblioteca de Mídias
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Input
-              placeholder="Buscar..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="md:w-64"
-            />
-
-            {/* Pastas */}
-            {visibleFolders.length > 0 && (
-              <div className="space-y-2">
-                <h3 className="text-xs font-medium text-slate-500 uppercase">Pastas</h3>
-                <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                  {visibleFolders.map((folder) => (
-                    <div
-                      key={folder.id}
-                      className="group relative border rounded-lg p-4 bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer"
-                      onClick={() => setCurrentFolderId(folder.id)}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Folder className="h-5 w-5 text-amber-600" />
-                            <span className="font-medium text-sm text-slate-900 truncate">{folder.name}</span>
-                          </div>
-                          {folder.description && <p className="text-xs text-slate-600 line-clamp-1">{folder.description}</p>}
-                          <p className="text-xs text-slate-500 mt-1">
-                            {folder._count?.media || 0} arquivo(s), {folder._count?.children || 0} pasta(s)
-                          </p>
-                        </div>
-                        {canDelete && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-6 w-6 p-0 text-red-600 hover:text-red-700 opacity-0 group-hover:opacity-100"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleDeleteFolder(folder.id)
-                            }}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Arquivos */}
-            {(mediaLoading || foldersLoading) && (
-              <div className="flex items-center justify-center py-12">
-                <div className="flex flex-col items-center gap-3">
-                  <LoadingSpinner size="lg" />
-                  <p className="text-sm text-slate-500">Carregando arquivos...</p>
-                </div>
-              </div>
-            )}
-            {(mediaError || foldersError) && <div className="text-sm text-red-600">Falha ao carregar</div>}
-
-            {filtered.length === 0 && !mediaLoading && (
-              <div className="text-center py-12 text-slate-500">
-                <File className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p className="font-medium">Nenhum arquivo nesta pasta</p>
-                <p className="text-sm mt-1">Faça upload de imagens, vídeos ou documentos</p>
-              </div>
-            )}
-
-            {filtered.length > 0 && (
-              <div className="space-y-2">
-                <h3 className="text-xs font-medium text-slate-500 uppercase">Arquivos</h3>
-                <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                  {filtered.map((item) => (
-                    <div
-                      key={item.id}
-                      className="group relative border rounded-lg p-3 bg-white hover:bg-slate-50 transition-colors"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2 mb-1 text-xs text-slate-600">
-                            {iconFor(item.type)}
-                            <span>{item.type === 'image' ? 'Imagem' : item.type === 'video' ? 'Vídeo' : 'Documento'}</span>
-                          </div>
-                          <h4 className="font-medium text-sm text-slate-900 truncate">{item.title}</h4>
-                          {item.description && <p className="text-xs text-slate-600 mt-1 line-clamp-2">{item.description}</p>}
-                          {item.fileSize && <p className="text-xs text-slate-500 mt-1">{(item.fileSize / 1024).toFixed(1)} KB</p>}
-                          {item.url && (
-                            <a
-                              href={item.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-xs text-blue-600 hover:underline mt-2 inline-block"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              Abrir
-                            </a>
-                          )}
-                        </div>
-                        <div className="flex gap-1">
-                          {canUpdate && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100"
-                              onClick={() => handleEditItem(item)}
-                            >
-                              <Edit className="h-3 w-3" />
-                            </Button>
-                          )}
-                          {canDelete && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-6 w-6 p-0 text-red-600 hover:text-red-700 opacity-0 group-hover:opacity-100"
-                              onClick={() => handleDeleteItem(item.id)}
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Modal Nova Pasta */}
-      {isFolderModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setIsFolderModalOpen(false)}>
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md m-4" onClick={(e) => e.stopPropagation()}>
-            <div className="p-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold">Nova Pasta</h2>
-                <Button variant="ghost" size="sm" onClick={() => setIsFolderModalOpen(false)}>
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-              <form onSubmit={handleCreateFolder} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="folder-name">Nome</Label>
-                  <Input
-                    id="folder-name"
-                    required
-                    value={folderForm.name}
-                    onChange={(e) => setFolderForm({ ...folderForm, name: e.target.value })}
-                    placeholder="Ex: Campanhas 2024"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="folder-desc">Descrição (opcional)</Label>
-                  <Textarea
-                    id="folder-desc"
-                    rows={2}
-                    value={folderForm.description}
-                    onChange={(e) => setFolderForm({ ...folderForm, description: e.target.value })}
-                    placeholder="Breve descrição"
-                  />
-                </div>
-                <div className="flex justify-end gap-2 pt-2">
-                  <Button type="button" variant="outline" onClick={() => setIsFolderModalOpen(false)}>
-                    Cancelar
+            <div className="flex gap-2">
+              {canCreate && (
+                <>
+                  <Button
+                    variant="outline"
+                    className="gap-2"
+                    onClick={() => {
+                      resetFolderForm()
+                      setIsFolderModalOpen(true)
+                    }}
+                  >
+                    <FolderPlus className="h-4 w-4" /> Nova Pasta
                   </Button>
-                  <Button type="submit">Criar</Button>
-                </div>
-              </form>
+                  <Button
+                    className="gap-2 bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200"
+                    onClick={() => {
+                      resetUploadForm()
+                      setIsUploadModalOpen(true)
+                    }}
+                  >
+                    <Upload className="h-4 w-4" /> Upload
+                  </Button>
+                </>
+              )}
             </div>
           </div>
-        </div>
-      )}
 
-      {/* Modal Upload/Editar */}
-      {isUploadModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setIsUploadModalOpen(false)}>
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-lg m-4" onClick={(e) => e.stopPropagation()}>
-            <div className="p-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold">{editingItem ? 'Editar Mídia' : 'Upload de Arquivo'}</h2>
-                <Button variant="ghost" size="sm" onClick={() => setIsUploadModalOpen(false)}>
-                  <X className="h-4 w-4" />
-                </Button>
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-2 text-sm">
+            {breadcrumb.map((crumb, idx) => (
+              <div key={crumb.id || 'root'} className="flex items-center gap-2">
+                {idx > 0 && <ChevronRight className="h-4 w-4 text-slate-400" />}
+                <button
+                  onClick={() => setCurrentFolderId(crumb.id)}
+                  className="flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-white/50 dark:hover:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                >
+                  {idx === 0 ? <Home className="h-4 w-4" /> : <Folder className="h-4 w-4" />}
+                  {crumb.name}
+                </button>
               </div>
-              <form onSubmit={editingItem ? handleUpdateItem : handleUpload} className="space-y-4">
-                {!editingItem && (
+            ))}
+          </div>
+
+          {/* Main Card */}
+          <div className="relative">
+            <div className="absolute -inset-1 bg-linear-to-r from-blue-600 to-purple-600 rounded-3xl blur opacity-20" />
+            <Card className="relative bg-white/80 backdrop-blur-sm dark:bg-slate-900/80 border-slate-200/50 dark:border-slate-700/50 shadow-xl">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3 text-slate-900 dark:text-white">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-linear-to-tr from-blue-600 to-purple-600 rounded-lg blur-md opacity-30" />
+                    <div className="relative w-10 h-10 bg-linear-to-tr from-blue-600 to-purple-600 rounded-lg flex items-center justify-center shrink-0">
+                      <ImageIcon className="h-5 w-5 text-white" />
+                    </div>
+                  </div>
+                  <span>Biblioteca de Mídias</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Input
+                  placeholder="Buscar..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="md:w-64 bg-white/50 dark:bg-slate-800/50"
+                />
+
+                {/* Pastas */}
+                {visibleFolders.length > 0 && (
                   <div className="space-y-2">
-                    <Label htmlFor="file-upload">Arquivo</Label>
-                    <Input
-                      id="file-upload"
-                      type="file"
-                      required
-                      onChange={(e) => setUploadForm({ ...uploadForm, file: e.target.files?.[0] || null })}
-                      accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv"
-                    />
-                    {uploadForm.file && (
-                      <p className="text-xs text-slate-600">
-                        {uploadForm.file.name} ({(uploadForm.file.size / 1024).toFixed(1)} KB)
-                      </p>
-                    )}
+                    <h3 className="text-xs font-medium text-slate-500 uppercase">Pastas</h3>
+                    <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                      {visibleFolders.map((folder) => (
+                        <div
+                          key={folder.id}
+                          className="group relative border rounded-lg p-4 bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer"
+                          onClick={() => setCurrentFolderId(folder.id)}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <Folder className="h-5 w-5 text-amber-600" />
+                                <span className="font-medium text-sm text-slate-900 truncate">{folder.name}</span>
+                              </div>
+                              {folder.description && <p className="text-xs text-slate-600 line-clamp-1">{folder.description}</p>}
+                              <p className="text-xs text-slate-500 mt-1">
+                                {folder._count?.media || 0} arquivo(s), {folder._count?.children || 0} pasta(s)
+                              </p>
+                            </div>
+                            {canDelete && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 w-6 p-0 text-red-600 hover:text-red-700 opacity-0 group-hover:opacity-100"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleDeleteFolder(folder.id)
+                                }}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
-                <div className="space-y-2">
-                  <Label htmlFor="title">Título</Label>
-                  <Input
-                    id="title"
-                    required
-                    value={uploadForm.title}
-                    onChange={(e) => setUploadForm({ ...uploadForm, title: e.target.value })}
-                    placeholder="Nome do arquivo"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="desc">Descrição (opcional)</Label>
-                  <Textarea
-                    id="desc"
-                    rows={3}
-                    value={uploadForm.description}
-                    onChange={(e) => setUploadForm({ ...uploadForm, description: e.target.value })}
-                    placeholder="Breve descrição"
-                  />
-                </div>
-                <div className="flex justify-end gap-2 pt-2">
-                  <Button type="button" variant="outline" onClick={() => setIsUploadModalOpen(false)}>
-                    Cancelar
-                  </Button>
-                  <Button type="submit" disabled={uploading || (!editingItem && !uploadForm.file)}>
-                    {uploading && <LoadingSpinner size="sm" className="mr-2" />}
-                    {uploading ? 'Enviando...' : editingItem ? 'Salvar' : 'Upload'}
-                  </Button>
-                </div>
-              </form>
-            </div>
+
+                {/* Arquivos */}
+                {(mediaLoading || foldersLoading) && (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="flex flex-col items-center gap-3">
+                      <LoadingSpinner size="lg" />
+                      <p className="text-sm text-slate-500">Carregando arquivos...</p>
+                    </div>
+                  </div>
+                )}
+                {(mediaError || foldersError) && <div className="text-sm text-red-600">Falha ao carregar</div>}
+
+                {filtered.length === 0 && !mediaLoading && (
+                  <div className="text-center py-12 text-slate-500">
+                    <File className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p className="font-medium">Nenhum arquivo nesta pasta</p>
+                    <p className="text-sm mt-1">Faça upload de imagens, vídeos ou documentos</p>
+                  </div>
+                )}
+
+                {filtered.length > 0 && (
+                  <div className="space-y-2">
+                    <h3 className="text-xs font-medium text-slate-500 uppercase">Arquivos</h3>
+                    <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                      {filtered.map((item) => (
+                        <div
+                          key={item.id}
+                          className="group relative border rounded-lg p-3 bg-white hover:bg-slate-50 transition-colors"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2 mb-1 text-xs text-slate-600">
+                                {iconFor(item.type)}
+                                <span>{item.type === 'image' ? 'Imagem' : item.type === 'video' ? 'Vídeo' : 'Documento'}</span>
+                              </div>
+                              <h4 className="font-medium text-sm text-slate-900 truncate">{item.title}</h4>
+                              {item.description && <p className="text-xs text-slate-600 mt-1 line-clamp-2">{item.description}</p>}
+                              {item.fileSize && <p className="text-xs text-slate-500 mt-1">{(item.fileSize / 1024).toFixed(1)} KB</p>}
+                              {item.url && (
+                                <a
+                                  href={item.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-blue-600 hover:underline mt-2 inline-block"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  Abrir
+                                </a>
+                              )}
+                            </div>
+                            <div className="flex gap-1">
+                              {canUpdate && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100"
+                                  onClick={() => handleEditItem(item)}
+                                >
+                                  <Edit className="h-3 w-3" />
+                                </Button>
+                              )}
+                              {canDelete && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-6 w-6 p-0 text-red-600 hover:text-red-700 opacity-0 group-hover:opacity-100"
+                                  onClick={() => handleDeleteItem(item.id)}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
+
+          {/* Modal Nova Pasta */}
+          {isFolderModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setIsFolderModalOpen(false)}>
+              <div className="bg-white rounded-lg shadow-xl w-full max-w-md m-4" onClick={(e) => e.stopPropagation()}>
+                <div className="p-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-semibold">Nova Pasta</h2>
+                    <Button variant="ghost" size="sm" onClick={() => setIsFolderModalOpen(false)}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <form onSubmit={handleCreateFolder} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="folder-name">Nome</Label>
+                      <Input
+                        id="folder-name"
+                        required
+                        value={folderForm.name}
+                        onChange={(e) => setFolderForm({ ...folderForm, name: e.target.value })}
+                        placeholder="Ex: Campanhas 2024"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="folder-desc">Descrição (opcional)</Label>
+                      <Textarea
+                        id="folder-desc"
+                        rows={2}
+                        value={folderForm.description}
+                        onChange={(e) => setFolderForm({ ...folderForm, description: e.target.value })}
+                        placeholder="Breve descrição"
+                      />
+                    </div>
+                    <div className="flex justify-end gap-2 pt-2">
+                      <Button type="button" variant="outline" onClick={() => setIsFolderModalOpen(false)}>
+                        Cancelar
+                      </Button>
+                      <Button type="submit">Criar</Button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Modal Upload/Editar */}
+          {isUploadModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setIsUploadModalOpen(false)}>
+              <div className="bg-white rounded-lg shadow-xl w-full max-w-lg m-4" onClick={(e) => e.stopPropagation()}>
+                <div className="p-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-semibold">{editingItem ? 'Editar Mídia' : 'Upload de Arquivo'}</h2>
+                    <Button variant="ghost" size="sm" onClick={() => setIsUploadModalOpen(false)}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <form onSubmit={editingItem ? handleUpdateItem : handleUpload} className="space-y-4">
+                    {!editingItem && (
+                      <div className="space-y-2">
+                        <Label htmlFor="file-upload">Arquivo</Label>
+                        <Input
+                          id="file-upload"
+                          type="file"
+                          required
+                          onChange={(e) => setUploadForm({ ...uploadForm, file: e.target.files?.[0] || null })}
+                          accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv"
+                        />
+                        {uploadForm.file && (
+                          <p className="text-xs text-slate-600">
+                            {uploadForm.file.name} ({(uploadForm.file.size / 1024).toFixed(1)} KB)
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    <div className="space-y-2">
+                      <Label htmlFor="title">Título</Label>
+                      <Input
+                        id="title"
+                        required
+                        value={uploadForm.title}
+                        onChange={(e) => setUploadForm({ ...uploadForm, title: e.target.value })}
+                        placeholder="Nome do arquivo"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="desc">Descrição (opcional)</Label>
+                      <Textarea
+                        id="desc"
+                        rows={3}
+                        value={uploadForm.description}
+                        onChange={(e) => setUploadForm({ ...uploadForm, description: e.target.value })}
+                        placeholder="Breve descrição"
+                      />
+                    </div>
+                    <div className="flex justify-end gap-2 pt-2">
+                      <Button type="button" variant="outline" onClick={() => setIsUploadModalOpen(false)}>
+                        Cancelar
+                      </Button>
+                      <Button type="submit" disabled={uploading || (!editingItem && !uploadForm.file)}>
+                        {uploading && <LoadingSpinner size="sm" className="mr-2" />}
+                        {uploading ? 'Enviando...' : editingItem ? 'Salvar' : 'Upload'}
+                      </Button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </>
   )
 }

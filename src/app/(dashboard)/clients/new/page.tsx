@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { Select } from '@/components/ui/select'
+import { parseDateInput } from '@/lib/utils'
 import { ArrowLeft, Save, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -34,10 +35,17 @@ export default function NewClientPage() {
     setError('')
 
     try {
+      const contractStartToSave = formData.contractStart ? parseDateInput(formData.contractStart).toISOString() : null
+      const contractEndToSave = formData.contractEnd ? parseDateInput(formData.contractEnd).toISOString() : null
+
       const response = await fetch('/api/clients', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          contractStart: contractStartToSave,
+          contractEnd: contractEndToSave,
+        }),
       })
 
       if (!response.ok) {

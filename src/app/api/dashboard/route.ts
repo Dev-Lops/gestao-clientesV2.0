@@ -59,7 +59,7 @@ export async function GET() {
     const orgId = user.memberships[0].orgId
 
     // Tasks mais completas (para métricas), limit maior
-    const [clients, tasks] = await Promise.all([
+    const [clients, tasks, meetings, finances] = await Promise.all([
       prisma.client.findMany({
         where: { orgId },
         orderBy: { createdAt: 'desc' },
@@ -80,6 +80,25 @@ export async function GET() {
           dueDate: true,
           clientId: true,
           client: { select: { id: true, name: true } },
+        },
+      }),
+      prisma.meeting.findMany({
+        where: { client: { orgId } },
+        orderBy: { startTime: 'asc' },
+        select: {
+          id: true,
+          title: true,
+          startTime: true,
+          clientId: true,
+          client: { select: { id: true, name: true } },
+        },
+      }),
+      prisma.finance.findMany({
+        where: { client: { orgId } },
+        select: {
+          clientId: true,
+          type: true,
+          amount: true,
         },
       }),
     ])
@@ -178,6 +197,67 @@ export async function GET() {
 
     urgentTasks.sort((a, b) => b.urgencyScore - a.urgencyScore)
 
+    // Calcular métricas de saúde dos clientes
+    const clientsHealth = clients.map((client) => {
+      const clientTasks = tasks.filter((t) => t.clientId === client.id)
+      const total = clientTasks.length
+      const completed = clientTasks.filter((t) => isDone(t.status)).length
+      const pending = clientTasks.filter((t) => isPending(t.status)).length
+      const overdue = clientTasks.filter(
+        (t) =>
+          !isDone(t.status) && t.dueDate && t.dueDate.getTime() < Date.now()
+      ).length
+
+      const completionRate =
+        total > 0 ? Math.round((completed / total) * 100) : 0
+
+      // Calcular saldo financeiro
+      const clientFinances = finances.filter((f) => f.clientId === client.id)
+      const balance = clientFinances.reduce((acc, f) => {
+        return acc + (f.type === 'income' ? f.amount : -f.amount)
+      }, 0)
+
+      // Calcular dias ativos
+      const daysActive = Math.floor(
+        (Date.now() - client.createdAt.getTime()) / (1000 * 60 * 60 * 24)
+      )
+
+      return {
+        clientId: client.id,
+        clientName: client.name,
+        completionRate,
+        balance,
+        daysActive,
+        tasksTotal: total,
+        tasksCompleted: completed,
+        tasksPending: pending,
+        tasksOverdue: overdue,
+      }
+    })
+
+    // Preparar atividades para o calendário (reuniões + tarefas com prazo)
+    const activities = [
+      ...meetings.map((m) => ({
+        id: m.id,
+        title: m.title,
+        type: 'meeting' as const,
+        date: m.startTime,
+        clientId: m.clientId,
+        clientName: m.client.name,
+      })),
+      ...tasks
+        .filter((t) => t.dueDate)
+        .map((t) => ({
+          id: t.id,
+          title: t.title,
+          type: 'task' as const,
+          date: t.dueDate!,
+          clientId: t.clientId,
+          clientName: t.client.name,
+          status: t.status,
+        })),
+    ].sort((a, b) => a.date.getTime() - b.date.getTime())
+
     return NextResponse.json({
       clients,
       tasks,
@@ -191,6 +271,8 @@ export async function GET() {
         urgentTasks: urgentTasks.slice(0, 15),
         taskAggByClient,
       },
+      clientsHealth,
+      activities,
       user: { id: user.id, name: user.name, email: user.email },
     })
   } catch (error) {

@@ -88,33 +88,38 @@ model Member {
 }
 
 model Client {
-  id            String         @id @default(cuid())
-  name          String
-  email         String?
-  phone         String?
-  status        String         @default("new") // new | onboarding | active | paused | closed
-  plan          ClientPlan? // plano do cliente
-  mainChannel   SocialChannel? // canal principal
+  id               String         @id @default(cuid())
+  name             String
+  email            String?
+  phone            String?
+  status           String         @default("new") // new | onboarding | active | paused | closed
+  plan             ClientPlan? // plano do cliente
+  mainChannel      SocialChannel? // canal principal
   // Informações de contrato (sensíveis - apenas OWNER)
-  contractValue Float? // valor mensal do contrato
-  paymentDay    Int? // dia do mês para pagamento (1-31)
-  contractStart DateTime? // início do contrato
-  contractEnd   DateTime? // fim do contrato (null = indefinido)
-  paymentStatus PaymentStatus  @default(PENDING) // status do pagamento
-  orgId         String
-  org           Org            @relation(fields: [orgId], references: [id])
-  clientUserId  String? // Usuário (role CLIENT) associado exclusivamente a este cliente
-  clientUser    User?          @relation(fields: [clientUserId], references: [id])
-  tasks         Task[]
-  media         Media[]
-  mediaFolders  MediaFolder[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  invites       Invite[]
-  strategies    Strategy[]
-  brandings     Branding[]
-  finances      Finance[]
-  meetings      Meeting[]
+  contractValue    Float? // valor mensal do contrato
+  paymentDay       Int? // dia do mês para pagamento (1-31)
+  contractStart    DateTime? // início do contrato
+  contractEnd      DateTime? // fim do contrato (null = indefinido)
+  paymentStatus    PaymentStatus  @default(PENDING) // status do pagamento
+  // Pagamento parcelado
+  isInstallment    Boolean        @default(false) // se o pagamento é parcelado
+  installmentCount Int? // número total de parcelas
+  installmentValue Float? // valor de cada parcela
+  orgId            String
+  org              Org            @relation(fields: [orgId], references: [id])
+  clientUserId     String? // Usuário (role CLIENT) associado exclusivamente a este cliente
+  clientUser       User?          @relation(fields: [clientUserId], references: [id])
+  tasks            Task[]
+  media            Media[]
+  mediaFolders     MediaFolder[]
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  invites          Invite[]
+  strategies       Strategy[]
+  brandings        Branding[]
+  finances         Finance[]
+  meetings         Meeting[]
+  installments     Installment[]
 
   @@unique([clientUserId])
 }
@@ -243,4 +248,21 @@ model Meeting {
   client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+// Parcelas de pagamento do cliente
+model Installment {
+  id        String        @id @default(cuid())
+  number    Int // número da parcela (1, 2, 3...)
+  amount    Float // valor da parcela
+  dueDate   DateTime // data de vencimento
+  status    PaymentStatus @default(PENDING) // status do pagamento
+  paidAt    DateTime? // data que foi pago
+  notes     String? // observações sobre o pagamento
+  clientId  String
+  client    Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([clientId, dueDate])
 }

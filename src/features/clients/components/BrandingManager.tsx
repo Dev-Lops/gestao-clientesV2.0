@@ -180,147 +180,157 @@ export function BrandingManager({ clientId, initialBranding = [] }: BrandingMana
 
   return (
     <>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-semibold text-slate-900">Branding</h2>
-            <p className="text-sm text-slate-500 mt-1">Identidade visual e materiais de marca</p>
-          </div>
-          {canCreate && (
-            <Button className="gap-2" onClick={() => { resetForm(); setIsModalOpen(true) }}>
-              <Plus className="h-4 w-4" />
-              Adicionar Asset
-            </Button>
-          )}
+      <div className="relative min-h-screen bg-linear-to-br from-slate-50 via-blue-50/30 to-slate-100 dark:from-slate-950 dark:via-blue-950/20 dark:to-slate-900">
+        {/* Animated background blobs */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 -left-4 w-96 h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob" />
+          <div className="absolute top-0 -right-4 w-96 h-96 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-2000" />
+          <div className="absolute -bottom-8 left-20 w-96 h-96 bg-pink-400 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-4000" />
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {types.map(type => {
-            const list = items.filter(i => i.type === type)
-            return (
-              <Card key={type}>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    {iconFor(type)}
-                    {titleFor(type)}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {list.length === 0 ? (
-                    <div className="text-center py-8 text-slate-500">Nenhum item</div>
-                  ) : (
-                    <div className="space-y-3">
-                      {list.map(item => (
-                        <div key={item.id} className="p-3 border rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-sm text-slate-900 truncate">{item.title}</h4>
-                              {item.description && (
-                                <p className="text-xs text-slate-600 mt-1">{item.description}</p>
-                              )}
-                              {item.content && (
-                                <p className="text-xs text-slate-500 mt-1 line-clamp-2">{item.content}</p>
-                              )}
-                              {item.fileUrl && (
-                                <a
-                                  href={item.fileUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-xs text-blue-600 hover:underline mt-2 inline-flex items-center gap-1"
-                                  aria-label={`Baixar ${item.title}`}
-                                >
-                                  <Download className="h-3 w-3" /> Baixar
-                                </a>
-                              )}
-                            </div>
-                            <div className="flex gap-1">
-                              {canUpdate && (
-                                <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => handleEdit(item)}>
-                                  <Edit className="h-3 w-3" />
-                                </Button>
-                              )}
-                              {canDelete && (
-                                <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-red-600 hover:text-red-700" onClick={() => handleDelete(item.id)}>
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
-                              )}
+        <div className="relative space-y-6 p-6">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Branding</h2>
+              <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Identidade visual e materiais de marca</p>
+            </div>
+            {canCreate && (
+              <Button className="gap-2 bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200" onClick={() => { resetForm(); setIsModalOpen(true) }}>
+                <Plus className="h-4 w-4" />
+                Adicionar Asset
+              </Button>
+            )}
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {types.map(type => {
+              const list = items.filter(i => i.type === type)
+              return (
+                <Card key={type}>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      {iconFor(type)}
+                      {titleFor(type)}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {list.length === 0 ? (
+                      <div className="text-center py-8 text-slate-500">Nenhum item</div>
+                    ) : (
+                      <div className="space-y-3">
+                        {list.map(item => (
+                          <div key={item.id} className="p-3 border rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-medium text-sm text-slate-900 truncate">{item.title}</h4>
+                                {item.description && (
+                                  <p className="text-xs text-slate-600 mt-1">{item.description}</p>
+                                )}
+                                {item.content && (
+                                  <p className="text-xs text-slate-500 mt-1 line-clamp-2">{item.content}</p>
+                                )}
+                                {item.fileUrl && (
+                                  <a
+                                    href={item.fileUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-xs text-blue-600 hover:underline mt-2 inline-flex items-center gap-1"
+                                    aria-label={`Baixar ${item.title}`}
+                                  >
+                                    <Download className="h-3 w-3" /> Baixar
+                                  </a>
+                                )}
+                              </div>
+                              <div className="flex gap-1">
+                                {canUpdate && (
+                                  <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => handleEdit(item)}>
+                                    <Edit className="h-3 w-3" />
+                                  </Button>
+                                )}
+                                {canDelete && (
+                                  <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-red-600 hover:text-red-700" onClick={() => handleDelete(item.id)}>
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* Loading and error states */}
-      {isLoading && (
-        <div className="text-sm text-slate-500">Carregando branding…</div>
-      )}
-      {error && (
-        <div className="text-sm text-red-600">Falha ao carregar branding</div>
-      )}
-
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setIsModalOpen(false)}>
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-auto m-4" onClick={(e) => e.stopPropagation()}>
-            <div className="p-6 space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-semibold">{editing ? 'Editar Item' : 'Novo Item de Branding'}</h2>
-                  <p className="text-sm text-slate-500 mt-1">Adicione logotipos, cores, tipografia, manuais e outros assets.</p>
-                </div>
-                <Button variant="ghost" size="sm" onClick={() => setIsModalOpen(false)}>
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="type">Tipo</Label>
-                  <Select id="type" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as BrandingType })}>
-                    <option value="logo">Logotipo</option>
-                    <option value="color-palette">Paleta de Cores</option>
-                    <option value="typography">Tipografia</option>
-                    <option value="manual">Manual</option>
-                    <option value="template">Template</option>
-                    <option value="asset">Asset</option>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="title">Título</Label>
-                  <Input id="title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required placeholder="Ex: Logo Principal" />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="description">Descrição (opcional)</Label>
-                  <Input id="description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Breve descrição" />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="fileUrl">URL do Arquivo (opcional)</Label>
-                  <Input id="fileUrl" type="url" value={form.fileUrl} onChange={(e) => setForm({ ...form, fileUrl: e.target.value })} placeholder="https://..." />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="content">Detalhes/Notas (opcional)</Label>
-                  <Textarea id="content" rows={4} value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} placeholder="Cores: #FF0000, #00FF00..." />
-                </div>
-
-                <div className="flex justify-end gap-2 pt-4">
-                  <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
-                  <Button type="submit" disabled={editing ? !canUpdate : !canCreate}>{editing ? 'Atualizar' : 'Criar'}</Button>
-                </div>
-              </form>
-            </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )
+            })}
           </div>
+
+          {/* Loading and error states */}
+          {isLoading && (
+            <div className="text-sm text-slate-500">Carregando branding…</div>
+          )}
+          {error && (
+            <div className="text-sm text-red-600">Falha ao carregar branding</div>
+          )}
+
+          {isModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setIsModalOpen(false)}>
+              <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-auto m-4" onClick={(e) => e.stopPropagation()}>
+                <div className="p-6 space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-2xl font-semibold">{editing ? 'Editar Item' : 'Novo Item de Branding'}</h2>
+                      <p className="text-sm text-slate-500 mt-1">Adicione logotipos, cores, tipografia, manuais e outros assets.</p>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => setIsModalOpen(false)}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="type">Tipo</Label>
+                      <Select id="type" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as BrandingType })}>
+                        <option value="logo">Logotipo</option>
+                        <option value="color-palette">Paleta de Cores</option>
+                        <option value="typography">Tipografia</option>
+                        <option value="manual">Manual</option>
+                        <option value="template">Template</option>
+                        <option value="asset">Asset</option>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="title">Título</Label>
+                      <Input id="title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required placeholder="Ex: Logo Principal" />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="description">Descrição (opcional)</Label>
+                      <Input id="description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Breve descrição" />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="fileUrl">URL do Arquivo (opcional)</Label>
+                      <Input id="fileUrl" type="url" value={form.fileUrl} onChange={(e) => setForm({ ...form, fileUrl: e.target.value })} placeholder="https://..." />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="content">Detalhes/Notas (opcional)</Label>
+                      <Textarea id="content" rows={4} value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} placeholder="Cores: #FF0000, #00FF00..." />
+                    </div>
+
+                    <div className="flex justify-end gap-2 pt-4">
+                      <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
+                      <Button type="submit" disabled={editing ? !canUpdate : !canCreate} className="bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0">{editing ? 'Atualizar' : 'Criar'}</Button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </div >
     </>
   )
 }
