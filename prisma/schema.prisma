@@ -65,6 +65,16 @@ model Org {
   id            String         @id @default(cuid())
   name          String
   description   String?
+  // Dados de perfil da organização
+  cnpj          String?
+  phone         String?
+  website       String?
+  addressLine1  String?
+  addressLine2  String?
+  city          String?
+  state         String?
+  postalCode    String?
+  country       String?
   ownerId       String
   owner         User           @relation("OrgOwner", fields: [ownerId], references: [id])
   members       Member[]

@@ -2,17 +2,12 @@
 
 import { cn } from '@/lib/utils'
 import {
-  BarChart3,
-  Calendar,
   ChevronDown,
   ChevronRight,
   DollarSign,
-  FileText,
-  FolderKanban,
-  Home,
   LayoutDashboard,
   Settings,
-  Users,
+  Users
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -108,18 +103,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   const menuItems: MenuItem[] = [
     {
-      label: 'Dashboard',
-      icon: <Home className="w-5 h-5" />,
-      href: '/',
-    },
-    {
-      label: 'Tarefas',
-      icon: <FolderKanban className="w-5 h-5" />,
-      href: '/tasks',
-      badge: stats?.counters.tasks.pending ?? undefined,
-      badgeColor: stats?.counters.tasks.pending ? 'red' : 'blue',
-    },
-    {
       label: 'Clientes',
       icon: <Users className="w-5 h-5" />,
       href: '/clients',
@@ -132,13 +115,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       ],
     },
     {
-      label: 'Agenda',
-      icon: <Calendar className="w-5 h-5" />,
-      href: '/calendar',
-      badge: stats?.counters.meetings.upcoming ?? undefined,
-      badgeColor: stats?.counters.meetings.upcoming ? 'green' : undefined,
-    },
-    {
       label: 'Financeiro',
       icon: <DollarSign className="w-5 h-5" />,
       href: '/finance',
@@ -148,21 +124,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         { label: 'Visão Geral', href: '/finance' },
         { label: 'Receitas', href: '/finance?type=income' },
         { label: 'Despesas', href: '/finance?type=expense' },
-      ],
-    },
-    {
-      label: 'Mídia',
-      icon: <FileText className="w-5 h-5" />,
-      href: '/media',
-    },
-    {
-      label: 'Relatórios',
-      icon: <BarChart3 className="w-5 h-5" />,
-      href: '/reports',
-      submenu: [
-        { label: 'Dashboard Geral', href: '/reports' },
-        { label: 'Por Cliente', href: '/reports/clients' },
-        { label: 'Financeiro', href: '/reports/finance' },
       ],
     },
     {
