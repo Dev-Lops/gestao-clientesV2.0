@@ -76,9 +76,10 @@ export async function uploadFile(
       let url: string
       if (process.env.AWS_ENDPOINT_URL) {
         // Cloudflare R2 ou similar (endpoint customizado)
-        url = await getFileUrl(fileKey, 31536000) // 1 ano (R2 permite URLs longas)
+        // R2 permite URLs longas, mas limitamos a 7 dias (604800s) por segurança
+        url = await getFileUrl(fileKey, 604800) // 7 dias (máximo S3-compatible)
       } else {
-        // AWS S3 padrão
+        // AWS S3 padrão - URL pública ou presigned de 7 dias
         url = `https://${S3_BUCKET}.s3.${
           process.env.AWS_REGION || 'us-east-1'
         }.amazonaws.com/${fileKey}`

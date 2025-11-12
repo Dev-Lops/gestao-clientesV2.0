@@ -14,10 +14,10 @@ const MAX_FILE_SIZE = 100 * 1024 * 1024 // 100MB
 // POST /api/clients/[id]/media/upload
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const clientId = params.id
+    const { id: clientId } = await params
     const { user, orgId, role } = await getSessionProfile()
     if (!user || !orgId || !role) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

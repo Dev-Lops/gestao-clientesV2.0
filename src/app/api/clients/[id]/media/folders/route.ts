@@ -6,10 +6,10 @@ import { NextResponse } from 'next/server'
 // GET /api/clients/[id]/media/folders - Lista pastas
 export async function GET(
   _req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const clientId = params.id
+    const { id: clientId } = await params
     const { user, orgId, role } = await getSessionProfile()
     if (!user || !orgId || !role) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -48,10 +48,10 @@ export async function GET(
 // POST /api/clients/[id]/media/folders - Cria pasta
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const clientId = params.id
+    const { id: clientId } = await params
     const { user, orgId, role } = await getSessionProfile()
     if (!user || !orgId || !role) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -109,10 +109,10 @@ export async function POST(
 // PATCH /api/clients/[id]/media/folders?folderId=xxx - Atualiza pasta
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const clientId = params.id
+    const { id: clientId } = await params
     const { user, orgId, role } = await getSessionProfile()
     if (!user || !orgId || !role) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -187,10 +187,10 @@ export async function PATCH(
 // DELETE /api/clients/[id]/media/folders?folderId=xxx - Deleta pasta (e mídias dentro por cascade)
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const clientId = params.id
+    const { id: clientId } = await params
     const { user, orgId, role } = await getSessionProfile()
     if (!user || !orgId || !role) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
