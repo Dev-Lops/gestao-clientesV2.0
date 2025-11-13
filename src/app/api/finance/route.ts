@@ -132,12 +132,18 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'Proibido' }, { status: 403 })
     }
 
-    // Verify finance belongs to org
+    // Verify finance belongs to org (support legacy by also checking client.orgId)
     const existingFinance = await prisma.finance.findUnique({
       where: { id: financeId },
+      include: { client: { select: { orgId: true } } },
     })
 
-    if (!existingFinance || existingFinance.orgId !== orgId) {
+    const belongsToOrg =
+      !!existingFinance &&
+      (existingFinance.orgId === orgId ||
+        existingFinance.client?.orgId === orgId)
+
+    if (!belongsToOrg) {
       return NextResponse.json(
         { error: 'Transação não encontrada' },
         { status: 404 }
@@ -217,12 +223,18 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Proibido' }, { status: 403 })
     }
 
-    // Verify finance belongs to org
+    // Verify finance belongs to org (support legacy by also checking client.orgId)
     const existingFinance = await prisma.finance.findUnique({
       where: { id: financeId },
+      include: { client: { select: { orgId: true } } },
     })
 
-    if (!existingFinance || existingFinance.orgId !== orgId) {
+    const belongsToOrg =
+      !!existingFinance &&
+      (existingFinance.orgId === orgId ||
+        existingFinance.client?.orgId === orgId)
+
+    if (!belongsToOrg) {
       return NextResponse.json(
         { error: 'Transação não encontrada' },
         { status: 404 }
