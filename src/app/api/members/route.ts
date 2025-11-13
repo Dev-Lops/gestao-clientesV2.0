@@ -39,7 +39,7 @@ export async function GET() {
       id: member.id,
       user_id: member.userId,
       role: member.role,
-      status: (member as any).isActive === false ? 'inactive' : 'active',
+      status: member.isActive === false ? 'inactive' : 'active',
       full_name: member.user.name,
       email: member.user.email,
       created_at: member.createdAt.toISOString(),

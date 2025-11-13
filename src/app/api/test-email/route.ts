@@ -16,8 +16,7 @@ export async function POST(req: NextRequest) {
       )
 
     const result = await sendTestEmail(to, body.subject, body.html)
-    const skipped = (result as any)?.skipped === true
-    return NextResponse.json({ ok: true, skipped })
+    return NextResponse.json({ ok: true, skipped: result.skipped })
   } catch (e) {
     console.error('Erro ao enviar e-mail de teste:', e)
     return NextResponse.json(

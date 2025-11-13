@@ -5,7 +5,7 @@ import AppShell from '@/components/layout/AppShell'
 import { Card } from '@/components/ui/card'
 import { ClientsWithBottlenecks, type ClientHealthMetrics } from '@/features/clients/components'
 import { ActivitiesCalendar } from '@/features/dashboard/components/ActivitiesCalendar'
-import { can } from '@/lib/permissions'
+import { can, type AppRole } from '@/lib/permissions'
 
 import { motion } from 'framer-motion'
 import Link from 'next/link'
@@ -202,7 +202,7 @@ function RealtimeDashboard() {
       {/* Layout em 2 colunas para desktop */}
       <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
         {/* Coluna 1 - Clientes com Gargalos */}
-        {(role ? can(role as any, 'update', 'finance') : false) && data.clientsHealth && data.clientsHealth.length > 0 && (
+        {(role ? can(role as unknown as AppRole, 'update', 'finance') : false) && data.clientsHealth && data.clientsHealth.length > 0 && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">Clientes</h2>

@@ -62,11 +62,16 @@ export async function GET(request: NextRequest) {
       },
     })
 
+    type ProcessDetail = {
+      client: string
+      amount: number
+      type: 'installment' | 'monthly'
+    }
     const results = {
       processed: 0,
       created: 0,
       errors: 0,
-      details: [] as any[],
+      details: [] as ProcessDetail[],
     }
 
     for (const org of orgs) {

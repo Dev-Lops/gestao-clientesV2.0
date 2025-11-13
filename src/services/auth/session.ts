@@ -23,8 +23,7 @@ export async function getSessionProfile(): Promise<SessionProfile> {
     if (!user) return { user: null, orgId: null, role: null }
     // Prefer an active membership
     const membership =
-      user.memberships.find((m) => (m as any).isActive !== false) ||
-      user.memberships[0]
+      user.memberships.find((m) => m.isActive !== false) || user.memberships[0]
     return {
       user: { id: user.id, email: user.email, name: user.name },
       orgId: membership?.orgId || null,

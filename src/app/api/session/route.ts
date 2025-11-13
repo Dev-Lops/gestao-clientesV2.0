@@ -76,14 +76,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true })
   } catch (err) {
     console.error('Erro ao criar sessão:', err)
-    let details: any = undefined
+    let details:
+      | { uid?: string; aud?: string; iss?: string; iat?: number; exp?: number }
+      | undefined = undefined
     try {
       // Tenta decodificar o payload sem verificar para ajudar no debug
       // Isso facilita identificar mismatch de projeto (aud/iss) durante o dev
-      const body = await req
+      const body = (await req
         .clone()
         .json()
-        .catch(() => ({}) as any)
+        .catch(() => ({}))) as {
+        idToken?: string
+      }
       const rawToken: string | undefined = body?.idToken
       if (rawToken) {
         const parts = rawToken.split('.')

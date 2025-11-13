@@ -1,5 +1,5 @@
 import { FinanceManagerV2 } from '@/features/clients/components'
-import { can } from '@/lib/permissions'
+import { can, type AppRole } from '@/lib/permissions'
 import { prisma } from '@/lib/prisma'
 import { getSessionProfile } from '@/services/auth/session'
 import { redirect } from 'next/navigation'
@@ -19,7 +19,7 @@ export default async function ClientFinancePage({
   }
 
   // Only OWNER should access client finance UI
-  const authorized = can(role as any, 'read', 'finance') && can(role as any, 'update', 'finance')
+  const authorized = can(role as unknown as AppRole, 'read', 'finance') && can(role as unknown as AppRole, 'update', 'finance')
   if (!authorized) {
     redirect(`/clients/${id}/info`)
   }

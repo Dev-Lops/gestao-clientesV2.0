@@ -84,11 +84,6 @@ export async function sendInviteEmail(params: InviteEmailParams) {
     html,
     text,
   })
-  try {
-    // Log do ID da mensagem para facilitar suporte/checagem na Resend
-    const id = (result as any)?.id
-    if (id) console.log(`[Resend] Invite email enfileirado. id=${id} to=${to}`)
-  } catch {}
   return result
 }
 
@@ -98,7 +93,7 @@ export async function sendTestEmail(
   to: string,
   subject = 'Teste de envio - Gestão de Clientes',
   html?: string
-) {
+): Promise<{ skipped: boolean; result?: unknown }> {
   if (!client) {
     console.warn('[Resend] RESEND_API_KEY not set; skipping test email')
     return { skipped: true }
@@ -113,10 +108,11 @@ export async function sendTestEmail(
       </div>
     </body></html>`
 
-  return client.emails.send({
+  const result = await client.emails.send({
     from: fromEmail,
     to,
     subject,
     html: safeHtml,
   })
+  return { skipped: false, result }
 }

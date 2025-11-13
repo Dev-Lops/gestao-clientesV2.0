@@ -1,4 +1,4 @@
-import { can } from '@/lib/permissions'
+import { can, type AppRole } from '@/lib/permissions'
 import { prisma } from '@/lib/prisma'
 import { getSessionProfile } from '@/services/auth/session'
 import { NextRequest, NextResponse } from 'next/server'
@@ -12,7 +12,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
     }
 
-    if (!can(role as any, 'read', 'finance')) {
+    if (!can(role as unknown as AppRole, 'read', 'finance')) {
       return NextResponse.json({ error: 'Proibido' }, { status: 403 })
     }
 
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
     }
 
-    if (!can(role as any, 'create', 'finance')) {
+    if (!can(role as unknown as AppRole, 'create', 'finance')) {
       return NextResponse.json({ error: 'Proibido' }, { status: 403 })
     }
 
@@ -129,7 +129,7 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
     }
 
-    if (!can(role as any, 'update', 'finance')) {
+    if (!can(role as unknown as AppRole, 'update', 'finance')) {
       return NextResponse.json({ error: 'Proibido' }, { status: 403 })
     }
 
@@ -217,7 +217,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
     }
 
-    if (!can(role as any, 'delete', 'finance')) {
+    if (!can(role as unknown as AppRole, 'delete', 'finance')) {
       return NextResponse.json({ error: 'Proibido' }, { status: 403 })
     }
 

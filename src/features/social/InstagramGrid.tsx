@@ -38,7 +38,6 @@ export function InstagramGrid({ clientId, limit = 12 }: InstagramGridProps) {
       }
     }
     void load()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clientId, limit])
 
   if (!clientId) {
@@ -48,8 +47,8 @@ export function InstagramGrid({ clientId, limit = 12 }: InstagramGridProps) {
           <CardTitle>Instagram</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            Use o botão "Conectar Instagram" na página do cliente para conectar a conta.
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+            Use o botão &quot;Conectar Instagram&quot; na página do cliente para conectar a conta.
           </p>
         </CardContent>
       </Card>
@@ -69,7 +68,7 @@ export function InstagramGrid({ clientId, limit = 12 }: InstagramGridProps) {
             </p>
             <p className="text-xs text-blue-600 dark:text-blue-300">
               {error.includes('não conectado') || error.includes('Token')
-                ? 'Use o botão "Conectar Instagram" no formulário de edição do cliente para autorizar o acesso.'
+                ? 'Use o botão &quot;Conectar Instagram&quot; no formulário de edição do cliente para autorizar o acesso.'
                 : error
               }
             </p>
