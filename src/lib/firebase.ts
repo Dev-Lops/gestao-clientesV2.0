@@ -62,4 +62,7 @@ if (isClient) {
   }
 }
 
-export { auth, db, firebaseApp, provider }
+// Alias de compatibilidade: alguns módulos podem importar `app`
+const app = firebaseApp
+
+export { app, auth, db, firebaseApp, provider }

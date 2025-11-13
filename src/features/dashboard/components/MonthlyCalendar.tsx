@@ -48,10 +48,21 @@ export function MonthlyCalendar({ activities, onMonthChange, initialMonth }: { a
   // Nota: Mudanças externas de mês devem ser feitas via remount (key) ou callbacks
 
   const normalized = useMemo(() => {
-    return activities.map((a) => ({
-      ...a,
-      dateObj: new Date(a.date),
-    }))
+    return activities.map((a) => {
+      let dateObj: Date
+      if (typeof a.date === 'string') {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(a.date)) {
+          const [y, m, d] = a.date.split('-').map((n) => Number(n))
+          dateObj = new Date(y, (m || 1) - 1, d || 1)
+        } else {
+          // ISO com hora -> parse normal (preserva local se sem Z)
+          dateObj = new Date(a.date)
+        }
+      } else {
+        dateObj = new Date(a.date)
+      }
+      return { ...a, dateObj }
+    })
   }, [activities])
 
   const monthLabel = cursor.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
