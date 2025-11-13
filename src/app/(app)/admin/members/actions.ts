@@ -4,7 +4,6 @@ import { prisma } from '@/lib/prisma'
 import { generateInviteToken } from '@/lib/tokens'
 import { getSessionProfile } from '@/services/auth/session'
 import { sendInviteEmail } from '@/services/email/resend'
-import { Role, InviteStatus } from '@prisma/client'
 import { revalidatePath } from 'next/cache'
 
 export async function updateMemberRoleAction(formData: FormData) {
@@ -17,7 +16,7 @@ export async function updateMemberRoleAction(formData: FormData) {
   }
 
   const memberId = formData.get('member_id') as string
-  const newRole = formData.get('role') as Role
+  const newRole = formData.get('role') as 'OWNER' | 'STAFF' | 'CLIENT'
 
   if (!memberId || !newRole) {
     throw new Error('Dados inválidos')
@@ -102,7 +101,7 @@ export async function inviteStaffAction(formData: FormData) {
   const fullNameRaw = formData.get('full_name') as string | null
   // deliberately unused: retained for future customization; prefix to ignore
   void fullNameRaw
-  const inviteRole = formData.get('role') as Role
+  const inviteRole = formData.get('role') as 'STAFF' | 'CLIENT' | 'OWNER'
   const clientId = formData.get('client_id') as string | null
   const allowResendExisting =
     (formData.get('allow_resend_existing') as string | null)?.toLowerCase() ===
@@ -120,7 +119,7 @@ export async function inviteStaffAction(formData: FormData) {
   if (user.email && email === user.email.toLowerCase()) {
     throw new Error('Você não pode enviar convite para o próprio e-mail')
   }
-  if (!['STAFF', 'CLIENT'].includes(inviteRole)) {
+  if (!(inviteRole === 'STAFF' || inviteRole === 'CLIENT')) {
     throw new Error('Papel inválido para convite')
   }
 
@@ -160,7 +159,7 @@ export async function inviteStaffAction(formData: FormData) {
 
   // Convite pendente existente?
   const pendingInvite = await prisma.invite.findFirst({
-    where: { orgId, email, status: InviteStatus.PENDING },
+    where: { orgId, email, status: 'PENDING' },
   })
   if (pendingInvite) {
     if (allowResendExisting) {
@@ -255,12 +254,12 @@ export async function cancelInviteAction(formData: FormData) {
   if (!invite || invite.orgId !== orgId) {
     throw new Error('Convite não encontrado')
   }
-  if (invite.status !== InviteStatus.PENDING) {
+  if (invite.status !== 'PENDING') {
     throw new Error('Somente convites pendentes podem ser cancelados')
   }
   await prisma.invite.update({
     where: { id: inviteId },
-    data: { status: InviteStatus.CANCELED },
+    data: { status: 'CANCELED' },
   })
   revalidatePath('/admin/members')
 }
@@ -277,7 +276,7 @@ export async function deleteInviteAction(formData: FormData) {
   if (!invite || invite.orgId !== orgId) {
     throw new Error('Convite não encontrado')
   }
-  if (invite.status === InviteStatus.ACCEPTED) {
+  if (invite.status === 'ACCEPTED') {
     throw new Error('Não é possível excluir convites já aceitos')
   }
   await prisma.invite.delete({ where: { id: inviteId } })
@@ -296,7 +295,7 @@ export async function resendInviteAction(formData: FormData) {
   if (!invite || invite.orgId !== orgId) {
     throw new Error('Convite não encontrado')
   }
-  if (invite.status !== InviteStatus.PENDING) {
+  if (invite.status !== 'PENDING') {
     throw new Error('Apenas convites pendentes podem ser reenviados')
   }
 
