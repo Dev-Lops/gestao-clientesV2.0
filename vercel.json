@@ -1,4 +1,5 @@
 {
+  "ignoreCommand": "if [ \"$VERCEL_ENV\" = \"production\" ] && [ \"$VERCEL_GIT_COMMIT_REF\" != \"master\" ]; then echo 'Ignoring non-master production deploy'; exit 0; else exit 1; fi",
   "crons": [
     {
       "path": "/api/cron/process-monthly-payments",
