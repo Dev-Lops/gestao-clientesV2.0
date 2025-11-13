@@ -162,12 +162,26 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       if (!auth) return // Type guard for TypeScript
 
       console.log('[UserContext] Verificando redirect result...')
+      console.log('[UserContext] URL atual:', window.location.href)
+
+      const wasPendingRedirect = localStorage.getItem('pendingAuthRedirect') === 'true'
+      console.log('[UserContext] Tinha redirect pendente?', wasPendingRedirect)
+
       try {
+        // Aguardar um pouco para garantir que o Firebase processou o redirect
+        await new Promise(resolve => setTimeout(resolve, 500))
+
         const result = await getRedirectResult(auth)
+        console.log('[UserContext] getRedirectResult retornou:', result ? 'resultado encontrado' : 'null')
+
         if (result) {
           console.log('[UserContext] ✅ Redirect result detectado!')
           console.log('[UserContext] User UID:', result.user.uid)
           console.log('[UserContext] User email:', result.user.email)
+          console.log('[UserContext] User displayName:', result.user.displayName)
+
+          // Limpar flag de redirect pendente
+          localStorage.removeItem('pendingAuthRedirect')
 
           // Retrieve invite token from sessionStorage if it was stored
           const inviteToken = sessionStorage.getItem('pendingInviteToken')
@@ -182,10 +196,20 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           await handleAuthResult(result.user, inviteToken)
         } else {
           console.log('[UserContext] Nenhum redirect result pendente')
+          // Limpar flag se não havia resultado
+          if (wasPendingRedirect) {
+            console.log('[UserContext] Limpando flag de redirect pendente sem resultado')
+            localStorage.removeItem('pendingAuthRedirect')
+          }
         }
       } catch (error) {
         console.error('[UserContext] ❌ Erro ao processar redirect result:', error)
-        console.error('[UserContext] Detalhes:', JSON.stringify(error, null, 2))
+        const err = error as { code?: string; message?: string }
+        console.error('[UserContext] Código do erro:', err.code)
+        console.error('[UserContext] Mensagem:', err.message)
+        console.error('[UserContext] Detalhes completos:', error)
+        // Limpar flag em caso de erro
+        localStorage.removeItem('pendingAuthRedirect')
       }
     }
 
@@ -193,6 +217,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       console.log('[UserContext] onAuthStateChanged disparado:', firebaseUser?.uid || 'null')
+      console.log('[UserContext] Email:', firebaseUser?.email || 'null')
       setUser(firebaseUser)
       setLoading(false)
     })
@@ -225,6 +250,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       // Mobile: sempre usar redirect (popups não funcionam bem)
       if (useMobile) {
         console.log('[UserContext] Iniciando signInWithRedirect...')
+        // Marcar que estamos aguardando um redirect
+        localStorage.setItem('pendingAuthRedirect', 'true')
         await signInWithRedirect(auth, provider)
         console.log('[UserContext] signInWithRedirect chamado - aguardando redirecionamento')
         // redirect flow continues in checkRedirectResult
@@ -242,6 +269,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         const popupIssues = ['auth/popup-blocked', 'auth/cancelled-popup-request', 'auth/popup-closed-by-user']
         if (popupIssues.includes(code)) {
           console.warn('[UserContext] Popup falhou (código:', code, '), tentando redirect...')
+          localStorage.setItem('pendingAuthRedirect', 'true')
           await signInWithRedirect(auth, provider)
         } else {
           throw e
