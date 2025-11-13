@@ -7,7 +7,9 @@ declare module 'resend' {
     text?: string
   }
 
-  export type SendEmailResponse = { id?: string } | { data?: { id?: string } | null; error?: unknown }
+  export type SendEmailResponse =
+    | { id?: string }
+    | { data?: { id?: string } | null; error?: unknown }
 
   export class Resend {
     constructor(apiKey: string)
