@@ -47,7 +47,7 @@ export function InstagramGrid({ clientId, limit = 12 }: InstagramGridProps) {
           <CardTitle>Instagram</CardTitle>
         </CardHeader>
         <CardContent>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
+          <p className="text-sm text-slate-600 dark:text-slate-400">
             Use o botão &quot;Conectar Instagram&quot; na página do cliente para conectar a conta.
           </p>
         </CardContent>
