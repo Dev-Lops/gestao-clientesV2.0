@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { parseDateInput, toLocalISOString } from '@/lib/utils'
+import { formatDateInput, parseDateInput, toLocalISOString } from '@/lib/utils'
 import {
   ArrowDownCircle,
   ArrowUpCircle,
@@ -65,7 +65,7 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
     amount: '',
     description: '',
     category: '',
-    date: new Date().toISOString().split('T')[0],
+    date: formatDateInput(new Date()),
     clientId: '',
   })
 
@@ -139,7 +139,7 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
       amount: '',
       description: '',
       category: '',
-      date: new Date().toISOString().split('T')[0],
+      date: formatDateInput(new Date()),
       clientId: '',
     })
     setEditingItem(null)
@@ -305,7 +305,11 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
     }
 
     if (clientFilter !== 'all') {
-      result = result.filter((f) => f.clientId === clientFilter)
+      if (clientFilter === '') {
+        result = result.filter((f) => !f.clientId)
+      } else {
+        result = result.filter((f) => f.clientId === clientFilter)
+      }
     }
 
     if (dateFilter) {

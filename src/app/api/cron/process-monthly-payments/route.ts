@@ -124,6 +124,7 @@ export async function GET(request: NextRequest) {
           if (!existingEntry) {
             await prisma.finance.create({
               data: {
+                orgId: org.id,
                 clientId: client.id,
                 type: 'income',
                 amount: amountToPay,

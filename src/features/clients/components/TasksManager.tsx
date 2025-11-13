@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { parseDateInput, toLocalISOString } from '@/lib/utils'
+import { formatDateInput, parseDateInput, toLocalISOString } from '@/lib/utils'
 import { CalendarDays, CheckCircle2, Clock, Edit, Flag, ListTodo, Plus, Trash2, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
@@ -64,7 +64,7 @@ export function TasksManager({ clientId, initialTasks = [] }: TasksManagerProps)
           status: (t.status as TaskStatus) ?? 'todo',
           priority: ((t.priority as TaskPriority) ?? 'medium'),
           assignee: (t.assignee as string | undefined) ?? undefined,
-          dueDate: t.dueDate ? new Date(String(t.dueDate)).toISOString().slice(0, 10) : undefined,
+          dueDate: t.dueDate ? formatDateInput(String(t.dueDate)) : undefined,
           createdAt: new Date(String(t.createdAt)),
         }))
         setTasks(parsed)
@@ -123,7 +123,7 @@ export function TasksManager({ clientId, initialTasks = [] }: TasksManagerProps)
           status: updated.status,
           priority: updated.priority,
           assignee: updated.assignee ?? undefined,
-          dueDate: updated.dueDate ? new Date(updated.dueDate).toISOString().slice(0, 10) : undefined,
+          dueDate: updated.dueDate ? formatDateInput(updated.dueDate) : undefined,
         } : t)))
       } catch {
         // noop; could show toast
@@ -144,7 +144,7 @@ export function TasksManager({ clientId, initialTasks = [] }: TasksManagerProps)
           status: created.status,
           priority: created.priority,
           assignee: created.assignee ?? undefined,
-          dueDate: created.dueDate ? new Date(created.dueDate).toISOString().slice(0, 10) : undefined,
+          dueDate: created.dueDate ? formatDateInput(created.dueDate) : undefined,
           createdAt: new Date(created.createdAt),
         }, ...prev])
       } catch {

@@ -73,6 +73,7 @@ export async function POST(
     const [finance, updatedClient] = await prisma.$transaction([
       prisma.finance.create({
         data: {
+          orgId,
           type: 'income',
           amount: client.contractValue,
           description: `Pagamento mensal - ${client.name}`,

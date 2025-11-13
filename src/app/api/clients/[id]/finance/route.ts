@@ -91,6 +91,7 @@ export async function POST(
 
     const finance = await prisma.finance.create({
       data: {
+        orgId,
         clientId: client.id,
         type,
         amount: parseFloat(String(amount)),
@@ -148,13 +149,13 @@ export async function PATCH(
     // Verify finance belongs to this client and org
     const existing = await prisma.finance.findUnique({
       where: { id: financeId },
-      select: { id: true, clientId: true, client: { select: { orgId: true } } },
+      select: { id: true, clientId: true, orgId: true },
     })
 
     if (
       !existing ||
       existing.clientId !== client.id ||
-      existing.client.orgId !== orgId
+      existing.orgId !== orgId
     ) {
       return NextResponse.json(
         { error: 'Transação não encontrada' },
@@ -224,13 +225,13 @@ export async function DELETE(
     // Verify finance belongs to this client and org
     const existing = await prisma.finance.findUnique({
       where: { id: financeId },
-      select: { id: true, clientId: true, client: { select: { orgId: true } } },
+      select: { id: true, clientId: true, orgId: true },
     })
 
     if (
       !existing ||
       existing.clientId !== client.id ||
-      existing.client.orgId !== orgId
+      existing.orgId !== orgId
     ) {
       return NextResponse.json(
         { error: 'Transação não encontrada' },

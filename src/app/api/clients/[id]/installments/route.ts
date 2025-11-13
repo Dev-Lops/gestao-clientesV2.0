@@ -232,6 +232,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       if (!existingFinance) {
         await prisma.finance.create({
           data: {
+            orgId: profile.orgId!,
             clientId: id,
             type: 'income',
             amount: installment.amount,

@@ -140,6 +140,7 @@ export async function POST() {
         if (!existingEntry) {
           await prisma.finance.create({
             data: {
+              orgId: profile.orgId,
               clientId: client.id,
               type: 'income',
               amount: amountToPay,

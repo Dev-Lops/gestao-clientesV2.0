@@ -95,6 +95,7 @@ export async function PATCH(req: NextRequest) {
 
       await tx.finance.create({
         data: {
+          orgId,
           clientId: inst.clientId,
           type: 'income',
           amount: inst.amount,

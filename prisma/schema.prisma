@@ -86,6 +86,7 @@ model Org {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   notifications Notification[]
+  finances      Finance[]
 }
 
 model Member {
@@ -249,11 +250,14 @@ model Finance {
   description String?
   category    String? // Categoria da transação
   date        DateTime @default(now())
-  clientId    String
-  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  orgId       String
+  org         Org      @relation(fields: [orgId], references: [id])
+  clientId    String?
+  client      Client?  @relation(fields: [clientId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  @@index([orgId, date])
   @@index([clientId, date])
 }
 

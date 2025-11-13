@@ -15,9 +15,12 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useState 
 // Utility function to detect mobile devices
 const isMobileDevice = () => {
   if (typeof window === 'undefined') return false
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+  // Melhor detecção de mobile: verifica user agent E touch capability
+  const hasTouchScreen = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+  const mobileUserAgent = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
     navigator.userAgent
-  ) || window.innerWidth < 768
+  )
+  return (mobileUserAgent || hasTouchScreen) && window.innerWidth < 1024
 }
 
 interface UserContextType {
@@ -158,20 +161,55 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     const checkRedirectResult = async () => {
       if (!auth) return // Type guard for TypeScript
 
+      console.log('[UserContext] Verificando redirect result...')
+      console.log('[UserContext] URL atual:', window.location.href)
+
+      const wasPendingRedirect = localStorage.getItem('pendingAuthRedirect') === 'true'
+      console.log('[UserContext] Tinha redirect pendente?', wasPendingRedirect)
+
       try {
+        // Aguardar um pouco para garantir que o Firebase processou o redirect
+        await new Promise(resolve => setTimeout(resolve, 500))
+
         const result = await getRedirectResult(auth)
+        console.log('[UserContext] getRedirectResult retornou:', result ? 'resultado encontrado' : 'null')
+
         if (result) {
-          console.log('[UserContext] Redirect result detected:', result.user.uid)
+          console.log('[UserContext] ✅ Redirect result detectado!')
+          console.log('[UserContext] User UID:', result.user.uid)
+          console.log('[UserContext] User email:', result.user.email)
+          console.log('[UserContext] User displayName:', result.user.displayName)
+
+          // Limpar flag de redirect pendente
+          localStorage.removeItem('pendingAuthRedirect')
+
           // Retrieve invite token from sessionStorage if it was stored
           const inviteToken = sessionStorage.getItem('pendingInviteToken')
+          console.log('[UserContext] Invite token recuperado:', inviteToken)
+
           if (inviteToken) {
             sessionStorage.removeItem('pendingInviteToken')
           }
+
           // Handle the redirect result the same way as popup result
+          console.log('[UserContext] Processando auth result...')
           await handleAuthResult(result.user, inviteToken)
+        } else {
+          console.log('[UserContext] Nenhum redirect result pendente')
+          // Limpar flag se não havia resultado
+          if (wasPendingRedirect) {
+            console.log('[UserContext] Limpando flag de redirect pendente sem resultado')
+            localStorage.removeItem('pendingAuthRedirect')
+          }
         }
       } catch (error) {
-        console.error('[UserContext] Error handling redirect result:', error)
+        console.error('[UserContext] ❌ Erro ao processar redirect result:', error)
+        const err = error as { code?: string; message?: string }
+        console.error('[UserContext] Código do erro:', err.code)
+        console.error('[UserContext] Mensagem:', err.message)
+        console.error('[UserContext] Detalhes completos:', error)
+        // Limpar flag em caso de erro
+        localStorage.removeItem('pendingAuthRedirect')
       }
     }
 
@@ -179,6 +217,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       console.log('[UserContext] onAuthStateChanged disparado:', firebaseUser?.uid || 'null')
+      console.log('[UserContext] Email:', firebaseUser?.email || 'null')
       setUser(firebaseUser)
       setLoading(false)
     })
@@ -187,9 +226,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   }, [handleAuthResult])
 
   const loginWithGoogle = async (inviteToken?: string | null) => {
-    if (!auth || !provider) throw new Error('Firebase auth not initialized')
+    if (!auth || !provider) {
+      console.error('[UserContext] Firebase não inicializado')
+      throw new Error('Firebase auth not initialized')
+    }
 
-    console.log('[UserContext] Iniciando login com Google, inviteToken:', inviteToken)
+    console.log('[UserContext] Iniciando login com Google')
+    console.log('[UserContext] inviteToken:', inviteToken)
+    console.log('[UserContext] window.location.href:', window.location.href)
 
     // Store invite token in sessionStorage so it's available after redirect
     if (inviteToken) {
@@ -197,30 +241,43 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
 
     const useMobile = isMobileDevice()
-    console.log('[UserContext] Usando método de login:', useMobile ? 'redirect' : 'popup')
+    console.log('[UserContext] Mobile detectado:', useMobile)
+    console.log('[UserContext] User agent:', navigator.userAgent)
+    console.log('[UserContext] Window width:', window.innerWidth)
+    console.log('[UserContext] Método de login:', useMobile ? 'redirect' : 'popup')
 
     try {
+      // Mobile: sempre usar redirect (popups não funcionam bem)
       if (useMobile) {
+        console.log('[UserContext] Iniciando signInWithRedirect...')
+        // Marcar que estamos aguardando um redirect
+        localStorage.setItem('pendingAuthRedirect', 'true')
         await signInWithRedirect(auth, provider)
+        console.log('[UserContext] signInWithRedirect chamado - aguardando redirecionamento')
         // redirect flow continues in checkRedirectResult
-      } else {
-        try {
-          const result = await signInWithPopup(auth, provider)
-          await handleAuthResult(result.user, inviteToken)
-        } catch (e: unknown) {
-          // Fallback para redirect se popup falhar (bloqueado pelo navegador)
-          const code = (e as { code?: string } | null | undefined)?.code || ''
-          const popupIssues = ['auth/popup-blocked', 'auth/cancelled-popup-request', 'auth/popup-closed-by-user']
-          if (popupIssues.includes(code)) {
-            console.warn('[UserContext] Popup falhou, tentando redirect...')
-            await signInWithRedirect(auth, provider)
-          } else {
-            throw e
-          }
+        return
+      }
+
+      // Desktop: tentar popup primeiro, fallback para redirect
+      try {
+        console.log('[UserContext] Desktop: tentando popup')
+        const result = await signInWithPopup(auth, provider)
+        await handleAuthResult(result.user, inviteToken)
+      } catch (e: unknown) {
+        // Fallback para redirect se popup falhar (bloqueado pelo navegador)
+        const code = (e as { code?: string } | null | undefined)?.code || ''
+        const popupIssues = ['auth/popup-blocked', 'auth/cancelled-popup-request', 'auth/popup-closed-by-user']
+        if (popupIssues.includes(code)) {
+          console.warn('[UserContext] Popup falhou (código:', code, '), tentando redirect...')
+          localStorage.setItem('pendingAuthRedirect', 'true')
+          await signInWithRedirect(auth, provider)
+        } else {
+          throw e
         }
       }
     } catch (error) {
       console.error('[UserContext] Erro no login:', error)
+      console.error('[UserContext] Detalhes do erro:', JSON.stringify(error, null, 2))
       throw error
     }
   }
