@@ -14,6 +14,7 @@ import { prisma } from '@/lib/prisma'
 import { formatDate } from '@/lib/utils'
 import { getSessionProfile } from '@/services/auth/session'
 import { getClientById } from '@/services/repositories/clients'
+import type { Finance, Media, Meeting, Task } from '@prisma/client'
 import {
   FileText,
   FolderKanban,
@@ -116,7 +117,7 @@ export default async function ClientInfoPage({ params }: ClientInfoPageProps) {
   const canViewAmounts = isOwner
 
   // Buscar dados detalhados para os relatórios
-  const [tasks, finances, media, meetings] = await Promise.all([
+  const [tasks, finances, media, meetings]: [Task[], Finance[], Media[], Meeting[]] = await Promise.all([
     prisma.task.findMany({ where: { clientId: id }, orderBy: { createdAt: 'desc' } }),
     prisma.finance.findMany({ where: { clientId: id }, orderBy: { date: 'desc' } }),
     prisma.media.findMany({ where: { clientId: id } }),
@@ -279,112 +280,112 @@ export default async function ClientInfoPage({ params }: ClientInfoPageProps) {
           </div>
         </div>
         {/* Estatísticas e Conteúdo */}
-          <div className="grid gap-6 lg:grid-cols-2">
-            {/* Task Breakdown */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <FolderKanban className="h-5 w-5 text-blue-600" />
-                  <CardTitle>Desempenho de Tarefas</CardTitle>
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Task Breakdown */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <FolderKanban className="h-5 w-5 text-blue-600" />
+                <CardTitle>Desempenho de Tarefas</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-slate-700">Concluídas</span>
+                  <span className="text-sm font-bold text-green-600">{taskStats.completed}</span>
                 </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-slate-700">Concluídas</span>
-                    <span className="text-sm font-bold text-green-600">{taskStats.completed}</span>
-                  </div>
-                  <ProgressBar value={taskStats.completed} max={taskStats.total} color="green" />
-                </div>
+                <ProgressBar value={taskStats.completed} max={taskStats.total} color="green" />
+              </div>
 
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-slate-700">Em Progresso</span>
-                    <span className="text-sm font-bold text-blue-600">{taskStats.inProgress}</span>
-                  </div>
-                  <ProgressBar value={taskStats.inProgress} max={taskStats.total} color="blue" />
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-slate-700">Em Progresso</span>
+                  <span className="text-sm font-bold text-blue-600">{taskStats.inProgress}</span>
                 </div>
+                <ProgressBar value={taskStats.inProgress} max={taskStats.total} color="blue" />
+              </div>
 
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-slate-700">Pendentes</span>
-                    <span className="text-sm font-bold text-amber-600">{taskStats.pending}</span>
-                  </div>
-                  <ProgressBar value={taskStats.pending} max={taskStats.total} color="amber" />
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-slate-700">Pendentes</span>
+                  <span className="text-sm font-bold text-amber-600">{taskStats.pending}</span>
                 </div>
-              </CardContent>
-            </Card>
+                <ProgressBar value={taskStats.pending} max={taskStats.total} color="amber" />
+              </div>
+            </CardContent>
+          </Card>
 
-            {/* Media Stats */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-purple-600" />
-                  <CardTitle>Biblioteca de Mídia</CardTitle>
+          {/* Media Stats */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-purple-600" />
+                <CardTitle>Biblioteca de Mídia</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center p-4 rounded-lg bg-purple-50 border border-purple-200">
+                  <div className="text-3xl font-bold text-purple-600">{mediaStats.images}</div>
+                  <p className="text-xs text-slate-600 mt-1">Imagens</p>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="text-center p-4 rounded-lg bg-purple-50 border border-purple-200">
-                    <div className="text-3xl font-bold text-purple-600">{mediaStats.images}</div>
-                    <p className="text-xs text-slate-600 mt-1">Imagens</p>
-                  </div>
-                  <div className="text-center p-4 rounded-lg bg-pink-50 border border-pink-200">
-                    <div className="text-3xl font-bold text-pink-600">{mediaStats.videos}</div>
-                    <p className="text-xs text-slate-600 mt-1">Vídeos</p>
-                  </div>
-                  <div className="text-center p-4 rounded-lg bg-indigo-50 border border-indigo-200">
-                    <div className="text-3xl font-bold text-indigo-600">{mediaStats.documents}</div>
-                    <p className="text-xs text-slate-600 mt-1">Documentos</p>
-                  </div>
+                <div className="text-center p-4 rounded-lg bg-pink-50 border border-pink-200">
+                  <div className="text-3xl font-bold text-pink-600">{mediaStats.videos}</div>
+                  <p className="text-xs text-slate-600 mt-1">Vídeos</p>
                 </div>
-                <div className="mt-4 p-4 rounded-lg bg-slate-100 border border-slate-200 text-center">
-                  <p className="text-2xl font-bold text-slate-900">{mediaStats.total}</p>
-                  <p className="text-xs text-slate-600 mt-1">Total de arquivos</p>
+                <div className="text-center p-4 rounded-lg bg-indigo-50 border border-indigo-200">
+                  <div className="text-3xl font-bold text-indigo-600">{mediaStats.documents}</div>
+                  <p className="text-xs text-slate-600 mt-1">Documentos</p>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+              <div className="mt-4 p-4 rounded-lg bg-slate-100 border border-slate-200 text-center">
+                <p className="text-2xl font-bold text-slate-900">{mediaStats.total}</p>
+                <p className="text-xs text-slate-600 mt-1">Total de arquivos</p>
+              </div>
+            </CardContent>
+          </Card>
 
+        </div>
+
+        {/* Reuniões e Social */}
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Meeting Stats */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-blue-600" />
+                <CardTitle>Histórico de Reuniões</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="text-center p-4 rounded-lg bg-blue-50 border border-blue-200">
+                  <div className="text-3xl font-bold text-blue-600">{meetingStats.upcoming}</div>
+                  <p className="text-xs text-slate-600 mt-1">Próximas</p>
+                </div>
+                <div className="text-center p-4 rounded-lg bg-slate-50 border border-slate-200">
+                  <div className="text-3xl font-bold text-slate-600">{meetingStats.past}</div>
+                  <p className="text-xs text-slate-600 mt-1">Realizadas</p>
+                </div>
+              </div>
+              <div className="p-4 rounded-lg bg-linear-to-r from-blue-50 to-purple-50 border border-blue-200 text-center">
+                <p className="text-2xl font-bold bg-linear-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  {meetingStats.total}
+                </p>
+                <p className="text-xs text-slate-600 mt-1">Total de reuniões</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Instagram Feed */}
+          <div>
+            <InstagramGrid clientId={client.id} />
           </div>
+        </div>
 
-          {/* Reuniões e Social */}
-          <div className="grid gap-6 lg:grid-cols-2">
-            {/* Meeting Stats */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-blue-600" />
-                  <CardTitle>Histórico de Reuniões</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div className="text-center p-4 rounded-lg bg-blue-50 border border-blue-200">
-                    <div className="text-3xl font-bold text-blue-600">{meetingStats.upcoming}</div>
-                    <p className="text-xs text-slate-600 mt-1">Próximas</p>
-                  </div>
-                  <div className="text-center p-4 rounded-lg bg-slate-50 border border-slate-200">
-                    <div className="text-3xl font-bold text-slate-600">{meetingStats.past}</div>
-                    <p className="text-xs text-slate-600 mt-1">Realizadas</p>
-                  </div>
-                </div>
-                <div className="p-4 rounded-lg bg-linear-to-r from-blue-50 to-purple-50 border border-blue-200 text-center">
-                  <p className="text-2xl font-bold bg-linear-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                    {meetingStats.total}
-                  </p>
-                  <p className="text-xs text-slate-600 mt-1">Total de reuniões</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Instagram Feed */}
-            <div>
-              <InstagramGrid clientId={client.id} />
-            </div>
-          </div>
-
-          {/* Summary */}
-          {isOwner && (
+        {/* Summary */}
+        {isOwner && (
           <Card className="relative overflow-hidden border-2 border-slate-200/60 shadow-xl">
             <div className="absolute top-0 left-0 w-full h-2 bg-linear-to-r from-blue-600 via-purple-600 to-pink-600 bg-size-[200%_100%] animate-gradient" />
             <CardHeader>
@@ -442,8 +443,8 @@ export default async function ClientInfoPage({ params }: ClientInfoPageProps) {
               </div>
             </CardContent>
           </Card>
-          )}
-        </div>
+        )}
+      </div>
     </ProtectedRoute>
   )
 }
