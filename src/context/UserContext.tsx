@@ -161,20 +161,31 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     const checkRedirectResult = async () => {
       if (!auth) return // Type guard for TypeScript
 
+      console.log('[UserContext] Verificando redirect result...')
       try {
         const result = await getRedirectResult(auth)
         if (result) {
-          console.log('[UserContext] Redirect result detected:', result.user.uid)
+          console.log('[UserContext] ✅ Redirect result detectado!')
+          console.log('[UserContext] User UID:', result.user.uid)
+          console.log('[UserContext] User email:', result.user.email)
+
           // Retrieve invite token from sessionStorage if it was stored
           const inviteToken = sessionStorage.getItem('pendingInviteToken')
+          console.log('[UserContext] Invite token recuperado:', inviteToken)
+
           if (inviteToken) {
             sessionStorage.removeItem('pendingInviteToken')
           }
+
           // Handle the redirect result the same way as popup result
+          console.log('[UserContext] Processando auth result...')
           await handleAuthResult(result.user, inviteToken)
+        } else {
+          console.log('[UserContext] Nenhum redirect result pendente')
         }
       } catch (error) {
-        console.error('[UserContext] Error handling redirect result:', error)
+        console.error('[UserContext] ❌ Erro ao processar redirect result:', error)
+        console.error('[UserContext] Detalhes:', JSON.stringify(error, null, 2))
       }
     }
 
@@ -190,9 +201,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   }, [handleAuthResult])
 
   const loginWithGoogle = async (inviteToken?: string | null) => {
-    if (!auth || !provider) throw new Error('Firebase auth not initialized')
+    if (!auth || !provider) {
+      console.error('[UserContext] Firebase não inicializado')
+      throw new Error('Firebase auth not initialized')
+    }
 
-    console.log('[UserContext] Iniciando login com Google, inviteToken:', inviteToken)
+    console.log('[UserContext] Iniciando login com Google')
+    console.log('[UserContext] inviteToken:', inviteToken)
+    console.log('[UserContext] window.location.href:', window.location.href)
 
     // Store invite token in sessionStorage so it's available after redirect
     if (inviteToken) {
@@ -200,13 +216,17 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
 
     const useMobile = isMobileDevice()
-    console.log('[UserContext] Usando método de login:', useMobile ? 'redirect' : 'popup')
+    console.log('[UserContext] Mobile detectado:', useMobile)
+    console.log('[UserContext] User agent:', navigator.userAgent)
+    console.log('[UserContext] Window width:', window.innerWidth)
+    console.log('[UserContext] Método de login:', useMobile ? 'redirect' : 'popup')
 
     try {
       // Mobile: sempre usar redirect (popups não funcionam bem)
       if (useMobile) {
-        console.log('[UserContext] Mobile detectado, usando signInWithRedirect')
+        console.log('[UserContext] Iniciando signInWithRedirect...')
         await signInWithRedirect(auth, provider)
+        console.log('[UserContext] signInWithRedirect chamado - aguardando redirecionamento')
         // redirect flow continues in checkRedirectResult
         return
       }
@@ -221,7 +241,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         const code = (e as { code?: string } | null | undefined)?.code || ''
         const popupIssues = ['auth/popup-blocked', 'auth/cancelled-popup-request', 'auth/popup-closed-by-user']
         if (popupIssues.includes(code)) {
-          console.warn('[UserContext] Popup falhou, tentando redirect...')
+          console.warn('[UserContext] Popup falhou (código:', code, '), tentando redirect...')
           await signInWithRedirect(auth, provider)
         } else {
           throw e
@@ -229,6 +249,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       }
     } catch (error) {
       console.error('[UserContext] Erro no login:', error)
+      console.error('[UserContext] Detalhes do erro:', JSON.stringify(error, null, 2))
       throw error
     }
   }
