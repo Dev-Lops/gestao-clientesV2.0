@@ -5,7 +5,7 @@ import { ClientHealthMetrics } from '@/features/clients/components'
 import { ClientInfoDisplay } from '@/features/clients/components/ClientInfoDisplay'
 import ContractManager from '@/features/clients/components/ContractManager'
 import { InstallmentManager } from '@/features/clients/components/InstallmentManager'
-import { MonthlyPaymentCard } from '@/features/clients/components/MonthlyPaymentCard'
+import { PaymentStatusCard } from '@/features/payments/components/PaymentStatusCard'
 import { InstagramGrid } from '@/features/social/InstagramGrid'
 import { can } from '@/lib/permissions'
 import { prisma } from '@/lib/prisma'
@@ -198,12 +198,9 @@ export default async function ClientInfoPage({ params }: ClientInfoPageProps) {
               />
             )}
             {isOwner && (
-              <MonthlyPaymentCard
+              <PaymentStatusCard
                 clientId={client.id}
                 clientName={client.name}
-                contractValue={client.contract_value}
-                paymentDay={client.payment_day}
-                isInstallment={client.is_installment}
                 canEdit={isOwner}
               />
             )}
