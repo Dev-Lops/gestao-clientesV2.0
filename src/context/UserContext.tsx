@@ -152,6 +152,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
     // Check for redirect result when component mounts (for mobile login)
     const checkRedirectResult = async () => {
+      if (!auth) return // Type guard for TypeScript
+      
       try {
         const result = await getRedirectResult(auth)
         if (result) {
