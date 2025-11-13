@@ -21,6 +21,23 @@ export function ClientInfoEditor({ client, canEdit }: ClientInfoEditorProps) {
   const router = useRouter()
   const [isEditing, setIsEditing] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  function onlyDigits(v: string) {
+    return v.replace(/\D+/g, '')
+  }
+  function formatPhoneBR(v: string) {
+    const digits = onlyDigits(v).slice(0, 11)
+    if (digits.length <= 10) {
+      return digits
+        .replace(/(\d{2})(\d)/, '($1) $2')
+        .replace(/(\d{4})(\d)/, '$1-$2')
+        .slice(0, 14)
+    }
+    return digits
+      .replace(/(\d{2})(\d)/, '($1) $2')
+      .replace(/(\d{5})(\d)/, '$1-$2')
+      .slice(0, 15)
+  }
   const [formData, setFormData] = useState({
     name: client.name || '',
     email: client.email || '',
@@ -29,16 +46,39 @@ export function ClientInfoEditor({ client, canEdit }: ClientInfoEditorProps) {
     plan: client.plan || '',
     main_channel: client.main_channel || '',
   })
+  const [display, setDisplay] = useState({
+    phone: formatPhoneBR(client.phone || ''),
+  })
+
+  function validateForm() {
+    const errs: Record<string, string> = {}
+    if (!formData.name.trim()) errs.name = 'Nome é obrigatório'
+    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      errs.email = 'Email inválido'
+    }
+    const phoneDigits = onlyDigits(display.phone)
+    if (phoneDigits && phoneDigits.length < 10) errs.phone = 'Telefone incompleto'
+    setFieldErrors(errs)
+    return Object.keys(errs).length === 0
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+    setFieldErrors({})
 
     try {
+      if (!validateForm()) {
+        setLoading(false)
+        return
+      }
       const response = await fetch(`/api/clients/${client.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          phone: formData.phone, // already digits-only while typing
+        }),
       })
 
       if (!response.ok) {
@@ -65,6 +105,7 @@ export function ClientInfoEditor({ client, canEdit }: ClientInfoEditorProps) {
       plan: client.plan || '',
       main_channel: client.main_channel || '',
     })
+    setDisplay({ phone: formatPhoneBR(client.phone || '') })
     setIsEditing(false)
   }
 
@@ -103,12 +144,16 @@ export function ClientInfoEditor({ client, canEdit }: ClientInfoEditorProps) {
                 <Input
                   id="name"
                   required
+                  aria-invalid={!!fieldErrors.name}
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Nome do cliente"
                   disabled={loading}
-                  className="border-slate-300 focus:border-blue-500 focus:ring-blue-500"
+                  className={`border-slate-300 focus:border-blue-500 focus:ring-blue-500 ${fieldErrors.name ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                 />
+                {fieldErrors.name && (
+                  <p className="text-xs text-red-600">{fieldErrors.name}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -118,12 +163,16 @@ export function ClientInfoEditor({ client, canEdit }: ClientInfoEditorProps) {
                 <Input
                   id="email"
                   type="email"
+                  aria-invalid={!!fieldErrors.email}
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="email@exemplo.com"
                   disabled={loading}
-                  className="border-slate-300 focus:border-blue-500 focus:ring-blue-500"
+                  className={`border-slate-300 focus:border-blue-500 focus:ring-blue-500 ${fieldErrors.email ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                 />
+                {fieldErrors.email && (
+                  <p className="text-xs text-red-600">{fieldErrors.email}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -132,13 +181,21 @@ export function ClientInfoEditor({ client, canEdit }: ClientInfoEditorProps) {
                 </Label>
                 <Input
                   id="phone"
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  type="text"
+                  aria-invalid={!!fieldErrors.phone}
+                  value={display.phone}
+                  onChange={(e) => {
+                    const masked = formatPhoneBR(e.target.value)
+                    setDisplay((d) => ({ ...d, phone: masked }))
+                    setFormData((f) => ({ ...f, phone: onlyDigits(masked) }))
+                  }}
                   placeholder="(11) 99999-9999"
                   disabled={loading}
-                  className="border-slate-300 focus:border-blue-500 focus:ring-blue-500"
+                  className={`border-slate-300 focus:border-blue-500 focus:ring-blue-500 ${fieldErrors.phone ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                 />
+                {fieldErrors.phone && (
+                  <p className="text-xs text-red-600">{fieldErrors.phone}</p>
+                )}
               </div>
 
               <div className="space-y-2">

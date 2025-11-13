@@ -104,7 +104,7 @@ export default function NewClientPage() {
     try {
       const contractStartToSave = formData.contractStart ? parseDateInput(formData.contractStart).toISOString() : null
       const contractEndToSave = formData.contractEnd ? parseDateInput(formData.contractEnd).toISOString() : null
-      
+
       if (!validateForm()) {
         setLoading(false)
         return
@@ -331,56 +331,56 @@ export default function NewClientPage() {
                     </div>
                   </div>
 
-                {/* Financeiro */}
-                <div className="pt-6 border-t border-slate-200 dark:border-slate-700">
-                  <h3 className="text-lg font-semibold mb-4">Informações Financeiras</h3>
-                  <div className="grid gap-6 sm:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="paymentDay" className="text-sm font-medium">
-                        Dia de Pagamento
-                      </Label>
-                      <Input
-                        id="paymentDay"
-                        type="number"
-                        min="1"
-                        max="31"
-                        aria-invalid={!!fieldErrors.paymentDay}
-                        value={formData.paymentDay}
-                        onChange={(e) => setFormData({ ...formData, paymentDay: e.target.value })}
-                        placeholder="Ex: 5, 10, 15..."
-                        disabled={loading}
-                        className={`border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-slate-800 ${fieldErrors.paymentDay ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
-                      />
-                      <p className="text-xs text-slate-500 dark:text-slate-400">Dia do mês (1-31)</p>
-                      {fieldErrors.paymentDay && (
-                        <p className="text-xs text-red-600 dark:text-red-400">{fieldErrors.paymentDay}</p>
-                      )}
-                    </div>
+                  {/* Financeiro */}
+                  <div className="pt-6 border-t border-slate-200 dark:border-slate-700">
+                    <h3 className="text-lg font-semibold mb-4">Informações Financeiras</h3>
+                    <div className="grid gap-6 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="paymentDay" className="text-sm font-medium">
+                          Dia de Pagamento
+                        </Label>
+                        <Input
+                          id="paymentDay"
+                          type="number"
+                          min="1"
+                          max="31"
+                          aria-invalid={!!fieldErrors.paymentDay}
+                          value={formData.paymentDay}
+                          onChange={(e) => setFormData({ ...formData, paymentDay: e.target.value })}
+                          placeholder="Ex: 5, 10, 15..."
+                          disabled={loading}
+                          className={`border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-slate-800 ${fieldErrors.paymentDay ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                        />
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Dia do mês (1-31)</p>
+                        {fieldErrors.paymentDay && (
+                          <p className="text-xs text-red-600 dark:text-red-400">{fieldErrors.paymentDay}</p>
+                        )}
+                      </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="contractValue" className="text-sm font-medium">
-                        Valor Mensal (R$)
-                      </Label>
-                      <Input
-                        id="contractValue"
-                        type="text"
-                        aria-invalid={!!fieldErrors.contractValue}
-                        value={display.contractValue}
-                        onChange={(e) => {
-                          const masked = formatCurrencyBRLMask(e.target.value)
-                          setDisplay((d) => ({ ...d, contractValue: masked }))
-                          setFormData((f) => ({ ...f, contractValue: normalizeCurrencyToDot(masked) }))
-                        }}
-                        placeholder="Ex: R$ 1.500,00"
-                        disabled={loading}
-                        className={`border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-slate-800 ${fieldErrors.contractValue ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
-                      />
-                      {fieldErrors.contractValue && (
-                        <p className="text-xs text-red-600 dark:text-red-400">{fieldErrors.contractValue}</p>
-                      )}
+                      <div className="space-y-2">
+                        <Label htmlFor="contractValue" className="text-sm font-medium">
+                          Valor Mensal (R$)
+                        </Label>
+                        <Input
+                          id="contractValue"
+                          type="text"
+                          aria-invalid={!!fieldErrors.contractValue}
+                          value={display.contractValue}
+                          onChange={(e) => {
+                            const masked = formatCurrencyBRLMask(e.target.value)
+                            setDisplay((d) => ({ ...d, contractValue: masked }))
+                            setFormData((f) => ({ ...f, contractValue: normalizeCurrencyToDot(masked) }))
+                          }}
+                          placeholder="Ex: R$ 1.500,00"
+                          disabled={loading}
+                          className={`border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-slate-800 ${fieldErrors.contractValue ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                        />
+                        {fieldErrors.contractValue && (
+                          <p className="text-xs text-red-600 dark:text-red-400">{fieldErrors.contractValue}</p>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
 
                   {error && (
                     <div className="p-4 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 text-red-600 dark:text-red-400 text-sm">
