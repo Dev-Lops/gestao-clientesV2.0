@@ -1,7 +1,7 @@
 "use client"
 
-import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
@@ -48,10 +48,21 @@ export function MonthlyCalendar({ activities, onMonthChange, initialMonth }: { a
   // Nota: Mudanças externas de mês devem ser feitas via remount (key) ou callbacks
 
   const normalized = useMemo(() => {
-    return activities.map((a) => ({
-      ...a,
-      dateObj: new Date(a.date),
-    }))
+    return activities.map((a) => {
+      let dateObj: Date
+      if (typeof a.date === 'string') {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(a.date)) {
+          const [y, m, d] = a.date.split('-').map((n) => Number(n))
+          dateObj = new Date(y, (m || 1) - 1, d || 1)
+        } else {
+          // ISO com hora -> parse normal (preserva local se sem Z)
+          dateObj = new Date(a.date)
+        }
+      } else {
+        dateObj = new Date(a.date)
+      }
+      return { ...a, dateObj }
+    })
   }, [activities])
 
   const monthLabel = cursor.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
@@ -85,7 +96,8 @@ export function MonthlyCalendar({ activities, onMonthChange, initialMonth }: { a
     const map = new Map<string, CalendarActivity[]>()
     normalized.forEach((a) => {
       if (filter !== 'all' && a.type !== filter) return
-      const key = a.dateObj.toISOString().split('T')[0]
+      // Usa data local (YYYY-MM-DD) para evitar deslocamento por fuso horário
+      const key = `${a.dateObj.getFullYear()}-${String(a.dateObj.getMonth() + 1).padStart(2, '0')}-${String(a.dateObj.getDate()).padStart(2, '0')}`
       if (!map.has(key)) map.set(key, [])
       map.get(key)!.push(a)
     })
@@ -133,10 +145,10 @@ export function MonthlyCalendar({ activities, onMonthChange, initialMonth }: { a
           </div>
         </div>
 
-        {/* Weekday headers - apenas números */}
+        {/* Weekday headers */}
         <div className="grid grid-cols-7 text-[10px] sm:text-xs text-slate-500 uppercase tracking-wide">
-          {monthInfo.days.slice(0, 7).map((d, i) => (
-            <div key={i} className="px-2 py-1 text-center">{d.getDate()}</div>
+          {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((w) => (
+            <div key={w} className="px-2 py-1 text-center">{w}</div>
           ))}
         </div>
 

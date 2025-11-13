@@ -68,6 +68,8 @@ export function toLocalISOString(date: Date): string {
   const seconds = String(date.getSeconds()).padStart(2, '0')
   const ms = String(date.getMilliseconds()).padStart(3, '0')
 
+  // Mantém 'Z' para preservar contrato dos testes: usa componentes locais
+  // e marca como UTC para evitar que toISOString() desloque a data.
   return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${ms}Z`
 }
 

@@ -1,5 +1,6 @@
 'use client'
 import { auth, provider } from '@/lib/firebase'
+import { usePresence } from '@/lib/usePresence'
 import {
   getRedirectResult,
   onAuthStateChanged,
@@ -31,6 +32,8 @@ const UserContext = createContext<UserContextType | undefined>(undefined)
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null)
+  // Atualiza presença em tempo real no Firebase Realtime Database
+  usePresence(user?.uid)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
-import { parseDateInput, toLocalISOString } from '@/lib/utils'
+import { formatDateInput, parseDateInput, toLocalISOString } from '@/lib/utils'
 import { ClientStatus } from '@/types/client'
 import { AppClient } from '@/types/tables'
 import { Edit2, Save, X } from 'lucide-react'
@@ -53,12 +53,8 @@ export function ClientInfoDisplay({ client, canEdit }: ClientInfoDisplayProps) {
     mainChannel: client.main_channel || '',
     instagramUserId: client.instagram_user_id || '',
     instagramUsername: client.instagram_username || '',
-    contractStart: client.contract_start
-      ? new Date(client.contract_start).toISOString().split('T')[0]
-      : '',
-    contractEnd: client.contract_end
-      ? new Date(client.contract_end).toISOString().split('T')[0]
-      : '',
+    contractStart: client.contract_start ? formatDateInput(client.contract_start) : '',
+    contractEnd: client.contract_end ? formatDateInput(client.contract_end) : '',
     paymentDay: client.payment_day?.toString() || '',
     contractValue: client.contract_value?.toString() || '',
   })
@@ -110,12 +106,8 @@ export function ClientInfoDisplay({ client, canEdit }: ClientInfoDisplayProps) {
       mainChannel: client.main_channel || '',
       instagramUserId: client.instagram_user_id || '',
       instagramUsername: client.instagram_username || '',
-      contractStart: client.contract_start
-        ? new Date(client.contract_start).toISOString().split('T')[0]
-        : '',
-      contractEnd: client.contract_end
-        ? new Date(client.contract_end).toISOString().split('T')[0]
-        : '',
+      contractStart: client.contract_start ? formatDateInput(client.contract_start) : '',
+      contractEnd: client.contract_end ? formatDateInput(client.contract_end) : '',
       paymentDay: client.payment_day?.toString() || '',
       contractValue: client.contract_value?.toString() || '',
     })
