@@ -4,7 +4,7 @@ import { ProtectedRoute } from '@/components/ProtectedRoute'
 import AppShell from '@/components/layout/AppShell'
 import { Card } from '@/components/ui/card'
 import { ClientsWithBottlenecks, type ClientHealthMetrics } from '@/features/clients/components'
-import { ActivitiesCalendar } from '@/features/dashboard/components/ActivitiesCalendar'
+import { MonthlyCalendar } from '@/features/dashboard/components/MonthlyCalendar'
 import { can, type AppRole } from '@/lib/permissions'
 
 import { motion } from 'framer-motion'
@@ -232,7 +232,7 @@ function RealtimeDashboard() {
 
         {/* Coluna 2 - Calendário */}
         {data.activities && data.activities.length > 0 && (
-          <ActivitiesCalendar activities={data.activities} />
+          <MonthlyCalendar activities={data.activities} />
         )}
       </div>
 
