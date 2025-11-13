@@ -32,7 +32,12 @@ function getSafeFromEmail(): string {
 }
 
 const fromEmail = getSafeFromEmail()
-const appBaseUrl = process.env.APP_BASE_URL || 'http://localhost:3000'
+const appBaseUrl =
+  process.env.APP_BASE_URL ||
+  process.env.NEXT_PUBLIC_APP_URL ||
+  process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : 'http://localhost:3000'
 
 let client: Resend | null = null
 if (apiKey) {
