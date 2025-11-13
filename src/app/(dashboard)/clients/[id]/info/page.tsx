@@ -2,8 +2,6 @@ import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ProgressBar } from '@/components/ui/progress-bar'
 import { ClientHealthMetrics } from '@/features/clients/components'
-import { ClientBottlenecksCard } from '@/features/clients/components/ClientBottlenecksCard'
-import { ClientHealthCardWrapper } from '@/features/clients/components/ClientHealthCardWrapper'
 import { ClientInfoDisplay } from '@/features/clients/components/ClientInfoDisplay'
 import ContractManager from '@/features/clients/components/ContractManager'
 import { InstallmentManager } from '@/features/clients/components/InstallmentManager'
@@ -182,12 +180,12 @@ export default async function ClientInfoPage({ params }: ClientInfoPageProps) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2 space-y-6">
             <ClientInfoDisplay client={client} canEdit={isOwner} />
-            {isOwner && (
+            {/* {isOwner && (
               <ClientHealthCardWrapper metrics={healthMetrics} canViewAmounts={canViewAmounts} />
             )}
             {isOwner && (
               <ClientBottlenecksCard metrics={healthMetrics} canViewAmounts={canViewAmounts} />
-            )}
+            )} */}
             {/* Instagram Feed moved to bottom section */}
             {isOwner && (
               <ContractManager

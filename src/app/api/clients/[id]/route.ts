@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { parseISOToLocal } from '@/lib/utils'
 import { getSessionProfile } from '@/services/auth/session'
 import { ClientStatus } from '@/types/client'
 import type { ClientPlan, SocialChannel } from '@prisma/client'
@@ -60,8 +61,8 @@ export async function PATCH(
         status: status as ClientStatus,
         plan: plan ? (plan as ClientPlan) : null,
         mainChannel: mainChannel ? (mainChannel as SocialChannel) : null,
-        contractStart: contractStart ? new Date(contractStart) : null,
-        contractEnd: contractEnd ? new Date(contractEnd) : null,
+        contractStart: contractStart ? parseISOToLocal(contractStart) : null,
+        contractEnd: contractEnd ? parseISOToLocal(contractEnd) : null,
         paymentDay: paymentDay ? parseInt(paymentDay) : null,
         contractValue: contractValue ? parseFloat(contractValue) : null,
         instagramUserId: instagramUserId?.trim() || null,
