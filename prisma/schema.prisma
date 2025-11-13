@@ -156,6 +156,8 @@ model Task {
   client      Client    @relation(fields: [clientId], references: [id])
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+
+  @@index([clientId, status])
 }
 
 model Media {
@@ -250,6 +252,8 @@ model Finance {
   client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([clientId, date])
 }
 
 // Reuniões agendadas com o cliente

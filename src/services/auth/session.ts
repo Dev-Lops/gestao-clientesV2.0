@@ -1,12 +1,12 @@
 import { adminAuth } from '@/lib/firebaseAdmin'
+import type { AppRole } from '@/lib/permissions'
 import { prisma } from '@/lib/prisma'
-import { Role } from '@prisma/client'
 import { cookies } from 'next/headers'
 
 interface SessionProfile {
   user: { id: string; email: string; name: string | null } | null
   orgId: string | null
-  role: Role | null
+  role: AppRole | null
 }
 
 export async function getSessionProfile(): Promise<SessionProfile> {
@@ -27,7 +27,7 @@ export async function getSessionProfile(): Promise<SessionProfile> {
     return {
       user: { id: user.id, email: user.email, name: user.name },
       orgId: membership?.orgId || null,
-      role: membership?.role || null,
+      role: (membership?.role as unknown as AppRole) || null,
     }
   } catch (e) {
     console.error('Erro ao obter sessão', e)
