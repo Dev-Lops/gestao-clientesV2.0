@@ -272,7 +272,38 @@ export default async function ClientInfoPage({ params }: ClientInfoPageProps) {
                 </div>
               </CardContent>
             </Card>
+
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-purple-600" />
+                  <CardTitle>Biblioteca de Mídia</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="text-center p-4 rounded-lg bg-purple-50 border border-purple-200">
+                    <div className="text-3xl font-bold text-purple-600">{mediaStats.images}</div>
+                    <p className="text-xs text-slate-600 mt-1">Imagens</p>
+                  </div>
+                  <div className="text-center p-4 rounded-lg bg-pink-50 border border-pink-200">
+                    <div className="text-3xl font-bold text-pink-600">{mediaStats.videos}</div>
+                    <p className="text-xs text-slate-600 mt-1">Vídeos</p>
+                  </div>
+                  <div className="text-center p-4 rounded-lg bg-indigo-50 border border-indigo-200">
+                    <div className="text-3xl font-bold text-indigo-600">{mediaStats.documents}</div>
+                    <p className="text-xs text-slate-600 mt-1">Documentos</p>
+                  </div>
+                </div>
+                <div className="mt-4 p-4 rounded-lg bg-slate-100 border border-slate-200 text-center">
+                  <p className="text-2xl font-bold text-slate-900">{mediaStats.total}</p>
+                  <p className="text-xs text-slate-600 mt-1">Total de arquivos</p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
+
+
         </div>
         {/* Estatísticas e Conteúdo */}
         <div className="grid gap-6 lg:grid-cols-2">
@@ -312,34 +343,7 @@ export default async function ClientInfoPage({ params }: ClientInfoPageProps) {
           </Card>
 
           {/* Media Stats */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-purple-600" />
-                <CardTitle>Biblioteca de Mídia</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="text-center p-4 rounded-lg bg-purple-50 border border-purple-200">
-                  <div className="text-3xl font-bold text-purple-600">{mediaStats.images}</div>
-                  <p className="text-xs text-slate-600 mt-1">Imagens</p>
-                </div>
-                <div className="text-center p-4 rounded-lg bg-pink-50 border border-pink-200">
-                  <div className="text-3xl font-bold text-pink-600">{mediaStats.videos}</div>
-                  <p className="text-xs text-slate-600 mt-1">Vídeos</p>
-                </div>
-                <div className="text-center p-4 rounded-lg bg-indigo-50 border border-indigo-200">
-                  <div className="text-3xl font-bold text-indigo-600">{mediaStats.documents}</div>
-                  <p className="text-xs text-slate-600 mt-1">Documentos</p>
-                </div>
-              </div>
-              <div className="mt-4 p-4 rounded-lg bg-slate-100 border border-slate-200 text-center">
-                <p className="text-2xl font-bold text-slate-900">{mediaStats.total}</p>
-                <p className="text-xs text-slate-600 mt-1">Total de arquivos</p>
-              </div>
-            </CardContent>
-          </Card>
+
 
         </div>
 

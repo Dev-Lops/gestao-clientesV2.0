@@ -217,7 +217,7 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
       amount: item.amount.toString(),
       description: item.description || '',
       category: item.category || '',
-      date: date.toISOString().split('T')[0],
+      date: formatDateInput(date),
       clientId: item.clientId || '',
     })
     setIsModalOpen(true)

@@ -6,8 +6,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { formatDateInput, parseDateInput } from '@/lib/utils'
 import { Calendar, CheckCircle2, Clock, Edit, MapPin, Plus, Trash2, Video, X, XCircle } from 'lucide-react'
-import { parseDateInput } from '@/lib/utils'
 import { useMemo, useState } from 'react'
 
 interface Meeting {
@@ -121,7 +121,7 @@ export function MeetingsManager({ clientId, initialMeetings = [] }: MeetingsMana
     setFormData({
       title: item.title,
       description: item.description || '',
-      startDate: item.startTime.toISOString().split('T')[0],
+      startDate: formatDateInput(item.startTime),
       startTime: item.startTime.toTimeString().slice(0, 5),
       endTime: item.endTime.toTimeString().slice(0, 5),
       location: item.location || '',

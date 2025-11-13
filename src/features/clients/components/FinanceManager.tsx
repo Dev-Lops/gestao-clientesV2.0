@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { parseDateInput } from '@/lib/utils'
+import { formatDateInput, parseDateInput } from '@/lib/utils'
 import { CreditCard, DollarSign, Edit, Plus, Trash2, TrendingDown, TrendingUp, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
@@ -44,7 +44,7 @@ export function FinanceManager({ clientId, initialFinances = [] }: FinanceManage
       amount: '',
       description: '',
       category: '',
-      date: new Date().toISOString().split('T')[0],
+      date: formatDateInput(new Date()),
     })
     setEditingItem(null)
   }
@@ -97,7 +97,7 @@ export function FinanceManager({ clientId, initialFinances = [] }: FinanceManage
       amount: item.amount.toString(),
       description: item.description || '',
       category: item.category || '',
-      date: item.date.toISOString().split('T')[0],
+      date: formatDateInput(item.date),
     })
     setIsModalOpen(true)
   }

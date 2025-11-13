@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { parseDateInput } from '@/lib/utils'
+import { formatDateInput, parseDateInput } from '@/lib/utils'
 import {
   ArrowDownCircle,
   ArrowUpCircle,
@@ -80,7 +80,7 @@ export function FinanceManagerV2({ clientId }: FinanceManagerProps) {
       amount: '',
       description: '',
       category: '',
-      date: new Date().toISOString().split('T')[0],
+      date: formatDateInput(new Date()),
     })
     setEditingItem(null)
   }
@@ -154,7 +154,7 @@ export function FinanceManagerV2({ clientId }: FinanceManagerProps) {
       amount: item.amount.toString(),
       description: item.description || '',
       category: item.category || '',
-      date: date.toISOString().split('T')[0],
+      date: formatDateInput(date),
     })
     setIsModalOpen(true)
   }

@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { parseDateInput, toLocalISOString } from '@/lib/utils'
+import { formatDateInput, parseDateInput, toLocalISOString } from '@/lib/utils'
 import { Installment } from '@/types/tables'
 import { CalendarDays, CheckCircle2, CreditCard, DollarSign, Plus, Trash2, X, XCircle } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -323,7 +323,7 @@ export function InstallmentManager({ clientId, canEdit }: InstallmentManagerProp
                             setEditingInstallment(installment)
                             setEditForm({
                               status: installment.status,
-                              paidAt: installment.paidAt ? new Date(installment.paidAt).toISOString().split('T')[0] : '',
+                              paidAt: installment.paidAt ? formatDateInput(new Date(installment.paidAt)) : '',
                               notes: installment.notes || '',
                             })
                           }}
