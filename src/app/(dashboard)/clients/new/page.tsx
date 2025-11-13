@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { Select } from '@/components/ui/select'
 import { parseDateInput } from '@/lib/utils'
-import { ArrowLeft, Save, UserPlus } from 'lucide-react'
+import { Save, UserPlus } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -75,19 +75,11 @@ export default function NewClientPage() {
             description="Cadastre um novo cliente na sua organização"
             icon={UserPlus}
             iconColor="bg-green-600"
-            actions={
-              <Link href="/clients">
-                <Button variant="outline" size="sm" className="rounded-full gap-2">
-                  <ArrowLeft className="h-4 w-4" />
-                  Voltar
-                </Button>
-              </Link>
-            }
           />
-          {/* Glow effect */}
-          <div className="absolute -inset-1 bg-linear-to-r from-blue-600 to-purple-600 rounded-3xl blur opacity-20" />
-
-          <Card className="relative bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-slate-200 dark:border-slate-700">
+          <div className="relative">
+            {/* Glow effect (sutil e contido ao card) */}
+            <div className="pointer-events-none absolute -inset-1 bg-linear-to-r from-blue-600 to-purple-600 rounded-3xl blur opacity-15" />
+            <Card className="relative bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-slate-200 dark:border-slate-700">
             <CardHeader>
               <CardTitle className="text-2xl">Informações do Cliente</CardTitle>
             </CardHeader>
@@ -310,19 +302,15 @@ export default function NewClientPage() {
                     )}
                   </Button>
                   <Link href="/clients">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      disabled={loading}
-                      className="rounded-full"
-                    >
+                    <Button type="button" variant="outline" disabled={loading} className="rounded-full">
                       Cancelar
                     </Button>
                   </Link>
                 </div>
               </form>
             </CardContent>
-          </Card>
+            </Card>
+          </div>
         </PageLayout>
       </AppShell>
     </ProtectedRoute>
