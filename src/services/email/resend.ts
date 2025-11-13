@@ -87,9 +87,16 @@ export async function sendInviteEmail(
     text,
   })
   try {
-    const id =
-      (result as { id?: string } | { data?: { id?: string } | null })?.id ??
-      (result as { data?: { id?: string } | null })?.data?.id
+    type ResendResponseShape =
+      | { id?: string }
+      | { data?: { id?: string } | null }
+    const res = result as ResendResponseShape
+    let id: string | undefined
+    if ('id' in res && typeof res.id === 'string') {
+      id = res.id
+    } else if ('data' in res && res.data && typeof res.data.id === 'string') {
+      id = res.data.id
+    }
     return { skipped: false, id }
   } catch {
     return { skipped: false }
