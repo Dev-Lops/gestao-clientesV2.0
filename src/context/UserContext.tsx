@@ -1,15 +1,23 @@
 'use client'
 import { auth, provider } from '@/lib/firebase'
-import {
-  getRedirectResult,
-  onAuthStateChanged,
-  signInWithPopup,
+import { 
+  onAuthStateChanged, 
+  signInWithPopup, 
   signInWithRedirect,
-  signOut,
-  User
+  getRedirectResult,
+  signOut, 
+  User 
 } from 'firebase/auth'
 import { useRouter } from 'next/navigation'
-import { createContext, ReactNode, useContext, useEffect, useState } from 'react'
+import { createContext, ReactNode, useContext, useEffect, useState, useCallback } from 'react'
+
+// Utility function to detect mobile devices
+const isMobileDevice = () => {
+  if (typeof window === 'undefined') return false
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+    navigator.userAgent
+  ) || window.innerWidth < 768
+}
 
 interface UserContextType {
   user: User | null
@@ -33,49 +41,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
-  useEffect(() => {
-    if (!auth) {
-      // If auth is not initialized (missing env or server-side), don't try to
-      // subscribe. Mark loading as false so the UI can continue.
-      // Avoid synchronous setState inside effect body (can trigger cascading renders)
-      Promise.resolve().then(() => setLoading(false))
-      return
-    }
-
-    // Verifica se houve redirect de login (mobile)
-    const handleRedirectResult = async () => {
-      if (!auth) return
-      try {
-        const result = await getRedirectResult(auth)
-        if (result?.user) {
-          console.log('[UserContext] Redirect result detectado:', result.user.uid)
-          // Recupera token de convite salvo antes do redirect
-          const savedToken = sessionStorage.getItem('pendingInviteToken')
-          if (savedToken) {
-            sessionStorage.removeItem('pendingInviteToken')
-          }
-          // Processa a sessão após redirect
-          await processLoginResult(result.user, savedToken)
-        }
-      } catch (error) {
-        console.error('[UserContext] Erro ao processar redirect:', error)
-      }
-    }
-
-    handleRedirectResult()
-
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      console.log('[UserContext] onAuthStateChanged disparado:', firebaseUser?.uid || 'null')
-      setUser(firebaseUser)
-      setLoading(false)
-    })
-
-    return () => unsubscribe()
-  }, [])
-
-  const processLoginResult = async (firebaseUser: User, inviteToken?: string | null) => {
-    console.log('[UserContext] Processando resultado do login para:', firebaseUser.uid)
-    setUser(firebaseUser)
+  // Shared logic for handling authentication result (from popup or redirect)
+  const handleAuthResult = useCallback(async (result: { user: User }, inviteToken?: string | null) => {
+    // Atualiza o estado do usuário imediatamente
+    console.log('[UserContext] setUser com:', result.user.uid)
+    setUser(result.user)
 
     // Obtém token FRESCO (força refresh)
     const idToken = await firebaseUser.getIdToken(true)
@@ -93,7 +63,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
     if (!response.ok) {
       let errorText = ''
-      let errorJson: any = undefined
+      let errorJson: { error?: string; details?: unknown } | undefined = undefined
       try {
         errorJson = await response.json()
         errorText = JSON.stringify(errorJson)
@@ -177,6 +147,77 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     console.log('[UserContext] Redirecionando para:', nextPath)
     router.refresh()
     if (nextPath) router.push(nextPath)
+  }, [router])
+
+  useEffect(() => {
+    if (!auth) {
+      // If auth is not initialized (missing env or server-side), don't try to
+      // subscribe. Mark loading as false so the UI can continue.
+      // Avoid synchronous setState inside effect body (can trigger cascading renders)
+      Promise.resolve().then(() => setLoading(false))
+      return
+    }
+
+    // Check for redirect result when component mounts (for mobile login)
+    const checkRedirectResult = async () => {
+      if (!auth) return // Type guard for TypeScript
+      
+      try {
+        const result = await getRedirectResult(auth)
+        if (result) {
+          console.log('[UserContext] Redirect result detected:', result.user.uid)
+          // Retrieve invite token from sessionStorage if it was stored
+          const inviteToken = sessionStorage.getItem('pendingInviteToken')
+          if (inviteToken) {
+            sessionStorage.removeItem('pendingInviteToken')
+          }
+          // Handle the redirect result the same way as popup result
+          await handleAuthResult(result, inviteToken)
+        }
+      } catch (error) {
+        console.error('[UserContext] Error handling redirect result:', error)
+      }
+    }
+
+    checkRedirectResult()
+
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      console.log('[UserContext] onAuthStateChanged disparado:', firebaseUser?.uid || 'null')
+      setUser(firebaseUser)
+      setLoading(false)
+    })
+
+    return () => unsubscribe()
+  }, [handleAuthResult])
+
+  const loginWithGoogle = async (inviteToken?: string | null) => {
+    if (!auth || !provider) throw new Error('Firebase auth not initialized')
+
+    console.log('[UserContext] Iniciando login com Google, inviteToken:', inviteToken)
+    
+    // Store invite token in sessionStorage so it's available after redirect
+    if (inviteToken) {
+      sessionStorage.setItem('pendingInviteToken', inviteToken)
+    }
+
+    const useMobile = isMobileDevice()
+    console.log('[UserContext] Usando método de login:', useMobile ? 'redirect' : 'popup')
+
+    try {
+      if (useMobile) {
+        // On mobile devices, use redirect (popup doesn't work well)
+        await signInWithRedirect(auth, provider)
+        // The redirect will happen, and we'll handle the result in useEffect
+        // No code after this line will execute
+      } else {
+        // On desktop, use popup (better UX)
+        const result = await signInWithPopup(auth, provider)
+        await handleAuthResult(result, inviteToken)
+      }
+    } catch (error) {
+      console.error('[UserContext] Erro no login:', error)
+      throw error
+    }
   }
 
   const loginWithGoogle = async (inviteToken?: string | null) => {
