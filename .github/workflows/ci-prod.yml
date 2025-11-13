@@ -2,9 +2,9 @@ name: CI/CD - Production
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
-    branches: [main]
+    branches: [master]
 
 jobs:
   test-and-build:
@@ -47,6 +47,37 @@ jobs:
 
       - name: Run Database Migrations (Production)
         if: github.event_name == 'push'
+        run: echo "Migration step moved to gated job"
+
+  migrate-and-deploy:
+    name: Migrate and Deploy (Production)
+    needs: test-and-build
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: production
+    concurrency:
+      group: production-deploy
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm prisma:generate
+
+      - name: Run Database Migrations (Production)
         run: pnpm dlx prisma migrate deploy
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
