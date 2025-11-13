@@ -133,17 +133,18 @@ export function MonthlyCalendar({ activities, onMonthChange, initialMonth }: { a
           </div>
         </div>
 
-        {/* Weekday headers */}
+        {/* Weekday headers - apenas números */}
         <div className="grid grid-cols-7 text-[10px] sm:text-xs text-slate-500 uppercase tracking-wide">
-          {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((w) => (
-            <div key={w} className="px-2 py-1">{w}</div>
+          {monthInfo.days.slice(0, 7).map((d, i) => (
+            <div key={i} className="px-2 py-1 text-center">{d.getDate()}</div>
           ))}
         </div>
 
         {/* Month grid */}
         <div className="grid grid-cols-7 gap-1 sm:gap-2">
           {monthInfo.days.map((day) => {
-            const key = day.toISOString().split('T')[0]
+            // Corrigir fuso/data: usar apenas ano-mes-dia local
+            const key = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`
             const dayActs = activitiesByDay.get(key) || []
             const today = isToday(day)
             const current = inCurrentMonth(day)
@@ -152,23 +153,18 @@ export function MonthlyCalendar({ activities, onMonthChange, initialMonth }: { a
               <button
                 key={key}
                 onClick={() => setSelectedDate(new Date(day))}
-                className={`relative text-left rounded-lg border p-1.5 sm:p-2 transition-all focus:outline-none focus:ring-2 focus:ring-blue-400/50
+                className={`relative text-center rounded-lg border p-1.5 sm:p-2 transition-all focus:outline-none focus:ring-2 focus:ring-blue-400/50
                   ${today ? 'bg-blue-50 dark:bg-blue-950/30 border-blue-300 dark:border-blue-700' : 'bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700'}
                   ${!current ? 'opacity-60' : ''}
                   ${selected ? 'ring-2 ring-blue-500' : ''}
                 `}
                 aria-label={`Dia ${day.getDate()}`}
               >
-                <div className="flex items-center justify-between mb-1">
-                  <div className={`text-[9px] sm:text-[10px] uppercase font-medium ${today ? 'text-blue-600' : 'text-slate-500'}`}>
-                    {day.toLocaleDateString('pt-BR', { weekday: 'short' }).slice(0, 3)}
-                  </div>
-                  <div className={`text-xs sm:text-sm font-bold ${today ? 'text-blue-600' : 'text-slate-900 dark:text-white'}`}>
-                    {day.getDate()}
-                  </div>
+                <div className={`text-xs sm:text-sm font-bold ${today ? 'text-blue-600' : 'text-slate-900 dark:text-white'}`}>
+                  {day.getDate()}
                 </div>
                 {dayActs.length > 0 && (
-                  <div className="flex flex-col gap-0.5">
+                  <div className="flex flex-col gap-0.5 mt-1">
                     {dayActs.slice(0, 3).map((a) => (
                       <div
                         key={a.id}

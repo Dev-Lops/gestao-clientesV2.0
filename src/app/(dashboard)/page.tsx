@@ -245,7 +245,7 @@ function RealtimeDashboard() {
         )}
 
         {/* Coluna 2 - Calendário */}
-        {data.activities && data.activities.length > 0 && (
+        {data.activities && (
           <MonthlyCalendar
             key={monthKey}
             activities={data.activities}
