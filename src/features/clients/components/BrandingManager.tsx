@@ -59,6 +59,10 @@ export function BrandingManager({
 }: BrandingManagerProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editing, setEditing] = useState<Branding | null>(null);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerItem, setViewerItem] = useState<Branding | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     title: "",
@@ -78,6 +82,56 @@ export function BrandingManager({
     });
     setEditing(null);
   };
+
+  const openViewer = (item: Branding) => {
+    setViewerItem(item);
+    setViewerOpen(true);
+  };
+
+  const closeViewer = () => {
+    setViewerOpen(false);
+    setViewerItem(null);
+  };
+
+  const getMediaTypeFromUrl = (url?: string | null) => {
+    if (!url) return "document" as const;
+    const lower = url.split("?")[0].toLowerCase();
+    if (lower.match(/\.(jpg|jpeg|png|gif|webp|svg|bmp|tiff)$/)) return "image";
+    if (lower.match(/\.(mp4|mov|avi|webm|mkv|flv|mpeg)$/)) return "video";
+    if (lower.match(/\.(pdf)$/)) return "document";
+    return "document";
+  };
+
+  async function handleFileUpload(file: File) {
+    setUploading(true);
+    setUploadError(null);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("title", file.name);
+      const res = await fetch(`/api/clients/${clientId}/media/upload`, {
+        method: "POST",
+        body: fd,
+      });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        throw new Error(json?.error || "Upload falhou");
+      }
+      const media = await res.json();
+      // media.url is expected
+      if (media?.url) {
+        setForm((f) => ({ ...f, fileUrl: media.url }));
+      }
+      return media;
+    } catch (e: unknown) {
+      console.error("Upload error:", e);
+      const msg = e instanceof Error ? e.message : String(e);
+      setUploadError(msg);
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  }
   // SWR: session (for role) and branding list
   const { data: session } = useSWR<{
     user: unknown;
@@ -115,17 +169,17 @@ export function BrandingManager({
             (prev ?? []).map((i) =>
               i.id === editing.id
                 ? {
-                    ...i,
-                    title: String(updated.title ?? i.title),
-                    type: (updated.type as BrandingType) ?? i.type,
-                    description:
-                      (updated.description as string | undefined) ??
-                      i.description,
-                    fileUrl:
-                      (updated.fileUrl as string | undefined) ?? i.fileUrl,
-                    content:
-                      (updated.content as string | undefined) ?? i.content,
-                  }
+                  ...i,
+                  title: String(updated.title ?? i.title),
+                  type: (updated.type as BrandingType) ?? i.type,
+                  description:
+                    (updated.description as string | undefined) ??
+                    i.description,
+                  fileUrl:
+                    (updated.fileUrl as string | undefined) ?? i.fileUrl,
+                  content:
+                    (updated.content as string | undefined) ?? i.content,
+                }
                 : i,
             ),
           { revalidate: false },
@@ -298,7 +352,10 @@ export function BrandingManager({
                             className="p-3 border rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors"
                           >
                             <div className="flex items-start justify-between gap-2">
-                              <div className="flex-1 min-w-0">
+                              <div
+                                className="flex-1 min-w-0 cursor-pointer"
+                                onClick={() => openViewer(item)}
+                              >
                                 <h4 className="font-medium text-sm text-slate-900 truncate">
                                   {item.title}
                                 </h4>
@@ -319,6 +376,7 @@ export function BrandingManager({
                                     rel="noopener noreferrer"
                                     className="text-xs text-blue-600 hover:underline mt-2 inline-flex items-center gap-1"
                                     aria-label={`Baixar ${item.title}`}
+                                    onClick={(e) => e.stopPropagation()}
                                   >
                                     <Download className="h-3 w-3" /> Baixar
                                   </a>
@@ -330,7 +388,10 @@ export function BrandingManager({
                                     size="sm"
                                     variant="ghost"
                                     className="h-6 w-6 p-0"
-                                    onClick={() => handleEdit(item)}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleEdit(item);
+                                    }}
                                   >
                                     <Edit className="h-3 w-3" />
                                   </Button>
@@ -340,7 +401,10 @@ export function BrandingManager({
                                     size="sm"
                                     variant="ghost"
                                     className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
-                                    onClick={() => handleDelete(item.id)}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDelete(item.id);
+                                    }}
                                   >
                                     <Trash2 className="h-3 w-3" />
                                   </Button>
@@ -460,6 +524,34 @@ export function BrandingManager({
                     </div>
 
                     <div className="space-y-2">
+                      <Label htmlFor="file">Enviar Arquivo (opcional)</Label>
+                      <input
+                        id="file"
+                        title="Enviar arquivo"
+                        aria-label="Enviar arquivo"
+                        type="file"
+                        accept="image/*,video/*,application/pdf"
+                        onChange={async (e) => {
+                          const f = e.target.files?.[0];
+                          if (!f) return;
+                          await handleFileUpload(f);
+                        }}
+                        className="block w-full text-sm text-slate-700"
+                      />
+                      {uploading && (
+                        <div className="text-sm text-slate-500">Enviando...</div>
+                      )}
+                      {uploadError && (
+                        <div className="text-sm text-red-600">{uploadError}</div>
+                      )}
+                      {form.fileUrl && (
+                        <div className="text-xs text-slate-600 mt-1">
+                          Arquivo associado: <a href={form.fileUrl} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">Ver / Baixar</a>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
                       <Label htmlFor="content">Detalhes/Notas (opcional)</Label>
                       <Textarea
                         id="content"
@@ -489,6 +581,102 @@ export function BrandingManager({
                       </Button>
                     </div>
                   </form>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {viewerOpen && viewerItem && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+              onClick={closeViewer}
+            >
+              <div
+                className="bg-white dark:bg-slate-900 rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-auto m-4"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="p-6 space-y-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <h3 className="text-xl font-semibold text-slate-900 dark:text-white truncate">
+                        {viewerItem.title}
+                      </h3>
+                      {viewerItem.description && (
+                        <p className="text-sm text-slate-500 mt-1">
+                          {viewerItem.description}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {viewerItem.fileUrl && (
+                        <a
+                          href={viewerItem.fileUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-2 text-sm text-blue-600 hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Download className="h-4 w-4" /> Baixar
+                        </a>
+                      )}
+                      {canUpdate && (
+                        <Button
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            closeViewer();
+                            handleEdit(viewerItem);
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => closeViewer()}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="w-full bg-slate-50 dark:bg-slate-800 rounded-md p-4">
+                    {getMediaTypeFromUrl(viewerItem.fileUrl) === "image" && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={viewerItem.fileUrl || ""}
+                        alt={viewerItem.title}
+                        className="w-full h-auto object-contain rounded"
+                      />
+                    )}
+                    {getMediaTypeFromUrl(viewerItem.fileUrl) === "video" && (
+                      <video
+                        src={viewerItem.fileUrl || ""}
+                        controls
+                        className="w-full h-auto rounded"
+                      />
+                    )}
+                    {getMediaTypeFromUrl(viewerItem.fileUrl) === "document" && (
+                      <div className="prose max-w-none">
+                        {viewerItem.fileUrl ? (
+                          <iframe
+                            title={viewerItem.title}
+                            src={viewerItem.fileUrl}
+                            className="w-full h-[70vh] border rounded"
+                          />
+                        ) : (
+                          <p className="text-sm text-slate-600">Sem arquivo para visualização.</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {viewerItem.content && (
+                    <div className="text-sm text-slate-600">
+                      {viewerItem.content}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
