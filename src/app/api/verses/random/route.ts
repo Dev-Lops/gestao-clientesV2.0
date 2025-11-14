@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 
-// Removed unused helper `getDailyIndex` and `DAILY_REFERENCES` to avoid lint warnings
 
 export async function GET() {
   try {
