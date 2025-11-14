@@ -26,51 +26,7 @@ interface ClientInfoPageProps {
   params: Promise<{ id: string }>;
 }
 
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-  subtitle,
-  trend,
-}: {
-  icon: React.ElementType;
-  label: string;
-  value: string | number;
-  subtitle?: string;
-  trend?: "up" | "down" | "neutral";
-}) {
-  return (
-    <Card>
-      <CardContent className="pt-6">
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-              <Icon className="h-4 w-4" />
-              <span>{label}</span>
-            </div>
-            <div className="text-2xl font-bold text-foreground">{value}</div>
-            {subtitle && (
-              <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
-            )}
-          </div>
-          {trend && (
-            <div
-              className={`text-xs font-medium px-2 py-1 rounded ${
-                trend === "up"
-                  ? "bg-green-100 text-green-700"
-                  : trend === "down"
-                    ? "bg-red-100 text-red-700"
-                    : "bg-muted text-muted-foreground"
-              }`}
-            >
-              {trend === "up" ? "↑" : trend === "down" ? "↓" : "→"}
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
+// Removed unused StatCard helper to avoid lint warning
 
 export default async function ClientInfoPage({ params }: ClientInfoPageProps) {
   const { id } = await params;
@@ -122,7 +78,7 @@ export default async function ClientInfoPage({ params }: ClientInfoPageProps) {
       cache: "no-store",
     });
     if (res.ok) dash = (await res.json()) as ClientDashboard;
-  } catch {}
+  } catch { }
 
   const isOwner = can(role, "update", "finance");
   const canViewAmounts = isOwner;
@@ -163,12 +119,12 @@ export default async function ClientInfoPage({ params }: ClientInfoPageProps) {
     completionRate:
       tasks.length > 0
         ? Math.round(
-            (tasks.filter(
-              (t) => t.status === "done" || t.status === "completed",
-            ).length /
-              tasks.length) *
-              100,
-          )
+          (tasks.filter(
+            (t) => t.status === "done" || t.status === "completed",
+          ).length /
+            tasks.length) *
+          100,
+        )
         : 0,
   };
 
@@ -207,9 +163,9 @@ export default async function ClientInfoPage({ params }: ClientInfoPageProps) {
     balance: dash?.counts.finance.net || 0,
     daysActive: client.created_at
       ? Math.floor(
-          (new Date().getTime() - new Date(client.created_at).getTime()) /
-            (1000 * 60 * 60 * 24),
-        )
+        (new Date().getTime() - new Date(client.created_at).getTime()) /
+        (1000 * 60 * 60 * 24),
+      )
       : 0,
     tasksTotal: dash?.counts.tasks.total || 0,
     tasksCompleted: dash?.counts.tasks.done || 0,
@@ -583,15 +539,14 @@ export default async function ClientInfoPage({ params }: ClientInfoPageProps) {
                     </p>
                     <div className="flex items-center gap-2">
                       <div
-                        className={`h-3 w-3 rounded-full ${
-                          taskStats.completionRate >= 75
+                        className={`h-3 w-3 rounded-full ${taskStats.completionRate >= 75
                             ? "bg-green-500"
                             : taskStats.completionRate >= 50
                               ? "bg-blue-500"
                               : taskStats.completionRate >= 25
                                 ? "bg-amber-500"
                                 : "bg-red-500"
-                        }`}
+                          }`}
                       />
                       <span className="text-base font-semibold text-foreground">
                         {taskStats.completionRate >= 75
@@ -611,22 +566,21 @@ export default async function ClientInfoPage({ params }: ClientInfoPageProps) {
                     </p>
                     <div className="flex items-center gap-2">
                       <div
-                        className={`h-3 w-3 rounded-full ${
-                          financeStats.balance >=
-                          (client.contract_value
-                            ? Number(client.contract_value) * 0.5
-                            : 1000)
+                        className={`h-3 w-3 rounded-full ${financeStats.balance >=
+                            (client.contract_value
+                              ? Number(client.contract_value) * 0.5
+                              : 1000)
                             ? "bg-green-500"
                             : financeStats.balance >= 0
                               ? "bg-blue-500"
                               : "bg-red-500"
-                        }`}
+                          }`}
                       />
                       <span className="text-base font-semibold text-foreground">
                         {financeStats.balance >=
-                        (client.contract_value
-                          ? Number(client.contract_value) * 0.5
-                          : 1000)
+                          (client.contract_value
+                            ? Number(client.contract_value) * 0.5
+                            : 1000)
                           ? "Lucrativo"
                           : financeStats.balance >= 0
                             ? "Equilibrado"

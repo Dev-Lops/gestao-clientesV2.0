@@ -11,7 +11,7 @@ import {
   DollarSign,
   Info,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 type MonthlyPaymentStatus = {
@@ -53,13 +53,15 @@ export function PaymentStatusCard({
   clientName,
   canEdit = false,
 }: Props) {
+  // clientName currently unused in this component; keep for API compatibility
+  void clientName;
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState<MonthlyPaymentStatus | null>(null);
   const [installments, setInstallments] = useState<InstallmentInfo[]>([]);
   const [showAllInstallments, setShowAllInstallments] = useState(false);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       const [statusRes, installmentsRes] = await Promise.all([
@@ -82,11 +84,11 @@ export function PaymentStatusCard({
     } finally {
       setLoading(false);
     }
-  };
+  }, [clientId]);
 
   useEffect(() => {
     loadData();
-  }, [clientId]);
+  }, [loadData]);
 
   const handleConfirmMonthly = async () => {
     if (!status || status.mode !== "monthly") return;
@@ -212,7 +214,7 @@ export function PaymentStatusCard({
                 <div>
                   <div className="font-semibold text-sm">
                     {status.mode === "installment" &&
-                    status.details.installments ? (
+                      status.details.installments ? (
                       <>
                         {status.details.installments.total > 1
                           ? `${status.details.installments.total} parcelas este mês`
@@ -354,13 +356,12 @@ export function PaymentStatusCard({
                 {installments.map((inst) => (
                   <div
                     key={inst.id}
-                    className={`p-3 rounded-lg border flex items-center justify-between ${
-                      inst.status === "CONFIRMED"
+                    className={`p-3 rounded-lg border flex items-center justify-between ${inst.status === "CONFIRMED"
                         ? "bg-green-50 border-green-200"
                         : inst.status === "LATE"
                           ? "bg-red-50 border-red-200"
                           : "bg-slate-50 border-slate-200"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center gap-3">
                       {inst.status === "CONFIRMED" ? (

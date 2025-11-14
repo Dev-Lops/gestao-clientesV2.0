@@ -46,7 +46,7 @@ export function MonthlyCalendar({
   });
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [filter, setFilter] = useState<"all" | "meeting" | "task">("all");
-  const [view, setView] = useState<"month" | "week">("month");
+  // view toggle removed (not currently used)
 
   const monthInfo = useMemo(() => {
     const year = cursor.getFullYear();
@@ -255,11 +255,10 @@ export function MonthlyCalendar({
         {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((day, idx) => (
           <div
             key={day}
-            className={`text-center py-2 text-xs font-semibold ${
-              idx === 0 || idx === 6
+            className={`text-center py-2 text-xs font-semibold ${idx === 0 || idx === 6
                 ? "text-slate-400 dark:text-slate-500"
                 : "text-slate-600 dark:text-slate-400"
-            }`}
+              }`}
           >
             {day}
           </div>
@@ -286,10 +285,9 @@ export function MonthlyCalendar({
               }
               className={`
                 relative min-h-20 p-2 rounded-lg border transition-all
-                ${
-                  today
-                    ? "bg-blue-50 dark:bg-blue-950/30 border-blue-400 dark:border-blue-600 shadow-sm"
-                    : "bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700"
+                ${today
+                  ? "bg-blue-50 dark:bg-blue-950/30 border-blue-400 dark:border-blue-600 shadow-sm"
+                  : "bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700"
                 }
                 ${!current ? "opacity-40" : ""}
                 ${selected ? "ring-2 ring-blue-500 shadow-md" : ""}
@@ -318,10 +316,9 @@ export function MonthlyCalendar({
                       key={a.id}
                       className={`
                         text-[10px] px-1.5 py-0.5 rounded truncate
-                        ${
-                          a.type === "meeting"
-                            ? "bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300"
-                            : "bg-purple-100 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300"
+                        ${a.type === "meeting"
+                          ? "bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300"
+                          : "bg-purple-100 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300"
                         }
                       `}
                       title={`${a.title} - ${a.clientName}`}
@@ -379,11 +376,10 @@ export function MonthlyCalendar({
                     <div
                       className={`
                       h-10 w-10 rounded-lg flex items-center justify-center shrink-0
-                      ${
-                        activity.type === "meeting"
+                      ${activity.type === "meeting"
                           ? "bg-blue-100 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400"
                           : "bg-purple-100 text-purple-600 dark:bg-purple-950/50 dark:text-purple-400"
-                      }
+                        }
                     `}
                     >
                       {activity.type === "meeting" ? (
@@ -404,11 +400,10 @@ export function MonthlyCalendar({
                         <span
                           className={`
                           text-[10px] px-2 py-0.5 rounded-full font-medium
-                          ${
-                            activity.type === "meeting"
+                          ${activity.type === "meeting"
                               ? "bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300"
                               : "bg-purple-100 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300"
-                          }
+                            }
                         `}
                         >
                           {activity.type === "meeting" ? "Reunião" : "Tarefa"}
@@ -417,16 +412,15 @@ export function MonthlyCalendar({
                           <span
                             className={`
                             text-[10px] px-2 py-0.5 rounded-full font-medium
-                            ${
-                              activity.status === "done" ||
-                              activity.status === "completed"
+                            ${activity.status === "done" ||
+                                activity.status === "completed"
                                 ? "bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-300"
                                 : "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300"
-                            }
+                              }
                           `}
                           >
                             {activity.status === "done" ||
-                            activity.status === "completed"
+                              activity.status === "completed"
                               ? "Concluída"
                               : "Pendente"}
                           </span>

@@ -27,7 +27,7 @@ import {
   TrendingUp,
   X,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 interface Finance {
@@ -66,7 +66,7 @@ export function FinanceManagerV2({ clientId }: FinanceManagerProps) {
     date: new Date().toISOString().split("T")[0],
   });
 
-  const loadFinances = async () => {
+  const loadFinances = useCallback(async () => {
     try {
       setLoading(true);
       const res = await fetch(`/api/clients/${clientId}/finance`);
@@ -78,7 +78,12 @@ export function FinanceManagerV2({ clientId }: FinanceManagerProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [clientId]);
+
+  // Load finances on mount / when clientId changes
+  useEffect(() => {
+    loadFinances();
+  }, [loadFinances]);
 
   const resetForm = () => {
     setFormData({
@@ -322,40 +327,35 @@ export function FinanceManagerV2({ clientId }: FinanceManagerProps) {
           </Card>
 
           <Card
-            className={`relative overflow-hidden border-2 shadow-xl transition-colors ${
-              totals.balance >= 0
+            className={`relative overflow-hidden border-2 shadow-xl transition-colors ${totals.balance >= 0
                 ? "border-blue-200/60 shadow-blue-200/50"
                 : "border-orange-200/60 shadow-orange-200/50"
-            }`}
+              }`}
           >
             <div
-              className={`absolute top-0 left-0 w-full h-2 bg-linear-to-r ${
-                totals.balance >= 0
+              className={`absolute top-0 left-0 w-full h-2 bg-linear-to-r ${totals.balance >= 0
                   ? "from-blue-500 to-purple-500"
                   : "from-orange-500 to-red-500"
-              }`}
+                }`}
             />
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-foreground">
                 Saldo
               </CardTitle>
               <div
-                className={`h-10 w-10 rounded-full flex items-center justify-center ${
-                  totals.balance >= 0 ? "bg-blue-100" : "bg-orange-100"
-                }`}
+                className={`h-10 w-10 rounded-full flex items-center justify-center ${totals.balance >= 0 ? "bg-blue-100" : "bg-orange-100"
+                  }`}
               >
                 <DollarSign
-                  className={`h-5 w-5 ${
-                    totals.balance >= 0 ? "text-blue-600" : "text-orange-600"
-                  }`}
+                  className={`h-5 w-5 ${totals.balance >= 0 ? "text-blue-600" : "text-orange-600"
+                    }`}
                 />
               </div>
             </CardHeader>
             <CardContent>
               <div
-                className={`text-3xl font-bold ${
-                  totals.balance >= 0 ? "text-blue-600" : "text-orange-600"
-                }`}
+                className={`text-3xl font-bold ${totals.balance >= 0 ? "text-blue-600" : "text-orange-600"
+                  }`}
               >
                 {formatCurrency(totals.balance)}
               </div>
@@ -448,19 +448,17 @@ export function FinanceManagerV2({ clientId }: FinanceManagerProps) {
                 {filteredFinances.map((finance) => (
                   <div
                     key={finance.id}
-                    className={`flex items-center justify-between p-4 rounded-lg border-2 transition-all hover:shadow-md ${
-                      finance.type === "income"
+                    className={`flex items-center justify-between p-4 rounded-lg border-2 transition-all hover:shadow-md ${finance.type === "income"
                         ? "border-green-200 bg-green-50/50 hover:border-green-300"
                         : "border-red-200 bg-red-50/50 hover:border-red-300"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center gap-4 flex-1">
                       <div
-                        className={`h-12 w-12 rounded-full flex items-center justify-center ${
-                          finance.type === "income"
+                        className={`h-12 w-12 rounded-full flex items-center justify-center ${finance.type === "income"
                             ? "bg-green-100"
                             : "bg-red-100"
-                        }`}
+                          }`}
                       >
                         {finance.type === "income" ? (
                           <ArrowUpCircle className="h-6 w-6 text-green-600" />
@@ -485,11 +483,10 @@ export function FinanceManagerV2({ clientId }: FinanceManagerProps) {
                       </div>
                       <div className="text-right">
                         <div
-                          className={`text-xl font-bold ${
-                            finance.type === "income"
+                          className={`text-xl font-bold ${finance.type === "income"
                               ? "text-green-600"
                               : "text-red-600"
-                          }`}
+                            }`}
                         >
                           {finance.type === "income" ? "+" : "-"}
                           {formatCurrency(finance.amount)}

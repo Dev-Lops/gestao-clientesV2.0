@@ -42,6 +42,8 @@ export function StrategyManager({
   clientId,
   initialStrategies = [],
 }: StrategyManagerProps) {
+  // `clientId` is reserved for future use (keeps API consistent)
+  void clientId;
   const [strategies, setStrategies] = useState<Strategy[]>(initialStrategies);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStrategy, setEditingStrategy] = useState<Strategy | null>(null);

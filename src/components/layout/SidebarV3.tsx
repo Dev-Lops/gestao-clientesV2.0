@@ -82,12 +82,7 @@ export function SidebarV3({ isOpen, onClose }: SidebarV3Props) {
   const [profileOpen, setProfileOpen] = useState(false);
   const [showVerse, setShowVerse] = useState(true);
   const [search, setSearch] = useState("");
-  const [theme, setTheme] = useState<"light" | "dark">(
-    typeof window !== "undefined" &&
-      document.documentElement.classList.contains("dark")
-      ? "dark"
-      : "light",
-  );
+  // theme toggle removed (unused) — keep implementation commented for future use
   // Keyboard shortcuts: Ctrl+B collapse/expand, Ctrl+U toggle user menu
   useEffect(() => {
     function onKey(e: KeyboardEvent) {

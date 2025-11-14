@@ -96,11 +96,14 @@ export function DropdownMenuTrigger({ children, asChild }: TriggerProps) {
       setOpen(!open);
     };
 
-    return React.cloneElement(child, {
-      "data-dropdown-id": id,
-      "data-state": open ? "open" : "closed",
-      onClick: mergedOnClick,
-    });
+    return React.cloneElement(
+      child as React.ReactElement<Record<string, unknown>>,
+      {
+        ["data-dropdown-id"]: id,
+        ["data-state"]: open ? "open" : "closed",
+        onClick: mergedOnClick,
+      },
+    );
   }
   return (
     <button data-dropdown-id={id} data-state={open ? "open" : "closed"} onClick={() => setOpen(!open)}

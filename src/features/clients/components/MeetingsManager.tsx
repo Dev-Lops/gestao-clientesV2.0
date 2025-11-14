@@ -48,6 +48,8 @@ export function MeetingsManager({
   clientId,
   initialMeetings = [],
 }: MeetingsManagerProps) {
+  // `clientId` currently unused in this component but kept for API compatibility
+  void clientId;
   const [meetings, setMeetings] = useState<Meeting[]>(initialMeetings);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Meeting | null>(null);
@@ -105,15 +107,15 @@ export function MeetingsManager({
         prev.map((item) =>
           item.id === editingItem.id
             ? {
-                ...item,
-                title: formData.title,
-                description: formData.description,
-                startTime,
-                endTime,
-                location: formData.location,
-                status: formData.status,
-                notes: formData.notes,
-              }
+              ...item,
+              title: formData.title,
+              description: formData.description,
+              startTime,
+              endTime,
+              location: formData.location,
+              status: formData.status,
+              notes: formData.notes,
+            }
             : item,
         ),
       );
