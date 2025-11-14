@@ -14,6 +14,7 @@ import { getSessionProfile } from '@/services/auth/session'
 import { getClientById } from '@/services/repositories/clients'
 import type { Finance, Media, Meeting, Task } from '@prisma/client'
 import {
+  Clock,
   FileText,
   FolderKanban,
   Image as ImageIcon,
@@ -175,274 +176,342 @@ export default async function ClientInfoPage({ params }: ClientInfoPageProps) {
 
   return (
     <ProtectedRoute>
-      <div className="space-y-8 max-w-7xl mx-auto px-2 sm:px-4 md:px-8">
-        {/* Top: Client Info & Health */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-2 space-y-6">
-            <ClientInfoDisplay client={client} canEdit={isOwner} />
-            {/* {isOwner && (
-              <ClientHealthCardWrapper metrics={healthMetrics} canViewAmounts={canViewAmounts} />
-            )}
-            {isOwner && (
-              <ClientBottlenecksCard metrics={healthMetrics} canViewAmounts={canViewAmounts} />
-            )} */}
-            {/* Instagram Feed moved to bottom section */}
-            {isOwner && (
-              <ContractManager
-                clientId={client.id}
-                clientName={client.name}
-                contractStart={client.contract_start}
-                contractEnd={client.contract_end}
-                paymentDay={client.payment_day}
-                contractValue={client.contract_value}
-              />
-            )}
-            {isOwner && (
-              <PaymentStatusCard
-                clientId={client.id}
-                clientName={client.name}
-                canEdit={isOwner}
-              />
-            )}
+      <div className="min-h-screen bg-slate-50/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+          {/* Grid Principal: Info + Métricas */}
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+            {/* Coluna Esquerda: Informações Principais */}
+            <div className="xl:col-span-2 space-y-8">
+              {/* Card: Info do Cliente */}
+              <ClientInfoDisplay client={client} canEdit={isOwner} />
 
-            {isOwner && (
-              <InstallmentManager clientId={client.id} canEdit={isOwner} />
-            )}
+              {/* Grid: Métricas Rápidas */}
+              {dash && (
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  <Card className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg transition-all">
+                    <CardContent className="pt-6 pb-5">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="p-3 rounded-xl bg-linear-to-r from-blue-500 to-cyan-600 shadow-lg">
+                          <FolderKanban className="h-5 w-5 text-white" />
+                        </div>
+                        {dash.counts.tasks.overdue > 0 && (
+                          <span className="text-xs font-semibold px-2 py-1 bg-red-100 text-red-700 rounded-full">
+                            {dash.counts.tasks.overdue} atrasadas
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-3xl font-bold text-slate-900">
+                        {dash.counts.tasks.total - dash.counts.tasks.done}
+                      </p>
+                      <p className="text-xs text-slate-600 mt-1">
+                        Tarefas ativas • {dash.counts.tasks.done} concluídas
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg transition-all">
+                    <CardContent className="pt-6 pb-5">
+                      <div className="p-3 rounded-xl bg-linear-to-r from-purple-500 to-pink-600 shadow-lg mb-3 w-fit">
+                        <ImageIcon className="h-5 w-5 text-white" />
+                      </div>
+                      <p className="text-3xl font-bold text-slate-900">{dash.counts.media}</p>
+                      <p className="text-xs text-slate-600 mt-1">Arquivos de mídia</p>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg transition-all">
+                    <CardContent className="pt-6 pb-5">
+                      <div className="p-3 rounded-xl bg-linear-to-r from-amber-500 to-orange-600 shadow-lg mb-3 w-fit">
+                        <Lightbulb className="h-5 w-5 text-white" />
+                      </div>
+                      <p className="text-3xl font-bold text-slate-900">{dash.counts.strategies}</p>
+                      <p className="text-xs text-slate-600 mt-1">Estratégias</p>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg transition-all">
+                    <CardContent className="pt-6 pb-5">
+                      <div className="p-3 rounded-xl bg-linear-to-r from-indigo-500 to-purple-600 shadow-lg mb-3 w-fit">
+                        <FileText className="h-5 w-5 text-white" />
+                      </div>
+                      <p className="text-3xl font-bold text-slate-900">{dash.counts.brandings}</p>
+                      <p className="text-xs text-slate-600 mt-1">Materiais de branding</p>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+              {isOwner && (
+                <ContractManager
+                  clientId={client.id}
+                  clientName={client.name}
+                  contractStart={client.contract_start}
+                  contractEnd={client.contract_end}
+                  paymentDay={client.payment_day}
+                  contractValue={client.contract_value}
+                />
+              )}
+              {isOwner && (
+                <PaymentStatusCard
+                  clientId={client.id}
+                  clientName={client.name}
+                  canEdit={isOwner}
+                />
+              )}
+
+              {isOwner && (
+                <InstallmentManager clientId={client.id} canEdit={isOwner} />
+              )}
+            </div>
+            <div className="space-y-6">
+              {/* Metadata Card */}
+              <Card className="border-slate-200/60 shadow-sm hover:shadow-md transition-shadow">
+                <CardHeader className="bg-linear-to-r from-slate-50 to-slate-100/50 border-b border-slate-200/60">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-linear-to-br from-slate-600 to-slate-700 flex items-center justify-center shadow-md">
+                      <FileText className="h-5 w-5 text-white" />
+                    </div>
+                    <CardTitle className="text-lg">Metadados</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-6 space-y-4">
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-slate-50/50 border border-slate-200/60">
+                    <Clock className="h-4 w-4 text-slate-600 mt-0.5" />
+                    <div className="flex-1">
+                      <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">
+                        Criado em
+                      </div>
+                      <div className="text-sm font-semibold text-slate-900">
+                        {formatDate(client.created_at)}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-slate-50/50 border border-slate-200/60">
+                    <Clock className="h-4 w-4 text-slate-600 mt-0.5" />
+                    <div className="flex-1">
+                      <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">
+                        Última atualização
+                      </div>
+                      <div className="text-sm font-semibold text-slate-900">
+                        {formatDate(client.updated_at)}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-linear-to-br from-slate-50 to-indigo-50/30 border border-indigo-200/60">
+                    <FileText className="h-4 w-4 text-indigo-600 mt-0.5" />
+                    <div className="flex-1">
+                      <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">
+                        ID do Cliente
+                      </div>
+                      <div className="text-xs text-slate-900 font-mono bg-white px-2 py-1.5 rounded border border-slate-200 break-all">
+                        {client.id}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Media Library Card */}
+              <Card className="border-slate-200/60 shadow-sm hover:shadow-md transition-shadow">
+                <CardHeader className="bg-linear-to-r from-purple-50 via-pink-50 to-indigo-50 border-b border-purple-200/60">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-linear-to-br from-purple-600 to-pink-600 flex items-center justify-center shadow-md">
+                      <ImageIcon className="h-5 w-5 text-white" />
+                    </div>
+                    <CardTitle className="text-lg">Biblioteca de Mídia</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="text-center p-4 rounded-lg bg-linear-to-br from-purple-50 to-purple-100 border border-purple-200/60 hover:shadow-md transition-shadow">
+                      <ImageIcon className="h-5 w-5 text-purple-600 mx-auto mb-2" />
+                      <div className="text-2xl font-bold text-purple-600">{mediaStats.images}</div>
+                      <p className="text-xs text-slate-600 mt-1 font-medium">Imagens</p>
+                    </div>
+                    <div className="text-center p-4 rounded-lg bg-linear-to-br from-pink-50 to-pink-100 border border-pink-200/60 hover:shadow-md transition-shadow">
+                      <FileText className="h-5 w-5 text-pink-600 mx-auto mb-2" />
+                      <div className="text-2xl font-bold text-pink-600">{mediaStats.videos}</div>
+                      <p className="text-xs text-slate-600 mt-1 font-medium">Vídeos</p>
+                    </div>
+                    <div className="text-center p-4 rounded-lg bg-linear-to-br from-indigo-50 to-indigo-100 border border-indigo-200/60 hover:shadow-md transition-shadow">
+                      <FileText className="h-5 w-5 text-indigo-600 mx-auto mb-2" />
+                      <div className="text-2xl font-bold text-indigo-600">{mediaStats.documents}</div>
+                      <p className="text-xs text-slate-600 mt-1 font-medium">Docs</p>
+                    </div>
+                  </div>
+                  <div className="mt-4 p-4 rounded-lg bg-linear-to-r from-slate-50 to-slate-100 border border-slate-200/60 text-center">
+                    <p className="text-3xl font-bold bg-linear-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                      {mediaStats.total}
+                    </p>
+                    <p className="text-xs text-slate-600 mt-1 font-medium">Total de arquivos</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Task Breakdown */}
+              <Card className="border-slate-200/60 shadow-sm hover:shadow-lg transition-shadow">
+                <CardHeader className="bg-linear-to-r from-blue-50 via-cyan-50 to-blue-50 border-b border-blue-200/60">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-linear-to-br from-blue-600 to-cyan-600 flex items-center justify-center shadow-md">
+                      <FolderKanban className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">Desempenho de Tarefas</CardTitle>
+                      <p className="text-xs text-slate-600 mt-0.5">{taskStats.total} tarefas no total</p>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-6 space-y-5">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                        <span className="text-sm font-semibold text-slate-700">Concluídas</span>
+                      </div>
+                      <span className="text-sm font-bold text-green-600 bg-green-50 px-2.5 py-1 rounded-full">{taskStats.completed}</span>
+                    </div>
+                    <ProgressBar value={taskStats.completed} max={taskStats.total} color="green" />
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 w-2 rounded-full bg-blue-500"></div>
+                        <span className="text-sm font-semibold text-slate-700">Em Progresso</span>
+                      </div>
+                      <span className="text-sm font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">{taskStats.inProgress}</span>
+                    </div>
+                    <ProgressBar value={taskStats.inProgress} max={taskStats.total} color="blue" />
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 w-2 rounded-full bg-amber-500"></div>
+                        <span className="text-sm font-semibold text-slate-700">Pendentes</span>
+                      </div>
+                      <span className="text-sm font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full">{taskStats.pending}</span>
+                    </div>
+                    <ProgressBar value={taskStats.pending} max={taskStats.total} color="amber" />
+                  </div>
+
+                  <div className="pt-4 mt-4 border-t border-slate-200">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-slate-600 font-medium">Taxa de Conclusão</span>
+                      <span className="text-lg font-bold bg-linear-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                        {taskStats.completionRate}%
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Meeting Stats */}
+              <Card className="border-slate-200/60 shadow-sm hover:shadow-lg transition-shadow">
+                <CardHeader className="bg-linear-to-r from-indigo-50 via-purple-50 to-pink-50 border-b border-indigo-200/60">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-linear-to-br from-indigo-600 to-purple-600 flex items-center justify-center shadow-md">
+                      <Users className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">Histórico de Reuniões</CardTitle>
+                      <p className="text-xs text-slate-600 mt-0.5">Acompanhamento de meetings</p>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div className="text-center p-4 rounded-xl bg-linear-to-br from-blue-50 to-blue-100 border border-blue-200/60 hover:shadow-md transition-shadow">
+                      <Users className="h-5 w-5 text-blue-600 mx-auto mb-2" />
+                      <div className="text-3xl font-bold text-blue-600">{meetingStats.upcoming}</div>
+                      <p className="text-xs text-slate-600 mt-1 font-medium">Próximas</p>
+                    </div>
+                    <div className="text-center p-4 rounded-xl bg-linear-to-br from-slate-50 to-slate-100 border border-slate-200/60 hover:shadow-md transition-shadow">
+                      <Clock className="h-5 w-5 text-slate-600 mx-auto mb-2" />
+                      <div className="text-3xl font-bold text-slate-600">{meetingStats.past}</div>
+                      <p className="text-xs text-slate-600 mt-1 font-medium">Realizadas</p>
+                    </div>
+                  </div>
+                  <div className="p-5 rounded-xl bg-linear-to-r from-indigo-50 via-purple-50 to-pink-50 border border-indigo-200/60 text-center">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <Users className="h-5 w-5 text-purple-600" />
+                      <span className="text-xs text-slate-600 font-medium uppercase tracking-wider">Total</span>
+                    </div>
+                    <p className="text-4xl font-bold bg-linear-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+                      {meetingStats.total}
+                    </p>
+                    <p className="text-xs text-slate-600 mt-1.5 font-medium">reuniões registradas</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
-          <div className="space-y-6">
-            {/* Stat Cards */}
-            {dash && (
-              <>
-                <StatCard
-                  icon={FolderKanban}
-                  label="Tarefas Ativas"
-                  value={dash.counts.tasks.total - dash.counts.tasks.done}
-                  subtitle={`${dash.counts.tasks.done} concluídas`}
-                  trend={dash.counts.tasks.overdue > 0 ? 'down' : 'up'}
-                />
-                <StatCard
-                  icon={ImageIcon}
-                  label="Mídias"
-                  value={dash.counts.media}
-                  subtitle="Arquivos"
-                />
-                <StatCard
-                  icon={Lightbulb}
-                  label="Estratégias"
-                  value={dash.counts.strategies}
-                  subtitle="Documentos"
-                />
-                <StatCard
-                  icon={FileText}
-                  label="Brandings"
-                  value={dash.counts.brandings}
-                  subtitle="Materiais"
-                />
-              </>
-            )}
-            {/* Metadata Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Metadados</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div>
-                  <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">
-                    Criado em
-                  </div>
-                  <div className="text-sm text-slate-900">
-                    {formatDate(client.created_at)}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">
-                    Última atualização
-                  </div>
-                  <div className="text-sm text-slate-900">
-                    {formatDate(client.updated_at)}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">
-                    ID do Cliente
-                  </div>
-                  <div className="text-xs text-slate-900 font-mono bg-slate-100 px-2 py-1 rounded break-all">
-                    {client.id}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-purple-600" />
-                  <CardTitle>Biblioteca de Mídia</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="text-center p-4 rounded-lg bg-purple-50 border border-purple-200">
-                    <div className="text-3xl font-bold text-purple-600">{mediaStats.images}</div>
-                    <p className="text-xs text-slate-600 mt-1">Imagens</p>
-                  </div>
-                  <div className="text-center p-4 rounded-lg bg-pink-50 border border-pink-200">
-                    <div className="text-3xl font-bold text-pink-600">{mediaStats.videos}</div>
-                    <p className="text-xs text-slate-600 mt-1">Vídeos</p>
-                  </div>
-                  <div className="text-center p-4 rounded-lg bg-indigo-50 border border-indigo-200">
-                    <div className="text-3xl font-bold text-indigo-600">{mediaStats.documents}</div>
-                    <p className="text-xs text-slate-600 mt-1">Documentos</p>
-                  </div>
-                </div>
-                <div className="mt-4 p-4 rounded-lg bg-slate-100 border border-slate-200 text-center">
-                  <p className="text-2xl font-bold text-slate-900">{mediaStats.total}</p>
-                  <p className="text-xs text-slate-600 mt-1">Total de arquivos</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-
-        </div>
-        {/* Estatísticas e Conteúdo */}
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Task Breakdown */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <FolderKanban className="h-5 w-5 text-blue-600" />
-                <CardTitle>Desempenho de Tarefas</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-slate-700">Concluídas</span>
-                  <span className="text-sm font-bold text-green-600">{taskStats.completed}</span>
-                </div>
-                <ProgressBar value={taskStats.completed} max={taskStats.total} color="green" />
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-slate-700">Em Progresso</span>
-                  <span className="text-sm font-bold text-blue-600">{taskStats.inProgress}</span>
-                </div>
-                <ProgressBar value={taskStats.inProgress} max={taskStats.total} color="blue" />
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-slate-700">Pendentes</span>
-                  <span className="text-sm font-bold text-amber-600">{taskStats.pending}</span>
-                </div>
-                <ProgressBar value={taskStats.pending} max={taskStats.total} color="amber" />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Media Stats */}
-
-
-        </div>
-
-        {/* Reuniões e Social */}
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Meeting Stats */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-blue-600" />
-                <CardTitle>Histórico de Reuniões</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div className="text-center p-4 rounded-lg bg-blue-50 border border-blue-200">
-                  <div className="text-3xl font-bold text-blue-600">{meetingStats.upcoming}</div>
-                  <p className="text-xs text-slate-600 mt-1">Próximas</p>
-                </div>
-                <div className="text-center p-4 rounded-lg bg-slate-50 border border-slate-200">
-                  <div className="text-3xl font-bold text-slate-600">{meetingStats.past}</div>
-                  <p className="text-xs text-slate-600 mt-1">Realizadas</p>
-                </div>
-              </div>
-              <div className="p-4 rounded-lg bg-linear-to-r from-blue-50 to-purple-50 border border-blue-200 text-center">
-                <p className="text-2xl font-bold bg-linear-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  {meetingStats.total}
-                </p>
-                <p className="text-xs text-slate-600 mt-1">Total de reuniões</p>
-              </div>
-            </CardContent>
-          </Card>
 
           {/* Instagram Feed */}
           <div>
             <InstagramGrid clientId={client.id} />
           </div>
+
+          {/* Summary */}
+          {isOwner && (
+            <Card className="relative overflow-hidden border-2 border-slate-200/60 shadow-xl">
+              <div className="absolute top-0 left-0 w-full h-2 bg-linear-to-r from-blue-600 via-purple-600 to-pink-600 bg-size-[200%_100%] animate-gradient" />
+              <CardHeader>
+                <CardTitle className="text-xl">Resumo Executivo</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-slate-700">Status Geral do Projeto</p>
+                    <div className="flex items-center gap-2">
+                      <div className={`h-3 w-3 rounded-full ${taskStats.completionRate >= 75 ? 'bg-green-500' :
+                        taskStats.completionRate >= 50 ? 'bg-blue-500' :
+                          taskStats.completionRate >= 25 ? 'bg-amber-500' : 'bg-red-500'
+                        }`} />
+                      <span className="text-base font-semibold text-slate-900">
+                        {taskStats.completionRate >= 75 ? 'Excelente' :
+                          taskStats.completionRate >= 50 ? 'Bom' :
+                            taskStats.completionRate >= 25 ? 'Regular' : 'Precisa Atenção'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-slate-700">Saúde Financeira</p>
+                    <div className="flex items-center gap-2">
+                      <div className={`h-3 w-3 rounded-full ${financeStats.balance >= (client.contract_value ? Number(client.contract_value) * 0.5 : 1000) ? 'bg-green-500' :
+                        financeStats.balance >= 0 ? 'bg-blue-500' : 'bg-red-500'
+                        }`} />
+                      <span className="text-base font-semibold text-slate-900">
+                        {financeStats.balance >= (client.contract_value ? Number(client.contract_value) * 0.5 : 1000) ? 'Lucrativo' :
+                          financeStats.balance >= 0 ? 'Equilibrado' : 'Deficitário'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t">
+                  <p className="text-sm text-slate-600 leading-relaxed">
+                    Cliente ativo há <strong>{healthMetrics.daysActive} dias</strong> com <strong>{taskStats.completionRate}%</strong> de taxa de conclusão de tarefas.
+                    {canViewAmounts ? (
+                      financeStats.balance >= 0 ? (
+                        <> Apresenta balanço financeiro positivo de <strong>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financeStats.balance)}</strong>.</>
+                      ) : (
+                        <> Atenção: balanço financeiro negativo de <strong>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Math.abs(financeStats.balance))}</strong>.</>
+                      )
+                    ) : (
+                      financeStats.balance >= 0 ? (
+                        <> Apresenta balanço financeiro positivo.</>
+                      ) : (
+                        <> Atenção: balanço financeiro negativo.</>
+                      )
+                    )}
+                    {' '}Possui <strong>{mediaStats.total} arquivos</strong> na biblioteca de mídia e <strong>{meetingStats.total} reuniões</strong> registradas.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
-
-        {/* Summary */}
-        {isOwner && (
-          <Card className="relative overflow-hidden border-2 border-slate-200/60 shadow-xl">
-            <div className="absolute top-0 left-0 w-full h-2 bg-linear-to-r from-blue-600 via-purple-600 to-pink-600 bg-size-[200%_100%] animate-gradient" />
-            <CardHeader>
-              <CardTitle className="text-xl">Resumo Executivo</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-slate-700">Status Geral do Projeto</p>
-                  <div className="flex items-center gap-2">
-                    <div className={`h-3 w-3 rounded-full ${taskStats.completionRate >= 75 ? 'bg-green-500' :
-                      taskStats.completionRate >= 50 ? 'bg-blue-500' :
-                        taskStats.completionRate >= 25 ? 'bg-amber-500' : 'bg-red-500'
-                      }`} />
-                    <span className="text-base font-semibold text-slate-900">
-                      {taskStats.completionRate >= 75 ? 'Excelente' :
-                        taskStats.completionRate >= 50 ? 'Bom' :
-                          taskStats.completionRate >= 25 ? 'Regular' : 'Precisa Atenção'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-slate-700">Saúde Financeira</p>
-                  <div className="flex items-center gap-2">
-                    <div className={`h-3 w-3 rounded-full ${financeStats.balance >= (client.contract_value ? Number(client.contract_value) * 0.5 : 1000) ? 'bg-green-500' :
-                      financeStats.balance >= 0 ? 'bg-blue-500' : 'bg-red-500'
-                      }`} />
-                    <span className="text-base font-semibold text-slate-900">
-                      {financeStats.balance >= (client.contract_value ? Number(client.contract_value) * 0.5 : 1000) ? 'Lucrativo' :
-                        financeStats.balance >= 0 ? 'Equilibrado' : 'Deficitário'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-4 border-t">
-                <p className="text-sm text-slate-600 leading-relaxed">
-                  Cliente ativo há <strong>{healthMetrics.daysActive} dias</strong> com <strong>{taskStats.completionRate}%</strong> de taxa de conclusão de tarefas.
-                  {canViewAmounts ? (
-                    financeStats.balance >= 0 ? (
-                      <> Apresenta balanço financeiro positivo de <strong>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financeStats.balance)}</strong>.</>
-                    ) : (
-                      <> Atenção: balanço financeiro negativo de <strong>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Math.abs(financeStats.balance))}</strong>.</>
-                    )
-                  ) : (
-                    financeStats.balance >= 0 ? (
-                      <> Apresenta balanço financeiro positivo.</>
-                    ) : (
-                      <> Atenção: balanço financeiro negativo.</>
-                    )
-                  )}
-                  {' '}Possui <strong>{mediaStats.total} arquivos</strong> na biblioteca de mídia e <strong>{meetingStats.total} reuniões</strong> registradas.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
       </div>
     </ProtectedRoute>
   )

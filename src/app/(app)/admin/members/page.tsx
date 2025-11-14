@@ -253,184 +253,224 @@ export default function MembersAdminPage() {
   }
 
   return (
-    <div className="space-y-8 md:space-y-10">
-      {/* Cabeçalho */}
-      <div className="space-y-1">
-        <h1 className="text-2xl font-bold text-slate-900">Gerenciar Membros</h1>
-        <p className="text-sm text-slate-500">Convide e gerencie membros da sua organização</p>
-      </div>
-
-      {/* 📨 CONVITE */}
-      <Card className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-100 px-6 py-5 bg-slate-50 rounded-t-2xl">
-          <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
-            <UserPlus className="h-5 w-5 text-slate-500" />
-            Convidar novo membro
-          </h2>
-          <p className="text-sm text-slate-500">
-            Envie um convite por e-mail para liberar acesso como cliente ou
-            membro da equipe.
-          </p>
+    <div className="min-h-screen bg-slate-50/50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        {/* 🎯 Cabeçalho com Título e Descrição */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
+          <div className="flex items-center justify-between">
+            <div className="space-y-2">
+              <h1 className="text-3xl font-bold bg-linear-to-r from-slate-900 via-indigo-900 to-slate-900 bg-clip-text text-transparent">
+                Gerenciar Membros
+              </h1>
+              <p className="text-slate-600">
+                Convide e gerencie membros da sua organização com controle total de permissões
+              </p>
+            </div>
+            <Users className="h-12 w-12 text-indigo-200" />
+          </div>
         </div>
 
-        <form
-          action={handleInvite}
-          className="grid gap-4 px-6 py-6"
-        >
-          <input type="hidden" name="allow_resend_existing" value="true" />
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <div>
-              <Label htmlFor="invite-email">E-mail</Label>
-              <Input
-                id="invite-email"
-                name="email"
-                type="email"
-                required
-                placeholder="pessoa@empresa.com"
-                autoComplete="email"
-                inputMode="email"
-                pattern="[^\s@]+@[^\s@]+\.[^\s@]{2,}"
-                className="border border-slate-300 bg-white"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="invite-role">Papel</Label>
-              <select
-                id="invite-role"
-                name="role"
-                value={selectedRole}
-                onChange={(e) => {
-                  setSelectedRole(e.target.value as Role)
-                  setSelectedClient('') // Limpa seleção ao mudar papel
-                }}
-                className="h-11 w-full rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm focus:ring-2 focus:ring-indigo-500"
-                title="Selecionar papel"
-                aria-label="Selecionar papel"
+        {/* 📊 RESUMO DE ROLES - Grid Responsivo */}
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {(['OWNER', 'STAFF', 'CLIENT'] as Role[]).map((roleKey) => {
+            const Icon =
+              roleKey === 'OWNER' ? Shield : roleKey === 'STAFF' ? Users : User
+            const count = totalByRole[roleKey]
+            const colors = {
+              OWNER: 'from-violet-500 to-purple-600',
+              STAFF: 'from-sky-500 to-blue-600',
+              CLIENT: 'from-emerald-500 to-green-600',
+            }
+            const bgColors = {
+              OWNER: 'bg-linear-to-br from-violet-50 to-purple-50',
+              STAFF: 'bg-linear-to-br from-sky-50 to-blue-50',
+              CLIENT: 'bg-linear-to-br from-emerald-50 to-green-50',
+            }
+            return (
+              <Card
+                key={roleKey}
+                className={`rounded-2xl border border-slate-200 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group ${bgColors[roleKey]}`}
               >
-                <option value="STAFF">Equipe</option>
-                <option value="CLIENT">Cliente</option>
-              </select>
-            </div>
+                <div className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className={`p-3 rounded-xl bg-linear-to-r ${colors[roleKey]} shadow-lg`}>
+                      <Icon className="w-6 h-6 text-white" />
+                    </div>
+                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 bg-white/80 px-3 py-1 rounded-full">
+                      {ROLE_LABEL[roleKey]}
+                    </span>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-4xl font-bold text-slate-900">
+                      {count}
+                    </p>
+                    <p className="text-sm text-slate-600 leading-relaxed">
+                      {ROLE_DESCRIPTION[roleKey]}
+                    </p>
+                  </div>
+                </div>
+                <div className={`h-1 w-full bg-linear-to-r ${colors[roleKey]} transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300`} />
+              </Card>
+            )
+          })}
+        </div>
 
-            {selectedRole === 'CLIENT' && (
-              <div>
-                <Label htmlFor="invite-client">Cliente</Label>
+        {/* 📨 CONVITE - Card Melhorado */}
+        <Card className="rounded-2xl border border-slate-200 bg-white shadow-lg overflow-hidden">
+          <div className="border-b border-slate-100 px-8 py-6 bg-linear-to-r from-indigo-50 via-purple-50 to-pink-50">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 rounded-lg bg-indigo-600">
+                <UserPlus className="h-5 w-5 text-white" />
+              </div>
+              <h2 className="text-xl font-bold text-slate-900">
+                Convidar novo membro
+              </h2>
+            </div>
+            <p className="text-sm text-slate-600 ml-12">
+              Envie um convite por e-mail para liberar acesso como cliente ou membro da equipe.
+            </p>
+          </div>
+
+          <form action={handleInvite} className="p-8">
+            <input type="hidden" name="allow_resend_existing" value="true" />
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-6">
+              <div className="space-y-2">
+                <Label htmlFor="invite-email" className="text-sm font-medium text-slate-700">
+                  E-mail do convidado
+                </Label>
+                <Input
+                  id="invite-email"
+                  name="email"
+                  type="email"
+                  required
+                  placeholder="pessoa@empresa.com"
+                  autoComplete="email"
+                  inputMode="email"
+                  pattern="[^\s@]+@[^\s@]+\.[^\s@]{2,}"
+                  className="h-11 border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="invite-role" className="text-sm font-medium text-slate-700">
+                  Papel na organização
+                </Label>
                 <select
-                  id="invite-client"
-                  name="client_id"
-                  value={selectedClient}
-                  onChange={(e) => setSelectedClient(e.target.value)}
-                  className="h-11 w-full rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm focus:ring-2 focus:ring-indigo-500"
-                  title="Selecionar cliente para vincular"
-                  aria-label="Selecionar cliente para vincular"
+                  id="invite-role"
+                  name="role"
+                  value={selectedRole}
+                  onChange={(e) => {
+                    setSelectedRole(e.target.value as Role)
+                    setSelectedClient('')
+                  }}
+                  className="h-11 w-full rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  title="Selecionar papel"
+                  aria-label="Selecionar papel"
                 >
-                  <option value="">Criar novo cliente automaticamente</option>
-                  {clientsData?.data?.map((client: { id: string; name: string }) => (
-                    <option key={client.id} value={client.id}>
-                      {client.name}
-                    </option>
-                  ))}
+                  <option value="STAFF">Equipe</option>
+                  <option value="CLIENT">Cliente</option>
                 </select>
               </div>
-            )}
-          </div>
 
-          <div className="flex justify-end pt-2">
-            <Button
-              type="submit"
-              disabled={submitting}
-              className="bg-indigo-600 hover:bg-indigo-700 px-8 gap-2"
-              aria-busy={submitting}
-              aria-disabled={submitting}
-            >
-              {submitting ? (
-                'Enviando...'
-              ) : (
-                <>
-                  <UserPlus className="h-4 w-4" />
-                  Enviar convite
-                </>
-              )}
-            </Button>
-          </div>
-        </form>
-      </Card>
-
-      {/* 📊 RESUMO DE ROLES */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {(['OWNER', 'STAFF', 'CLIENT'] as Role[]).map((roleKey) => {
-          const Icon =
-            roleKey === 'OWNER' ? Shield : roleKey === 'STAFF' ? Users : User
-          const count = totalByRole[roleKey]
-          return (
-            <Card
-              key={roleKey}
-              className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm hover:shadow-md transition"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.15em] text-slate-400">
-                    {ROLE_LABEL[roleKey]}
-                  </p>
-                  <p className="text-3xl font-semibold text-slate-900">
-                    {count}
-                  </p>
-                  <p className="text-xs text-slate-500 mt-1">
-                    {ROLE_DESCRIPTION[roleKey]}
-                  </p>
+              {selectedRole === 'CLIENT' && (
+                <div className="space-y-2">
+                  <Label htmlFor="invite-client" className="text-sm font-medium text-slate-700">
+                    Vincular a cliente
+                  </Label>
+                  <select
+                    id="invite-client"
+                    name="client_id"
+                    value={selectedClient}
+                    onChange={(e) => setSelectedClient(e.target.value)}
+                    className="h-11 w-full rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    title="Selecionar cliente para vincular"
+                    aria-label="Selecionar cliente para vincular"
+                  >
+                    <option value="">Criar novo cliente automaticamente</option>
+                    {clientsData?.data?.map((client: { id: string; name: string }) => (
+                      <option key={client.id} value={client.id}>
+                        {client.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-                <Icon className="w-6 h-6 text-slate-400" />
+              )}
+            </div>
+
+            <div className="flex justify-end pt-4 border-t border-slate-100">
+              <Button
+                type="submit"
+                disabled={submitting}
+                className="bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 px-8 h-11 gap-2 shadow-lg"
+                aria-busy={submitting}
+                aria-disabled={submitting}
+              >
+                {submitting ? (
+                  <>
+                    <RefreshCcw className="h-4 w-4 animate-spin" />
+                    Enviando...
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="h-4 w-4" />
+                    Enviar convite
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </Card>
+        {/* 👥 LISTA DE MEMBROS - Grid Melhorado */}
+        <Card className="rounded-2xl border border-slate-200 bg-white shadow-lg overflow-hidden">
+          <div className="flex items-center justify-between border-b border-slate-100 px-8 py-6 bg-linear-to-r from-blue-50 via-cyan-50 to-teal-50">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-blue-600">
+                <Users className="h-5 w-5 text-white" />
               </div>
-            </Card>
-          )
-        })}
-      </div >
+              <h2 className="text-xl font-bold text-slate-900">
+                Membros da organização
+              </h2>
+            </div>
+            <Badge
+              variant="secondary"
+              className="rounded-full px-4 py-1.5 text-sm font-semibold bg-blue-100 text-blue-700"
+            >
+              {members.length} membro(s)
+            </Badge>
+          </div>
 
-      {/* 👥 LISTA DE MEMBROS */}
-      < Card className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden" >
-        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5 bg-slate-50">
-          <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
-            <Users className="h-5 w-5 text-slate-500" />
-            Membros da organização
-          </h2>
-          <Badge
-            variant="secondary"
-            className="rounded-full px-3 py-1 text-xs uppercase tracking-wide"
-          >
-            {members.length} membro(s)
-          </Badge>
-        </div>
-
-        {
-          members.length === 0 ? (
-            <p className="px-6 py-10 text-sm text-slate-500 text-center">
-              Nenhum membro cadastrado até o momento.
-            </p>
+          {members.length === 0 ? (
+            <div className="px-8 py-16 text-center">
+              <Users className="h-16 w-16 text-slate-300 mx-auto mb-4" />
+              <p className="text-slate-500 font-medium">Nenhum membro cadastrado até o momento.</p>
+              <p className="text-sm text-slate-400 mt-2">Envie convites usando o formulário acima</p>
+            </div>
           ) : (
             <div className="divide-y divide-slate-100">
               {members.map((m) => (
                 <div
                   key={m.id}
-                  className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 px-6 py-5 hover:bg-slate-50/70 transition-colors"
+                  className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 px-8 py-6 hover:bg-slate-50/80 transition-colors"
                 >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-sm font-medium text-slate-900">
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <p className="text-base font-semibold text-slate-900">
                         {m.full_name || m.email?.split('@')[0] || 'Usuário'}
                       </p>
+                      <RoleBadge role={(m.role as Role) || 'CLIENT'} />
                       <MemberStatusBadge status={m.status} />
                       <OnlineIndicator online={m.online} lastActive={m.last_active_at} />
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                    <div className="flex items-center gap-2 text-sm text-slate-500">
+                      <Mail className="h-3.5 w-3.5" />
                       <span>{m.email || '—'}</span>
                       <span className="text-slate-300">•</span>
+                      <Clock className="h-3.5 w-3.5" />
                       <span>Desde {formatDate(m.created_at)}</span>
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-3 justify-end md:justify-start">
-                    <RoleBadge role={(m.role as Role) || 'CLIENT'} />
+                  <div className="flex flex-wrap items-center gap-2 lg:justify-end">
                     <UpdateRoleForm
                       memberId={m.id}
                       currentRole={m.role || 'CLIENT'}
@@ -439,9 +479,9 @@ export default function MembersAdminPage() {
 
                     <Button
                       size="sm"
-                      variant={m.status === 'inactive' ? 'secondary' : 'outline'}
+                      variant={m.status === 'inactive' ? 'default' : 'outline'}
                       onClick={() => toggleMemberActive(m.id, m.status)}
-                      className="rounded-full"
+                      className={`rounded-lg ${m.status === 'inactive' ? 'bg-green-600 hover:bg-green-700' : ''}`}
                     >
                       {m.status === 'inactive' ? 'Ativar' : 'Desativar'}
                     </Button>
@@ -457,37 +497,54 @@ export default function MembersAdminPage() {
                 </div>
               ))}
             </div>
-          )
-        }
-      </Card >
+          )}
+        </Card>
 
-      {/* ✉️ CONVITES PENDENTES */}
-      < Card className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden" >
-        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5 bg-slate-50">
-          <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
-            <Mail className="h-5 w-5 text-slate-500" />
-            Convites pendentes
-          </h2>
-          <Badge variant="secondary" className="rounded-full px-3 py-1 text-xs uppercase tracking-wide">
-            {invitesData?.data?.length || 0}
-          </Badge>
-        </div>
-        {
-          !invitesData?.data?.length ? (
-            <p className="px-6 py-8 text-sm text-slate-500 text-center">Nenhum convite pendente.</p>
+        {/* ✉️ CONVITES PENDENTES - Grid Melhorado */}
+        <Card className="rounded-2xl border border-slate-200 bg-white shadow-lg overflow-hidden">
+          <div className="flex items-center justify-between border-b border-slate-100 px-8 py-6 bg-linear-to-r from-amber-50 via-orange-50 to-yellow-50">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-amber-600">
+                <Mail className="h-5 w-5 text-white" />
+              </div>
+              <h2 className="text-xl font-bold text-slate-900">
+                Convites pendentes
+              </h2>
+            </div>
+            <Badge
+              variant="secondary"
+              className="rounded-full px-4 py-1.5 text-sm font-semibold bg-amber-100 text-amber-700"
+            >
+              {invitesData?.data?.length || 0}
+            </Badge>
+          </div>
+
+          {!invitesData?.data?.length ? (
+            <div className="px-8 py-16 text-center">
+              <Mail className="h-16 w-16 text-slate-300 mx-auto mb-4" />
+              <p className="text-slate-500 font-medium">Nenhum convite pendente.</p>
+              <p className="text-sm text-slate-400 mt-2">Todos os convites foram aceitos ou expirados</p>
+            </div>
           ) : (
             <div className="divide-y divide-slate-100">
               {invitesData.data.map((invite: { id: string; email: string; roleRequested: string; status: string; expiresAt: string; token: string }) => (
-                <div key={invite.id} className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 px-6 py-5 hover:bg-slate-50/70 transition-colors">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-slate-900">{invite.email}</p>
+                <div
+                  key={invite.id}
+                  className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 px-8 py-6 hover:bg-slate-50/80 transition-colors"
+                >
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <p className="text-base font-semibold text-slate-900">{invite.email}</p>
                       <RoleBadge role={(invite.roleRequested as Role) || 'CLIENT'} />
+                      <InviteStatusBadge status={invite.status} />
                     </div>
-                    <p className="text-[11px] text-slate-500">Expira em {formatDate(invite.expiresAt)}</p>
+                    <div className="flex items-center gap-2 text-sm text-slate-500">
+                      <Clock className="h-3.5 w-3.5" />
+                      <span>Expira em {formatDate(invite.expiresAt)}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <InviteStatusBadge status={invite.status} />
+
+                  <div className="flex flex-wrap items-center gap-2">
                     {invite.status === 'PENDING' && (
                       <>
                         <Button
@@ -495,33 +552,48 @@ export default function MembersAdminPage() {
                           variant="outline"
                           onClick={() => handleResendInvite(invite.id)}
                           disabled={resendingId === invite.id}
+                          className="rounded-lg"
                         >
                           {resendingId === invite.id ? (
-                            'Reenviando...'
+                            <>
+                              <RefreshCcw className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                              Reenviando...
+                            </>
                           ) : (
                             <>
-                              <RefreshCcw className="h-3.5 w-3.5 mr-1" />
+                              <RefreshCcw className="h-3.5 w-3.5 mr-1.5" />
                               Reenviar
                             </>
                           )}
                         </Button>
-                        <Button size="sm" variant="outline" onClick={() => handleCancelInvite(invite.id)} className="gap-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleCancelInvite(invite.id)}
+                          className="rounded-lg gap-1.5"
+                        >
                           <XCircle className="h-3.5 w-3.5" />
                           Cancelar
                         </Button>
                       </>
                     )}
-                    <Button size="sm" variant="destructive" onClick={() => handleDeleteInvite(invite.id)} className="gap-1">
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => handleDeleteInvite(invite.id)}
+                      className="rounded-lg gap-1.5"
+                    >
                       <Trash2 className="h-3.5 w-3.5" />
                       Excluir
                     </Button>
                     <a
                       href={`/invite/${invite.token}`}
-                      className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:underline"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg transition-colors"
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      <LinkIcon className="h-3.5 w-3.5" /> Abrir link
+                      <LinkIcon className="h-3.5 w-3.5" />
+                      Abrir link
                     </a>
                     <Button
                       size="sm"
@@ -535,17 +607,18 @@ export default function MembersAdminPage() {
                           toast.error('Não foi possível copiar o link')
                         }
                       }}
-                      className="gap-1"
+                      className="rounded-lg gap-1.5"
                     >
-                      <Copy className="h-3.5 w-3.5" /> Copiar
+                      <Copy className="h-3.5 w-3.5" />
+                      Copiar
                     </Button>
                   </div>
                 </div>
               ))}
             </div>
-          )
-        }
-      </Card >
-    </div >
+          )}
+        </Card>
+      </div>
+    </div>
   )
 }

@@ -1,6 +1,7 @@
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ExternalLink, Instagram, Loader2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 type IgMedia = {
@@ -42,43 +43,85 @@ export function InstagramGrid({ clientId, limit = 12 }: InstagramGridProps) {
 
   if (!clientId) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Instagram</CardTitle>
+      <Card className="border-slate-200/60 shadow-sm">
+        <CardHeader className="bg-linear-to-r from-pink-50 via-purple-50 to-indigo-50 border-b border-pink-200/60">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg bg-linear-to-br from-pink-600 via-purple-600 to-indigo-600 flex items-center justify-center shadow-md">
+              <Instagram className="h-5 w-5 text-white" />
+            </div>
+            <CardTitle className="text-lg">Feed do Instagram</CardTitle>
+          </div>
         </CardHeader>
-        <CardContent>
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            Use o botão &quot;Conectar Instagram&quot; na página do cliente para conectar a conta.
-          </p>
+        <CardContent className="pt-6">
+          <div className="p-4 rounded-lg bg-linear-to-br from-pink-50/50 to-purple-50/50 border border-pink-200/60">
+            <Instagram className="h-8 w-8 text-pink-400 mx-auto mb-3" />
+            <p className="text-sm text-slate-600 text-center">
+              Use o botão &quot;Conectar Instagram&quot; na página do cliente para conectar a conta.
+            </p>
+          </div>
         </CardContent>
       </Card>
     )
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Feed do Instagram</CardTitle>
+    <Card className="border-slate-200/60 shadow-sm hover:shadow-md transition-shadow">
+      <CardHeader className="bg-linear-to-r from-pink-50 via-purple-50 to-indigo-50 border-b border-pink-200/60">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg bg-linear-to-br from-pink-600 via-purple-600 to-indigo-600 flex items-center justify-center shadow-md">
+              <Instagram className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">Feed do Instagram</CardTitle>
+              {items.length > 0 && (
+                <p className="text-xs text-slate-600 mt-0.5">{items.length} posts recentes</p>
+              )}
+            </div>
+          </div>
+          {items.length > 0 && (
+            <a
+              href={`https://www.instagram.com`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-pink-600 hover:text-pink-700 flex items-center gap-1 font-medium"
+            >
+              Ver perfil <ExternalLink className="h-3 w-3" />
+            </a>
+          )}
+        </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-6">
         {error && (
-          <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800">
-            <p className="text-sm text-blue-800 dark:text-blue-200 font-medium mb-2">
-              Instagram não conectado
-            </p>
-            <p className="text-xs text-blue-600 dark:text-blue-300">
-              {error.includes('não conectado') || error.includes('Token')
-                ? 'Use o botão &quot;Conectar Instagram&quot; no formulário de edição do cliente para autorizar o acesso.'
-                : error
-              }
-            </p>
+          <div className="p-5 rounded-xl bg-linear-to-br from-blue-50 to-indigo-50 border border-blue-200/60">
+            <div className="flex items-start gap-3">
+              <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
+                <Instagram className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm text-blue-800 font-semibold mb-1">
+                  Instagram não conectado
+                </p>
+                <p className="text-xs text-blue-600 leading-relaxed">
+                  {error.includes('não conectado') || error.includes('Token')
+                    ? 'Use o botão "Conectar Instagram" no formulário de edição do cliente para autorizar o acesso.'
+                    : error
+                  }
+                </p>
+              </div>
+            </div>
           </div>
         )}
         {loading && !items.length && (
-          <div className="text-sm text-slate-500">Carregando feed...</div>
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <Loader2 className="h-8 w-8 text-pink-500 animate-spin mx-auto mb-3" />
+              <p className="text-sm text-slate-500">Carregando feed...</p>
+            </div>
+          </div>
         )}
         {!error && items.length > 0 && (
-          <div className="grid grid-cols-3 gap-1 sm:gap-2">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
             {items.map((m) => {
               const img = m.media_type === 'VIDEO' ? (m.thumbnail_url || m.media_url) : m.media_url
               return (
@@ -87,17 +130,23 @@ export function InstagramGrid({ clientId, limit = 12 }: InstagramGridProps) {
                   href={m.permalink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="relative w-full aspect-square overflow-hidden rounded-md bg-slate-100 hover:opacity-90 transition-opacity"
+                  className="relative w-full aspect-square overflow-hidden rounded-lg bg-slate-100 hover:opacity-80 hover:scale-105 transition-all group shadow-sm hover:shadow-md"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={img} alt="Instagram post" className="h-full w-full object-cover" />
+                  <div className="absolute inset-0 bg-linear-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-2">
+                    <ExternalLink className="h-4 w-4 text-white" />
+                  </div>
                 </a>
               )
             })}
           </div>
         )}
         {!loading && !error && items.length === 0 && (
-          <p className="text-sm text-slate-500 mt-2">Nenhuma mídia encontrada no Instagram.</p>
+          <div className="p-8 text-center">
+            <Instagram className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+            <p className="text-sm text-slate-500">Nenhuma mídia encontrada no Instagram.</p>
+          </div>
         )}
       </CardContent>
     </Card>
