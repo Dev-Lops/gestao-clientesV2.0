@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
-import { Select } from '@/components/ui/select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { formatDateInput, parseDateInput, toLocalISOString } from '@/lib/utils'
 import {
@@ -305,7 +305,7 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
     }
 
     if (clientFilter !== 'all') {
-      if (clientFilter === '') {
+      if (clientFilter === '' || clientFilter === '__NONE__') {
         result = result.filter((f) => !f.clientId)
       } else {
         result = result.filter((f) => f.clientId === clientFilter)
@@ -583,17 +583,21 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
                 <div className="flex items-center gap-2">
                   <Building2 className="h-4 w-4 text-slate-500" />
                   <Select
-                    value={clientFilter}
-                    onChange={(e) => setClientFilter(e.target.value)}
-                    className="w-48 h-8 text-xs"
+                    value={clientFilter || '__NONE__'}
+                    onValueChange={(value) => setClientFilter(value === '__NONE__' ? '' : value)}
                   >
-                    <option value="all">Todos os clientes</option>
-                    <option value="">Sem cliente</option>
-                    {clients.map((client) => (
-                      <option key={client.id} value={client.id}>
-                        {client.name}
-                      </option>
-                    ))}
+                    <SelectTrigger className="w-48 h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos os clientes</SelectItem>
+                      <SelectItem value="__NONE__">Sem cliente</SelectItem>
+                      {clients.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                 </div>
                 <div className="flex items-center gap-2 ml-auto">
@@ -743,19 +747,23 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
                     <div className="space-y-2">
                       <Label htmlFor="type">Tipo</Label>
                       <Select
-                        id="type"
                         value={formData.type}
-                        onChange={(e) =>
+                        onValueChange={(value) =>
                           setFormData({
                             ...formData,
-                            type: e.target.value as 'income' | 'expense',
+                            type: value as 'income' | 'expense',
                             category: '',
                           })
                         }
                         disabled={submitting}
                       >
-                        <option value="income">Receita</option>
-                        <option value="expense">Despesa</option>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="income">Receita</SelectItem>
+                          <SelectItem value="expense">Despesa</SelectItem>
+                        </SelectContent>
                       </Select>
                     </div>
 
@@ -781,38 +789,46 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
                     <div className="space-y-2">
                       <Label htmlFor="clientId">Cliente (opcional)</Label>
                       <Select
-                        id="clientId"
-                        value={formData.clientId}
-                        onChange={(e) =>
-                          setFormData({ ...formData, clientId: e.target.value })
+                        value={formData.clientId || '__NONE__'}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, clientId: value === '__NONE__' ? '' : value })
                         }
                         disabled={submitting}
                       >
-                        <option value="">Sem cliente específico</option>
-                        {clients.map((client) => (
-                          <option key={client.id} value={client.id}>
-                            {client.name}
-                          </option>
-                        ))}
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__NONE__">Sem cliente específico</SelectItem>
+                          {clients.map((client) => (
+                            <SelectItem key={client.id} value={client.id}>
+                              {client.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
                       </Select>
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="category">Categoria</Label>
                       <Select
-                        id="category"
-                        value={formData.category}
-                        onChange={(e) =>
-                          setFormData({ ...formData, category: e.target.value })
+                        value={formData.category || '__NONE__'}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, category: value === '__NONE__' ? '' : value })
                         }
                         disabled={submitting}
                       >
-                        <option value="">Selecione...</option>
-                        {CATEGORIES[formData.type].map((cat) => (
-                          <option key={cat} value={cat}>
-                            {cat}
-                          </option>
-                        ))}
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__NONE__">Selecione...</SelectItem>
+                          {CATEGORIES[formData.type].map((cat) => (
+                            <SelectItem key={cat} value={cat}>
+                              {cat}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
                       </Select>
                     </div>
 

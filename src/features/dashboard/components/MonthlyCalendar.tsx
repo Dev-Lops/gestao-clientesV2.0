@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
@@ -122,17 +123,16 @@ export function MonthlyCalendar({ activities, onMonthChange, initialMonth }: { a
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <select
-              className="h-9 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 text-sm"
-              value={filter}
-              onChange={(e) => setFilter(e.target.value as 'all' | 'meeting' | 'task')}
-              title="Filtrar atividades"
-              aria-label="Filtrar atividades"
-            >
-              <option value="all">Tudo</option>
-              <option value="meeting">Reuniões</option>
-              <option value="task">Tarefas</option>
-            </select>
+            <Select value={filter} onValueChange={(value) => setFilter(value as 'all' | 'meeting' | 'task')}>
+              <SelectTrigger className="h-9 w-[110px] bg-white dark:bg-slate-800">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tudo</SelectItem>
+                <SelectItem value="meeting">Reuniões</SelectItem>
+                <SelectItem value="task">Tarefas</SelectItem>
+              </SelectContent>
+            </Select>
             <Button variant="outline" size="sm" className="rounded-lg" onClick={prevMonth}>
               <ChevronLeft className="w-4 h-4" />
             </Button>

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select } from '@/components/ui/select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { formatDateInput, parseDateInput, toLocalISOString } from '@/lib/utils'
 import { ClientStatus } from '@/types/client'
 import { AppClient } from '@/types/tables'
@@ -254,56 +254,65 @@ export function ClientInfoDisplay({ client, canEdit }: ClientInfoDisplayProps) {
                 <div className="space-y-2">
                   <Label htmlFor="status">Status</Label>
                   <Select
-                    id="status"
                     value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value as ClientStatus })}
+                    onValueChange={(value) => setFormData({ ...formData, status: value as ClientStatus })}
                     disabled={loading}
-                    className="border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-slate-800"
                   >
-                    <option value="new">Novo</option>
-                    <option value="onboarding">Em Onboarding</option>
-                    <option value="active">Ativo</option>
-                    <option value="paused">Pausado</option>
-                    <option value="closed">Encerrado</option>
+                    <SelectTrigger className="border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-slate-800">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="new">Novo</SelectItem>
+                      <SelectItem value="onboarding">Em Onboarding</SelectItem>
+                      <SelectItem value="active">Ativo</SelectItem>
+                      <SelectItem value="paused">Pausado</SelectItem>
+                      <SelectItem value="closed">Encerrado</SelectItem>
+                    </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="plan">Plano</Label>
                   <Select
-                    id="plan"
-                    value={formData.plan}
-                    onChange={(e) => setFormData({ ...formData, plan: e.target.value })}
+                    value={formData.plan || '__NONE__'}
+                    onValueChange={(value) => setFormData({ ...formData, plan: value === '__NONE__' ? '' : value })}
                     disabled={loading}
-                    className="border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-slate-800"
                   >
-                    <option value="">Selecione</option>
-                    <option value="GESTAO">Gestão</option>
-                    <option value="ESTRUTURA">Estrutura</option>
-                    <option value="FREELANCER">Freelancer</option>
-                    <option value="PARCERIA">Parceria</option>
-                    <option value="CONSULTORIA">Consultoria</option>
-                    <option value="OUTRO">Outro</option>
+                    <SelectTrigger className="border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-slate-800">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__NONE__">Selecione</SelectItem>
+                      <SelectItem value="GESTAO">Gestão</SelectItem>
+                      <SelectItem value="ESTRUTURA">Estrutura</SelectItem>
+                      <SelectItem value="FREELANCER">Freelancer</SelectItem>
+                      <SelectItem value="PARCERIA">Parceria</SelectItem>
+                      <SelectItem value="CONSULTORIA">Consultoria</SelectItem>
+                      <SelectItem value="OUTRO">Outro</SelectItem>
+                    </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="mainChannel">Canal Principal</Label>
                   <Select
-                    id="mainChannel"
-                    value={formData.mainChannel}
-                    onChange={(e) => setFormData({ ...formData, mainChannel: e.target.value })}
+                    value={formData.mainChannel || '__NONE__'}
+                    onValueChange={(value) => setFormData({ ...formData, mainChannel: value === '__NONE__' ? '' : value })}
                     disabled={loading}
-                    className="border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-slate-800"
                   >
-                    <option value="">Selecione</option>
-                    <option value="INSTAGRAM">Instagram</option>
-                    <option value="FACEBOOK">Facebook</option>
-                    <option value="TIKTOK">TikTok</option>
-                    <option value="YOUTUBE">YouTube</option>
-                    <option value="LINKEDIN">LinkedIn</option>
-                    <option value="TWITTER">Twitter</option>
-                    <option value="OUTRO">Outro</option>
+                    <SelectTrigger className="border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-slate-800">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__NONE__">Selecione</SelectItem>
+                      <SelectItem value="INSTAGRAM">Instagram</SelectItem>
+                      <SelectItem value="FACEBOOK">Facebook</SelectItem>
+                      <SelectItem value="TIKTOK">TikTok</SelectItem>
+                      <SelectItem value="YOUTUBE">YouTube</SelectItem>
+                      <SelectItem value="LINKEDIN">LinkedIn</SelectItem>
+                      <SelectItem value="TWITTER">Twitter</SelectItem>
+                      <SelectItem value="OUTRO">Outro</SelectItem>
+                    </SelectContent>
                   </Select>
                 </div>
               </div>

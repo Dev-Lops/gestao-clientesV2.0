@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select } from '@/components/ui/select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { Edit, Lightbulb, Plus, Target, Trash2, TrendingUp, Users, X } from 'lucide-react'
 import { useState } from 'react'
@@ -227,14 +227,18 @@ export function StrategyManager({ clientId, initialStrategies = [] }: StrategyMa
                   <div className="space-y-2">
                     <Label htmlFor="type">Tipo</Label>
                     <Select
-                      id="type"
                       value={formData.type}
-                      onChange={(e) => setFormData({ ...formData, type: e.target.value as Strategy['type'] })}
+                      onValueChange={(value) => setFormData({ ...formData, type: value as Strategy['type'] })}
                     >
-                      <option value="objective">Objetivo</option>
-                      <option value="action-plan">Plano de Ação</option>
-                      <option value="target-audience">Público-Alvo</option>
-                      <option value="kpi">KPI</option>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="objective">Objetivo</SelectItem>
+                        <SelectItem value="action-plan">Plano de Ação</SelectItem>
+                        <SelectItem value="target-audience">Público-Alvo</SelectItem>
+                        <SelectItem value="kpi">KPI</SelectItem>
+                      </SelectContent>
                     </Select>
                   </div>
 

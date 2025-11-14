@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select } from '@/components/ui/select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { AppRole, can } from '@/lib/permissions'
 import { fetcher } from '@/lib/swr'
@@ -290,13 +290,18 @@ export function BrandingManager({ clientId, initialBranding = [] }: BrandingMana
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="type">Tipo</Label>
-                      <Select id="type" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as BrandingType })}>
-                        <option value="logo">Logotipo</option>
-                        <option value="color-palette">Paleta de Cores</option>
-                        <option value="typography">Tipografia</option>
-                        <option value="manual">Manual</option>
-                        <option value="template">Template</option>
-                        <option value="asset">Asset</option>
+                      <Select value={form.type} onValueChange={(value) => setForm({ ...form, type: value as BrandingType })}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="logo">Logotipo</SelectItem>
+                          <SelectItem value="color-palette">Paleta de Cores</SelectItem>
+                          <SelectItem value="typography">Tipografia</SelectItem>
+                          <SelectItem value="manual">Manual</SelectItem>
+                          <SelectItem value="template">Template</SelectItem>
+                          <SelectItem value="asset">Asset</SelectItem>
+                        </SelectContent>
                       </Select>
                     </div>
 

@@ -2,6 +2,7 @@
 
 import { updateMemberRoleAction } from '@/app/(app)/admin/members/actions'
 import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -47,23 +48,23 @@ export function UpdateRoleForm({ memberId, currentRole, onSuccess }: UpdateRoleF
 
   return (
     <form onSubmit={handleSubmit} className="flex items-center gap-2">
-      <select
-        name="role"
+      <Select
         value={selectedRole}
-        onChange={(e) => setSelectedRole(e.target.value)}
+        onValueChange={setSelectedRole}
         disabled={isUpdating}
-        title="Alterar papel do membro"
-        aria-label="Alterar papel do membro"
-        className={cn(
-          'h-10 min-w-[130px] rounded-full border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm transition-all',
-          'focus:outline-none focus:ring-2 focus:ring-indigo-600 hover:border-slate-300 hover:bg-slate-50',
-          'disabled:opacity-50 disabled:cursor-not-allowed'
-        )}
       >
-        <option value="OWNER">Proprietário</option>
-        <option value="STAFF">Equipe</option>
-        <option value="CLIENT">Cliente</option>
-      </select>
+        <SelectTrigger className={cn(
+          'h-10 min-w-[130px] rounded-full bg-white shadow-sm',
+          'disabled:opacity-50 disabled:cursor-not-allowed'
+        )}>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="OWNER">Proprietário</SelectItem>
+          <SelectItem value="STAFF">Equipe</SelectItem>
+          <SelectItem value="CLIENT">Cliente</SelectItem>
+        </SelectContent>
+      </Select>
       <Button
         type="submit"
         size="sm"

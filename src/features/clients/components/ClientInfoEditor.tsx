@@ -203,17 +203,20 @@ export function ClientInfoEditor({ client, canEdit }: ClientInfoEditorProps) {
                   Status
                 </Label>
                 <Select
-                  id="status"
                   value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value as 'new' | 'onboarding' | 'active' | 'paused' | 'closed' })}
+                  onValueChange={(value) => setFormData({ ...formData, status: value as 'new' | 'onboarding' | 'active' | 'paused' | 'closed' })}
                   disabled={loading}
-                  className="border-slate-300 focus:border-blue-500 focus:ring-blue-500"
                 >
-                  <option value="new">Novo</option>
-                  <option value="onboarding">Em Onboarding</option>
-                  <option value="active">Ativo</option>
-                  <option value="paused">Pausado</option>
-                  <option value="closed">Encerrado</option>
+                  <SelectTrigger className="border-slate-300 focus:border-blue-500 focus:ring-blue-500">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="new">Novo</SelectItem>
+                    <SelectItem value="onboarding">Em Onboarding</SelectItem>
+                    <SelectItem value="active">Ativo</SelectItem>
+                    <SelectItem value="paused">Pausado</SelectItem>
+                    <SelectItem value="closed">Encerrado</SelectItem>
+                  </SelectContent>
                 </Select>
               </div>
 

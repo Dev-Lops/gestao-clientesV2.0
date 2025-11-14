@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { DeleteMemberButton } from '@/features/admin/components/DeleteMemberButton'
 import { UpdateRoleForm } from '@/features/admin/components/UpdateRoleForm'
 import { Clock, Copy, Link as LinkIcon, Mail, RefreshCcw, Shield, Trash2, User, UserPlus, Users, XCircle } from 'lucide-react'
@@ -62,7 +63,7 @@ export default function MembersAdminPage() {
   const { data: invitesData, mutate: mutateInvites } = useSWR('/api/invites', invitesFetcher)
   const { data: clientsData } = useSWR('/api/clients?lite=1', clientsFetcher)
   const [selectedRole, setSelectedRole] = useState<Role>('STAFF')
-  const [selectedClient, setSelectedClient] = useState<string>('')
+  const [selectedClient, setSelectedClient] = useState<string | undefined>(undefined)
   const [submitting, setSubmitting] = useState(false)
   const [resendingId, setResendingId] = useState<string | null>(null)
 
@@ -355,21 +356,22 @@ export default function MembersAdminPage() {
                 <Label htmlFor="invite-role" className="text-sm font-medium text-slate-700">
                   Papel na organização
                 </Label>
-                <select
-                  id="invite-role"
-                  name="role"
+                <Select
                   value={selectedRole}
-                  onChange={(e) => {
-                    setSelectedRole(e.target.value as Role)
-                    setSelectedClient('')
+                  onValueChange={(value) => {
+                    setSelectedRole(value as Role)
+                    setSelectedClient(undefined)
                   }}
-                  className="h-11 w-full rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  title="Selecionar papel"
-                  aria-label="Selecionar papel"
+                  defaultValue="STAFF"
                 >
-                  <option value="STAFF">Equipe</option>
-                  <option value="CLIENT">Cliente</option>
-                </select>
+                  <SelectTrigger className="h-11 bg-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="STAFF">Equipe</SelectItem>
+                    <SelectItem value="CLIENT">Cliente</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {selectedRole === 'CLIENT' && (
@@ -377,22 +379,22 @@ export default function MembersAdminPage() {
                   <Label htmlFor="invite-client" className="text-sm font-medium text-slate-700">
                     Vincular a cliente
                   </Label>
-                  <select
-                    id="invite-client"
-                    name="client_id"
-                    value={selectedClient}
-                    onChange={(e) => setSelectedClient(e.target.value)}
-                    className="h-11 w-full rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                    title="Selecionar cliente para vincular"
-                    aria-label="Selecionar cliente para vincular"
+                  <Select
+                    value={selectedClient ?? '__AUTO__'}
+                    onValueChange={(value) => setSelectedClient(value === '__AUTO__' ? undefined : value)}
                   >
-                    <option value="">Criar novo cliente automaticamente</option>
-                    {clientsData?.data?.map((client: { id: string; name: string }) => (
-                      <option key={client.id} value={client.id}>
-                        {client.name}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="h-11 bg-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__AUTO__">Criar novo cliente automaticamente</SelectItem>
+                      {clientsData?.data?.map((client: { id: string; name: string }) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               )}
             </div>

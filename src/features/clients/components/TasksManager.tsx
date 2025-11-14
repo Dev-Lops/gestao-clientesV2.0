@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
-import { Select } from '@/components/ui/select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { formatDateInput, parseDateInput, toLocalISOString } from '@/lib/utils'
 import { CalendarDays, CheckCircle2, Clock, Edit, Flag, ListTodo, Plus, Trash2, X } from 'lucide-react'
@@ -399,16 +399,19 @@ export function TasksManager({ clientId, initialTasks = [] }: TasksManagerProps)
                               )}
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
-                              <select
-                                aria-label="Status da tarefa"
-                                className="border rounded-md px-2 py-1 text-xs bg-white dark:bg-slate-800 dark:border-slate-600"
+                              <Select
                                 value={task.status}
-                                onChange={(e) => handleStatusChange(task.id, e.target.value as TaskStatus)}
+                                onValueChange={(value) => handleStatusChange(task.id, value as TaskStatus)}
                               >
-                                <option value="todo">A Fazer</option>
-                                <option value="in-progress">Em Progresso</option>
-                                <option value="done">Concluída</option>
-                              </select>
+                                <SelectTrigger className="border rounded-md px-2 py-1 text-xs bg-white dark:bg-slate-800 dark:border-slate-600 h-auto">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="todo">A Fazer</SelectItem>
+                                  <SelectItem value="in-progress">Em Progresso</SelectItem>
+                                  <SelectItem value="done">Concluída</SelectItem>
+                                </SelectContent>
+                              </Select>
                               <Button size="sm" variant="ghost" className="h-8 w-8 p-0 hover:bg-blue-100 dark:hover:bg-blue-900/30" onClick={() => handleEdit(task)}>
                                 <Edit className="h-4 w-4" />
                               </Button>
@@ -458,18 +461,28 @@ export function TasksManager({ clientId, initialTasks = [] }: TasksManagerProps)
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="space-y-2">
                       <Label htmlFor="status" className="text-slate-700 dark:text-slate-300">Status</Label>
-                      <Select id="status" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as TaskStatus })} className="bg-white/50 dark:bg-slate-800/50">
-                        <option value="todo">A Fazer</option>
-                        <option value="in-progress">Em Progresso</option>
-                        <option value="done">Concluída</option>
+                      <Select value={form.status} onValueChange={(value) => setForm({ ...form, status: value as TaskStatus })}>
+                        <SelectTrigger className="bg-white/50 dark:bg-slate-800/50">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="todo">A Fazer</SelectItem>
+                          <SelectItem value="in-progress">Em Progresso</SelectItem>
+                          <SelectItem value="done">Concluída</SelectItem>
+                        </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="priority" className="text-slate-700 dark:text-slate-300">Prioridade</Label>
-                      <Select id="priority" value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value as TaskPriority })} className="bg-white/50 dark:bg-slate-800/50">
-                        <option value="low">Baixa</option>
-                        <option value="medium">Média</option>
-                        <option value="high">Alta</option>
+                      <Select value={form.priority} onValueChange={(value) => setForm({ ...form, priority: value as TaskPriority })}>
+                        <SelectTrigger className="bg-white/50 dark:bg-slate-800/50">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="low">Baixa</SelectItem>
+                          <SelectItem value="medium">Média</SelectItem>
+                          <SelectItem value="high">Alta</SelectItem>
+                        </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
