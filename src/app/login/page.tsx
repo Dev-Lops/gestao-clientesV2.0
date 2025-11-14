@@ -1,5 +1,6 @@
 'use client'
 
+import { AuthDebug } from '@/components/AuthDebug'
 import { Button } from '@/components/ui/button'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { useUser } from '@/context/UserContext'
@@ -19,6 +20,7 @@ function LoginPageInner() {
   const searchParams = useSearchParams()
   const inviteToken = searchParams.get('invite')
   const [isLogging, setIsLogging] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const hasInvite = !!inviteToken
 
   // Verificar se há redirect pendente ao montar
@@ -40,13 +42,14 @@ function LoginPageInner() {
         setIsLogging(true)
       }, 0)
 
-      // Timeout de segurança: se após 10 segundos ainda estiver loading, resetar
+      // Timeout de segurança: se após 15 segundos ainda estiver loading, resetar
       const cleanupTimeout = setTimeout(() => {
         console.log('[LoginPage] ⚠️ Timeout ao processar redirect, resetando estado')
         setIsLogging(false)
+        setError('Timeout ao processar autenticação. Por favor, tente novamente.')
         localStorage.removeItem('pendingAuthRedirect')
         sessionStorage.removeItem('pendingInviteToken')
-      }, 10000)
+      }, 15000)
 
       return () => {
         clearTimeout(timeoutId)
@@ -64,10 +67,24 @@ function LoginPageInner() {
 
   const handleLogin = async () => {
     setIsLogging(true)
+    setError(null)
     try {
       await loginWithGoogle(inviteToken)
     } catch (error) {
       console.error('[LoginPage] Erro no login:', error)
+      const err = error as { code?: string; message?: string }
+
+      // Mensagens de erro amigáveis
+      let errorMessage = 'Erro ao fazer login. Por favor, tente novamente.'
+      if (err.code === 'auth/popup-blocked') {
+        errorMessage = 'Popup bloqueado. Redirecionando...'
+      } else if (err.code === 'auth/cancelled-popup-request') {
+        errorMessage = 'Login cancelado.'
+      } else if (err.code === 'auth/network-request-failed') {
+        errorMessage = 'Erro de conexão. Verifique sua internet.'
+      }
+
+      setError(errorMessage)
       setIsLogging(false)
     }
   }
@@ -264,6 +281,15 @@ function LoginPageInner() {
                 )}
               </Button>
 
+              {/* Error Message */}
+              {error && (
+                <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                  <p className="text-sm text-red-600 dark:text-red-400 text-center">
+                    {error}
+                  </p>
+                </div>
+              )}
+
               {/* Divider */}
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
@@ -315,6 +341,7 @@ export default function LoginPage() {
   return (
     <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Carregando...</div>}>
       <LoginPageInner />
+      <AuthDebug />
     </Suspense>
   )
 }

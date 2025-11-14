@@ -16,7 +16,7 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useState 
 const isMobileDevice = () => {
   if (typeof window === 'undefined') return false
 
-  // Detecção mais abrangente de mobile
+  // Detecção mais robusta e precisa
   const userAgent = navigator.userAgent.toLowerCase()
   const hasTouchScreen = 'ontouchstart' in window || navigator.maxTouchPoints > 0
 
@@ -32,14 +32,26 @@ const isMobileDevice = () => {
     /iemobile/i,
     /opera mini/i,
     /mobile/i,
-    /tablet/i
   ]
 
   const isMobileUserAgent = mobilePatterns.some(pattern => pattern.test(userAgent))
-  const isSmallScreen = window.innerWidth < 1024
 
-  // Mobile se tem touch + user agent mobile OU tela pequena
-  return (hasTouchScreen && isMobileUserAgent) || (isMobileUserAgent && isSmallScreen)
+  // Considera mobile se:
+  // 1. Tem user agent mobile E tem touch
+  // 2. OU tela menor que 768px (mobile típico)
+  const isSmallScreen = window.innerWidth < 768
+
+  const isMobile = (isMobileUserAgent && hasTouchScreen) || isSmallScreen
+
+  console.log('[isMobileDevice] Resultado:', isMobile, {
+    userAgent: navigator.userAgent.substring(0, 50) + '...',
+    hasTouchScreen,
+    isMobileUserAgent,
+    isSmallScreen,
+    width: window.innerWidth
+  })
+
+  return isMobile
 }
 
 interface UserContextType {
@@ -176,9 +188,12 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       return
     }
 
+    let isCheckingRedirect = false
+
     // Check for redirect result when component mounts (for mobile login)
     const checkRedirectResult = async () => {
-      if (!auth) return // Type guard for TypeScript
+      if (!auth || isCheckingRedirect) return // Type guard for TypeScript
+      isCheckingRedirect = true
 
       console.log('[UserContext] 🔍 Verificando redirect result...')
       console.log('[UserContext] URL atual:', window.location.href)
@@ -188,11 +203,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       console.log('[UserContext] Tinha redirect pendente?', wasPendingRedirect)
 
       try {
-        // SEMPRE tentar pegar o redirect result, mesmo sem flag
-        // Isso garante que funciona mesmo se a flag foi perdida
-        console.log('[UserContext] ⏳ Aguardando Firebase processar redirect...')
-        await new Promise(resolve => setTimeout(resolve, 1500))
-
+        // SEMPRE tentar pegar o redirect result, sem delay artificial
+        console.log('[UserContext] ⏳ Chamando getRedirectResult...')
         const result = await getRedirectResult(auth)
         console.log('[UserContext] getRedirectResult retornou:', result ? '✅ resultado encontrado' : '❌ null')
 
@@ -223,6 +235,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           if (wasPendingRedirect) {
             console.log('[UserContext] 🧹 Limpando flag de redirect pendente sem resultado')
             localStorage.removeItem('pendingAuthRedirect')
+            sessionStorage.removeItem('pendingInviteToken')
           }
           setLoading(false)
         }
@@ -237,6 +250,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         localStorage.removeItem('pendingAuthRedirect')
         sessionStorage.removeItem('pendingInviteToken')
         setLoading(false)
+      } finally {
+        isCheckingRedirect = false
       }
     }
 
@@ -266,6 +281,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             }
             localStorage.removeItem('pendingAuthRedirect')
             await handleAuthResult(firebaseUser, inviteToken)
+            return // Exit early to avoid setting loading to false
           }
         } catch (error) {
           console.error('[UserContext] Erro ao verificar sessão:', error)
