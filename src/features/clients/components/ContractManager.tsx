@@ -1,26 +1,26 @@
-'use client'
+"use client";
 
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   AlertTriangle,
   Calendar,
   CheckCircle2,
   Clock,
   DollarSign,
-  TrendingUp
-} from 'lucide-react'
-import { useState } from 'react'
-import { toast } from 'sonner'
+  TrendingUp,
+} from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface ContractManagerProps {
-  clientId: string
-  clientName: string
-  contractStart?: string | null
-  contractEnd?: string | null
-  paymentDay?: number | null
-  contractValue?: number | null
-  paymentStatus?: string
+  clientId: string;
+  clientName: string;
+  contractStart?: string | null;
+  contractEnd?: string | null;
+  paymentDay?: number | null;
+  contractValue?: number | null;
+  paymentStatus?: string;
 }
 
 export default function ContractManager({
@@ -30,107 +30,118 @@ export default function ContractManager({
   contractEnd,
   paymentDay,
   contractValue,
-  paymentStatus = 'PENDING',
+  paymentStatus = "PENDING",
 }: ContractManagerProps) {
-  const [loading, setLoading] = useState(false)
-  const [currentStatus, setCurrentStatus] = useState(paymentStatus)
+  const [loading, setLoading] = useState(false);
+  const [currentStatus, setCurrentStatus] = useState(paymentStatus);
 
   const formatDate = (dateString?: string | null) => {
-    if (!dateString) return 'Não definido'
-    return new Date(dateString).toLocaleDateString('pt-BR')
-  }
+    if (!dateString) return "Não definido";
+    return new Date(dateString).toLocaleDateString("pt-BR");
+  };
 
   const formatCurrency = (value?: number | null) => {
-    if (!value) return 'R$ 0,00'
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(value)
-  }
+    if (!value) return "R$ 0,00";
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(value);
+  };
 
   const getPaymentStatusColor = () => {
     switch (currentStatus) {
-      case 'CONFIRMED':
-        return 'text-green-600 dark:text-green-400'
-      case 'LATE':
-        return 'text-red-600 dark:text-red-400'
+      case "CONFIRMED":
+        return "text-green-600 dark:text-green-400";
+      case "LATE":
+        return "text-red-600 dark:text-red-400";
       default:
-        return 'text-yellow-600 dark:text-yellow-400'
+        return "text-yellow-600 dark:text-yellow-400";
     }
-  }
+  };
 
   const getPaymentStatusIcon = () => {
     switch (currentStatus) {
-      case 'CONFIRMED':
-        return <CheckCircle2 className="w-5 h-5" />
-      case 'LATE':
-        return <AlertTriangle className="w-5 h-5" />
+      case "CONFIRMED":
+        return <CheckCircle2 className="w-5 h-5" />;
+      case "LATE":
+        return <AlertTriangle className="w-5 h-5" />;
       default:
-        return <Clock className="w-5 h-5" />
+        return <Clock className="w-5 h-5" />;
     }
-  }
+  };
 
   const getPaymentStatusText = () => {
     switch (currentStatus) {
-      case 'CONFIRMED':
-        return 'Pago'
-      case 'LATE':
-        return 'Atrasado'
+      case "CONFIRMED":
+        return "Pago";
+      case "LATE":
+        return "Atrasado";
       default:
-        return 'Pendente'
+        return "Pendente";
     }
-  }
+  };
 
   const handleConfirmPayment = async () => {
-    if (!confirm(`Confirmar pagamento de ${clientName}?`)) return
+    if (!confirm(`Confirmar pagamento de ${clientName}?`)) return;
 
-    setLoading(true)
+    setLoading(true);
     try {
-      const response = await fetch(`/api/clients/${clientId}/payments/confirm`, {
-        method: 'POST',
-      })
+      const response = await fetch(
+        `/api/clients/${clientId}/payments/confirm`,
+        {
+          method: "POST",
+        },
+      );
 
       if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || 'Erro ao confirmar pagamento')
+        const data = await response.json();
+        throw new Error(data.error || "Erro ao confirmar pagamento");
       }
 
-      setCurrentStatus('CONFIRMED')
-      toast.success('Pagamento confirmado com sucesso!')
+      setCurrentStatus("CONFIRMED");
+      toast.success("Pagamento confirmado com sucesso!");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Erro ao confirmar pagamento')
+      toast.error(
+        error instanceof Error ? error.message : "Erro ao confirmar pagamento",
+      );
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   // Check if contract is active
   const isContractActive = () => {
-    if (!contractStart) return false
-    const now = new Date()
-    const start = new Date(contractStart)
-    if (now < start) return false
+    if (!contractStart) return false;
+    const now = new Date();
+    const start = new Date(contractStart);
+    if (now < start) return false;
     if (contractEnd) {
-      const end = new Date(contractEnd)
-      if (now > end) return false
+      const end = new Date(contractEnd);
+      if (now > end) return false;
     }
-    return true
-  }
+    return true;
+  };
 
   const getDaysUntilPayment = () => {
-    if (!paymentDay) return null
-    const now = new Date()
-    const currentDay = now.getDate()
+    if (!paymentDay) return null;
+    const now = new Date();
+    const currentDay = now.getDate();
     if (currentDay <= paymentDay) {
-      return paymentDay - currentDay
+      return paymentDay - currentDay;
     }
     // Next month
-    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, paymentDay)
-    const diff = Math.ceil((nextMonth.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-    return diff
-  }
+    const nextMonth = new Date(
+      now.getFullYear(),
+      now.getMonth() + 1,
+      paymentDay,
+    );
+    const diff = Math.ceil(
+      (nextMonth.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+    );
+    return diff;
+  };
 
-  const daysUntilPayment = getDaysUntilPayment()
+  const daysUntilPayment = getDaysUntilPayment();
 
   return (
     <div className="space-y-6">
@@ -168,7 +179,7 @@ export default function ContractManager({
                   <span>Término do Contrato</span>
                 </div>
                 <p className="text-lg font-semibold text-slate-900 dark:text-white">
-                  {contractEnd ? formatDate(contractEnd) : 'Indeterminado'}
+                  {contractEnd ? formatDate(contractEnd) : "Indeterminado"}
                 </p>
               </div>
             </div>
@@ -191,7 +202,7 @@ export default function ContractManager({
                   <span>Dia de Pagamento</span>
                 </div>
                 <p className="text-lg font-semibold text-slate-900 dark:text-white">
-                  {paymentDay ? `Dia ${paymentDay}` : 'Não definido'}
+                  {paymentDay ? `Dia ${paymentDay}` : "Não definido"}
                 </p>
               </div>
             </div>
@@ -202,11 +213,14 @@ export default function ContractManager({
                 <span className="text-sm text-slate-600 dark:text-slate-400">
                   Status do Contrato
                 </span>
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${isContractActive()
-                    ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-                  }`}>
-                  {isContractActive() ? 'Ativo' : 'Inativo'}
+                <span
+                  className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    isContractActive()
+                      ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                  }`}
+                >
+                  {isContractActive() ? "Ativo" : "Inativo"}
                 </span>
               </div>
             </div>
@@ -232,29 +246,30 @@ export default function ContractManager({
                     <p className="font-semibold text-slate-900 dark:text-white">
                       {getPaymentStatusText()}
                     </p>
-                    {daysUntilPayment !== null && currentStatus === 'PENDING' && (
-                      <p className="text-sm text-slate-600 dark:text-slate-400">
-                        {daysUntilPayment === 0
-                          ? 'Vence hoje'
-                          : daysUntilPayment > 0
-                            ? `Vence em ${daysUntilPayment} ${daysUntilPayment === 1 ? 'dia' : 'dias'}`
-                            : `Atrasado ${Math.abs(daysUntilPayment)} ${Math.abs(daysUntilPayment) === 1 ? 'dia' : 'dias'}`}
-                      </p>
-                    )}
+                    {daysUntilPayment !== null &&
+                      currentStatus === "PENDING" && (
+                        <p className="text-sm text-slate-600 dark:text-slate-400">
+                          {daysUntilPayment === 0
+                            ? "Vence hoje"
+                            : daysUntilPayment > 0
+                              ? `Vence em ${daysUntilPayment} ${daysUntilPayment === 1 ? "dia" : "dias"}`
+                              : `Atrasado ${Math.abs(daysUntilPayment)} ${Math.abs(daysUntilPayment) === 1 ? "dia" : "dias"}`}
+                        </p>
+                      )}
                   </div>
                 </div>
 
-                {currentStatus === 'PENDING' && (
+                {currentStatus === "PENDING" && (
                   <Button
                     onClick={handleConfirmPayment}
                     disabled={loading}
                     className="rounded-full bg-linear-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg shadow-green-500/30"
                   >
-                    {loading ? 'Confirmando...' : 'Confirmar Pagamento'}
+                    {loading ? "Confirmando..." : "Confirmar Pagamento"}
                   </Button>
                 )}
 
-                {currentStatus === 'CONFIRMED' && (
+                {currentStatus === "CONFIRMED" && (
                   <div className="px-4 py-2 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 font-medium">
                     Pago ✓
                   </div>
@@ -271,12 +286,13 @@ export default function ContractManager({
             <div className="flex items-center gap-3">
               <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
               <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                Nenhuma informação de contrato cadastrada. Edite o cliente para adicionar informações de contrato.
+                Nenhuma informação de contrato cadastrada. Edite o cliente para
+                adicionar informações de contrato.
               </p>
             </div>
           </CardContent>
         </Card>
       )}
     </div>
-  )
+  );
 }

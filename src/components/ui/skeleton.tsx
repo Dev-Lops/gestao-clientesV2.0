@@ -1,18 +1,18 @@
-import { cn } from '@/lib/utils'
+import { cn } from "@/lib/utils";
 
 interface SkeletonProps {
-  className?: string
+  className?: string;
 }
 
 export function Skeleton({ className }: SkeletonProps) {
   return (
     <div
       className={cn(
-        'animate-pulse rounded-md bg-slate-200 dark:bg-slate-800',
-        className
+        "animate-pulse rounded-md bg-slate-200 dark:bg-slate-800",
+        className,
       )}
     />
-  )
+  );
 }
 
 export function TableSkeleton({ rows = 5 }: { rows?: number }) {
@@ -29,7 +29,7 @@ export function TableSkeleton({ rows = 5 }: { rows?: number }) {
         </div>
       ))}
     </div>
-  )
+  );
 }
 
 export function CardSkeleton() {
@@ -50,7 +50,7 @@ export function CardSkeleton() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 export function DashboardSkeleton() {
@@ -92,5 +92,5 @@ export function DashboardSkeleton() {
         </div>
       </div>
     </div>
-  )
+  );
 }

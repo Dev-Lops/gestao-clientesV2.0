@@ -1,159 +1,154 @@
-"use client"
+"use client";
 
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { RefreshCw } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface Verse {
-  id: number
-  text: string
-  book: { id: number; name: string }
-  chapter: number
-  verse: number
-  translationId?: string
-  translationName?: string
+  id: number;
+  text: string;
+  book: { id: number; name: string };
+  chapter: number;
+  verse: number;
+  translationId?: string;
+  translationName?: string;
 }
 
 interface BibleVerseWidgetProps {
-  compact?: boolean
+  compact?: boolean;
 }
 
 export function BibleVerseWidget({ compact = false }: BibleVerseWidgetProps) {
-  const [verse, setVerse] = useState<Verse | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [currentId, setCurrentId] = useState<number | null>(null)
+  const [verse, setVerse] = useState<Verse | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [currentId, setCurrentId] = useState<number | null>(null);
 
   async function fetchRandomVerse() {
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
     try {
-      const res = await fetch(`/api/verses/random`, { cache: 'no-store' })
+      const res = await fetch(`/api/verses/random`, { cache: "no-store" });
       if (!res.ok) {
-        const msg = await res.text()
-        throw new Error(msg || 'Falha ao carregar versículo')
+        const msg = await res.text();
+        throw new Error(msg || "Falha ao carregar versículo");
       }
-      const data = await res.json()
-      setVerse(data)
-      setCurrentId(data.id)
+      const data = await res.json();
+      setVerse(data);
+      setCurrentId(data.id);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Erro desconhecido')
+      setError(e instanceof Error ? e.message : "Erro desconhecido");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   async function goNext() {
-    if (!currentId) return
-    setLoading(true)
-    setError(null)
+    if (!currentId) return;
+    setLoading(true);
+    setError(null);
     try {
-      const res = await fetch(`/api/verses/${currentId}/next`, { cache: 'no-store' })
-      if (!res.ok) throw new Error('Falha ao carregar próximo versículo')
-      const data = await res.json()
-      setCurrentId(data.id)
-      setVerse(data)
+      const res = await fetch(`/api/verses/${currentId}/next`, {
+        cache: "no-store",
+      });
+      if (!res.ok) throw new Error("Falha ao carregar próximo versículo");
+      const data = await res.json();
+      setCurrentId(data.id);
+      setVerse(data);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Erro desconhecido')
+      setError(e instanceof Error ? e.message : "Erro desconhecido");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   async function goPrev() {
-    if (!currentId) return
-    setLoading(true)
-    setError(null)
+    if (!currentId) return;
+    setLoading(true);
+    setError(null);
     try {
-      const res = await fetch(`/api/verses/${currentId}/previous`, { cache: 'no-store' })
-      if (!res.ok) throw new Error('Falha ao carregar versículo anterior')
-      const data = await res.json()
-      setCurrentId(data.id)
-      setVerse(data)
+      const res = await fetch(`/api/verses/${currentId}/previous`, {
+        cache: "no-store",
+      });
+      if (!res.ok) throw new Error("Falha ao carregar versículo anterior");
+      const data = await res.json();
+      setCurrentId(data.id);
+      setVerse(data);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Erro desconhecido')
+      setError(e instanceof Error ? e.message : "Erro desconhecido");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   useEffect(() => {
-    void fetchRandomVerse()
+    void fetchRandomVerse();
+  }, []);
 
-  }, [])
-
-  const translationLabel = verse?.translationId?.toUpperCase() || (verse?.translationName ? verse.translationName : 'ALMEIDA')
+  const translationLabel =
+    verse?.translationId?.toUpperCase() ||
+    (verse?.translationName ? verse.translationName : "ALMEIDA");
 
   if (compact) {
     return (
-      <div className="p-3 rounded-lg bg-linear-to-br from-violet-50 to-fuchsia-50 dark:from-violet-900/20 dark:to-fuchsia-900/20 border border-violet-100 dark:border-violet-800">
+      <div className="p-3 rounded-lg bg-card border border-border shadow-sm transition-colors">
         <div className="flex items-center justify-between mb-2">
-          <p className="text-xs font-medium text-slate-900 dark:text-white">
+          <p className="text-xs font-medium text-foreground">
             ✨ Versículo do dia
           </p>
           <div className="flex items-center gap-1">
             {verse && (
-              <span className="text-[9px] px-1.5 py-0.5 rounded bg-violet-100 dark:bg-violet-900/50 text-violet-700 dark:text-violet-300 font-semibold">
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-primary/10 dark:bg-primary/25 text-primary font-semibold">
                 {translationLabel}
               </span>
             )}
             <button
               onClick={fetchRandomVerse}
               disabled={loading}
-              className="h-5 w-5 rounded hover:bg-violet-200 dark:hover:bg-violet-800 transition-colors flex items-center justify-center"
+              className="h-5 w-5 rounded hover:bg-accent/50 dark:hover:bg-accent/30 transition-colors flex items-center justify-center disabled:opacity-50"
               title="Novo verso"
             >
-              <RefreshCw className={`h-3 w-3 text-violet-600 dark:text-violet-400 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw
+                className={`h-3 w-3 text-primary ${loading ? "animate-spin" : ""}`}
+              />
             </button>
           </div>
         </div>
         {error && (
-          <div className="text-[10px] text-red-600 dark:text-red-400 mb-2">{error}</div>
+          <div className="text-[10px] text-destructive mb-2">{error}</div>
         )}
         {loading && !verse && (
-          <div className="text-xs text-slate-600 dark:text-slate-400">Carregando...</div>
+          <div className="text-xs text-muted-foreground">Carregando...</div>
         )}
         {verse && (
-          <div className="text-xs text-slate-600 dark:text-slate-400 space-y-2">
-            <p className="line-clamp-3 leading-relaxed italic">&ldquo;{verse.text}&rdquo;</p>
+          <div className="text-xs text-muted-foreground space-y-2">
+            <p className="line-clamp-3 leading-relaxed italic text-foreground">
+              &ldquo;{verse.text}&rdquo;
+            </p>
             <div className="flex items-center justify-between pt-1">
-              <span className="text-[10px] text-slate-500 dark:text-slate-500 font-medium">
+              <span className="text-[10px] text-muted-foreground font-medium">
                 {verse.book.name} {verse.chapter}:{verse.verse}
               </span>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={goPrev}
-                  disabled={loading || !currentId}
-                  className="h-5 w-5 rounded hover:bg-violet-200 dark:hover:bg-violet-800 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-                  title="Anterior"
-                >
-                  <ChevronLeft className="h-3 w-3 text-violet-600 dark:text-violet-400" />
-                </button>
-                <button
-                  onClick={goNext}
-                  disabled={loading || !currentId}
-                  className="h-5 w-5 rounded hover:bg-violet-200 dark:hover:bg-violet-800 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-                  title="Próximo"
-                >
-                  <ChevronRight className="h-3 w-3 text-violet-600 dark:text-violet-400" />
-                </button>
-              </div>
             </div>
           </div>
         )}
         {!verse && !loading && !error && (
-          <div className="text-[10px] text-slate-600 dark:text-slate-400">Não foi possível carregar o versículo agora.</div>
+          <div className="text-[10px] text-muted-foreground">
+            Não foi possível carregar o versículo agora.
+          </div>
         )}
       </div>
-    )
+    );
   }
 
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base">Verso do Dia{verse ? ` (${translationLabel})` : ''}</CardTitle>
+          <CardTitle className="text-base">
+            Verso do Dia{verse ? ` (${translationLabel})` : ""}
+          </CardTitle>
           <Button
             variant="ghost"
             size="sm"
@@ -162,37 +157,48 @@ export function BibleVerseWidget({ compact = false }: BibleVerseWidgetProps) {
             className="h-8 w-8 p-0 rounded-full"
             title="Novo verso aleatório"
           >
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           </Button>
         </div>
       </CardHeader>
       <CardContent>
-        {error && (
-          <div className="text-sm text-red-600 mb-3">{error}</div>
-        )}
+        {error && <div className="text-sm text-red-600 mb-3">{error}</div>}
         {loading && !verse && (
-          <div className="text-sm text-slate-500">Carregando...</div>
+          <div className="text-sm text-muted-foreground">Carregando...</div>
         )}
         {verse && (
           <div className="space-y-3">
-            <p className="text-sm text-slate-900 dark:text-slate-100 leading-relaxed">&ldquo;{verse.text}&rdquo;</p>
-            <p className="text-xs text-slate-600 dark:text-slate-400">
+            <p className="text-sm text-foreground leading-relaxed">
+              &ldquo;{verse.text}&rdquo;
+            </p>
+            <p className="text-xs text-muted-foreground">
               {verse.book.name} {verse.chapter}:{verse.verse}
             </p>
             <div className="flex items-center gap-2 pt-2">
-              <Button size="sm" variant="outline" onClick={goPrev} disabled={loading || !currentId}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={goPrev}
+                disabled={loading || !currentId}
+              >
                 Anterior
               </Button>
-              <Button size="sm" onClick={goNext} disabled={loading || !currentId}>
+              <Button
+                size="sm"
+                onClick={goNext}
+                disabled={loading || !currentId}
+              >
                 Próximo
               </Button>
             </div>
           </div>
         )}
         {!verse && !loading && !error && (
-          <div className="text-sm text-slate-500">Não foi possível carregar o versículo agora.</div>
+          <div className="text-sm text-muted-foreground">
+            Não foi possível carregar o versículo agora.
+          </div>
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

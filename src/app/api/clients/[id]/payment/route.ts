@@ -1,7 +1,7 @@
-import { can, type AppRole } from '@/lib/permissions'
-import { getSessionProfile } from '@/services/auth/session'
-import { PaymentService } from '@/services/payments/PaymentService'
-import { NextRequest, NextResponse } from 'next/server'
+import { can, type AppRole } from "@/lib/permissions";
+import { getSessionProfile } from "@/services/auth/session";
+import { PaymentService } from "@/services/payments/PaymentService";
+import { NextRequest, NextResponse } from "next/server";
 
 /**
  * GET /api/clients/[id]/payment/status
@@ -9,32 +9,35 @@ import { NextRequest, NextResponse } from 'next/server'
  */
 export async function GET(
   _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { orgId, role } = await getSessionProfile()
+    const { orgId, role } = await getSessionProfile();
 
     if (!orgId || !role) {
-      return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
+      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    if (!can(role as AppRole, 'read', 'finance')) {
-      return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
+    if (!can(role as AppRole, "read", "finance")) {
+      return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
 
-    const { id: clientId } = await params
+    const { id: clientId } = await params;
 
-    const status = await PaymentService.getMonthlyPaymentStatus(clientId, orgId)
+    const status = await PaymentService.getMonthlyPaymentStatus(
+      clientId,
+      orgId,
+    );
 
-    return NextResponse.json(status)
+    return NextResponse.json(status);
   } catch (error) {
-    console.error('Error fetching payment status:', error)
+    console.error("Error fetching payment status:", error);
     return NextResponse.json(
       {
-        error: error instanceof Error ? error.message : 'Erro ao buscar status',
+        error: error instanceof Error ? error.message : "Erro ao buscar status",
       },
-      { status: 500 }
-    )
+      { status: 500 },
+    );
   }
 }
 
@@ -47,43 +50,46 @@ export async function GET(
  */
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { orgId, role } = await getSessionProfile()
+    const { orgId, role } = await getSessionProfile();
 
     if (!orgId || !role) {
-      return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
+      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    if (!can(role as AppRole, 'create', 'finance')) {
-      return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
+    if (!can(role as AppRole, "create", "finance")) {
+      return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
 
-    const { id: clientId } = await params
-    const body = await req.json().catch(() => ({}))
-    const { amount } = body
+    const { id: clientId } = await params;
+    const body = await req.json().catch(() => ({}));
+    const { amount } = body;
 
-    await PaymentService.confirmMonthlyPayment(clientId, orgId, amount)
+    await PaymentService.confirmMonthlyPayment(clientId, orgId, amount);
 
     // Retornar status atualizado
-    const status = await PaymentService.getMonthlyPaymentStatus(clientId, orgId)
+    const status = await PaymentService.getMonthlyPaymentStatus(
+      clientId,
+      orgId,
+    );
 
     return NextResponse.json({
       success: true,
-      message: 'Pagamento confirmado com sucesso',
+      message: "Pagamento confirmado com sucesso",
       status,
-    })
+    });
   } catch (error) {
-    console.error('Error confirming payment:', error)
+    console.error("Error confirming payment:", error);
     const message =
-      error instanceof Error ? error.message : 'Erro ao confirmar pagamento'
-    const statusCode = message.includes('não encontrado')
+      error instanceof Error ? error.message : "Erro ao confirmar pagamento";
+    const statusCode = message.includes("não encontrado")
       ? 404
-      : message.includes('já existe')
+      : message.includes("já existe")
         ? 400
-        : 500
+        : 500;
 
-    return NextResponse.json({ error: message }, { status: statusCode })
+    return NextResponse.json({ error: message }, { status: statusCode });
   }
 }

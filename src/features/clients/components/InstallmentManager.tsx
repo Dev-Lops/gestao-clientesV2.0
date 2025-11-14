@@ -1,183 +1,226 @@
-'use client'
+"use client";
 
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { LoadingSpinner } from '@/components/ui/loading-spinner'
-import { Select } from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
-import { formatDateInput, parseDateInput, toLocalISOString } from '@/lib/utils'
-import { Installment } from '@/types/tables'
-import { CalendarDays, CheckCircle2, CreditCard, DollarSign, Plus, Trash2, X, XCircle } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { toast } from 'sonner'
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { formatDateInput, parseDateInput, toLocalISOString } from "@/lib/utils";
+import { Installment } from "@/types/tables";
+import {
+  CalendarDays,
+  CheckCircle2,
+  CreditCard,
+  DollarSign,
+  Plus,
+  Trash2,
+  X,
+  XCircle,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 interface InstallmentManagerProps {
-  clientId: string
-  canEdit: boolean
+  clientId: string;
+  canEdit: boolean;
 }
 
-export function InstallmentManager({ clientId, canEdit }: InstallmentManagerProps) {
-  const [installments, setInstallments] = useState<Installment[]>([])
-  const [loading, setLoading] = useState(true)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
+export function InstallmentManager({
+  clientId,
+  canEdit,
+}: InstallmentManagerProps) {
+  const [installments, setInstallments] = useState<Installment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    installmentCount: '',
-    startDate: '',
-  })
-  const [editingInstallment, setEditingInstallment] = useState<Installment | null>(null)
+    installmentCount: "",
+    startDate: "",
+  });
+  const [editingInstallment, setEditingInstallment] =
+    useState<Installment | null>(null);
   const [editForm, setEditForm] = useState({
-    status: 'PENDING' as 'PENDING' | 'CONFIRMED' | 'LATE',
-    paidAt: '',
-    notes: '',
-  })
+    status: "PENDING" as "PENDING" | "CONFIRMED" | "LATE",
+    paidAt: "",
+    notes: "",
+  });
 
   useEffect(() => {
-    loadInstallments()
+    loadInstallments();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clientId])
+  }, [clientId]);
 
   const loadInstallments = async () => {
     try {
-      const res = await fetch(`/api/clients/${clientId}/installments`)
+      const res = await fetch(`/api/clients/${clientId}/installments`);
       if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}))
-        throw new Error(errorData.error || 'Falha ao carregar parcelas')
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || "Falha ao carregar parcelas");
       }
-      const data = await res.json()
-      setInstallments(data)
+      const data = await res.json();
+      setInstallments(data);
     } catch (error) {
-      console.error('Erro ao carregar parcelas:', error)
-      toast.error(error instanceof Error ? error.message : 'Erro ao carregar parcelas')
+      console.error("Erro ao carregar parcelas:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Erro ao carregar parcelas",
+      );
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
-    const count = parseInt(formData.installmentCount)
+    const count = parseInt(formData.installmentCount);
 
     if (isNaN(count) || count <= 0) {
-      toast.error('Número de parcelas inválido')
-      return
+      toast.error("Número de parcelas inválido");
+      return;
     }
 
     if (!formData.startDate) {
-      toast.error('Data de início é obrigatória')
-      return
+      toast.error("Data de início é obrigatória");
+      return;
     }
 
-    setSubmitting(true)
+    setSubmitting(true);
 
     try {
-      const startDateToSave = toLocalISOString(parseDateInput(formData.startDate))
+      const startDateToSave = toLocalISOString(
+        parseDateInput(formData.startDate),
+      );
 
       const res = await fetch(`/api/clients/${clientId}/installments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           installmentCount: count,
           startDate: startDateToSave,
         }),
-      })
+      });
 
       if (!res.ok) {
-        const errorData = await res.json()
-        throw new Error(errorData.error || 'Falha ao criar parcelas')
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Falha ao criar parcelas");
       }
 
-      toast.success('Parcelas criadas com sucesso!')
-      setIsModalOpen(false)
-      setFormData({ installmentCount: '', startDate: '' })
-      loadInstallments()
+      toast.success("Parcelas criadas com sucesso!");
+      setIsModalOpen(false);
+      setFormData({ installmentCount: "", startDate: "" });
+      loadInstallments();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Erro ao criar parcelas')
+      toast.error(
+        error instanceof Error ? error.message : "Erro ao criar parcelas",
+      );
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
 
   const handleUpdateInstallment = async () => {
-    if (!editingInstallment) return
+    if (!editingInstallment) return;
 
-    setSubmitting(true)
+    setSubmitting(true);
 
     try {
-      const paidAtToSave = editForm.paidAt ? toLocalISOString(parseDateInput(editForm.paidAt)) : null
+      const paidAtToSave = editForm.paidAt
+        ? toLocalISOString(parseDateInput(editForm.paidAt))
+        : null;
 
-      const res = await fetch(`/api/clients/${clientId}/installments?installmentId=${editingInstallment.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          status: editForm.status,
-          paidAt: paidAtToSave,
-          notes: editForm.notes,
-        }),
-      })
+      const res = await fetch(
+        `/api/clients/${clientId}/installments?installmentId=${editingInstallment.id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            status: editForm.status,
+            paidAt: paidAtToSave,
+            notes: editForm.notes,
+          }),
+        },
+      );
 
-      if (!res.ok) throw new Error('Falha ao atualizar parcela')
+      if (!res.ok) throw new Error("Falha ao atualizar parcela");
 
-      toast.success('Parcela atualizada!')
-      setEditingInstallment(null)
-      loadInstallments()
+      toast.success("Parcela atualizada!");
+      setEditingInstallment(null);
+      loadInstallments();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Erro ao atualizar parcela')
+      toast.error(
+        error instanceof Error ? error.message : "Erro ao atualizar parcela",
+      );
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
 
   const handleDeleteAll = async () => {
-    if (!confirm('Tem certeza que deseja remover todas as parcelas? Esta ação não pode ser desfeita.')) return
+    if (
+      !confirm(
+        "Tem certeza que deseja remover todas as parcelas? Esta ação não pode ser desfeita.",
+      )
+    )
+      return;
 
-    setSubmitting(true)
+    setSubmitting(true);
 
     try {
       const res = await fetch(`/api/clients/${clientId}/installments`, {
-        method: 'DELETE',
-      })
+        method: "DELETE",
+      });
 
-      if (!res.ok) throw new Error('Falha ao remover parcelas')
+      if (!res.ok) throw new Error("Falha ao remover parcelas");
 
-      toast.success('Parcelas removidas com sucesso!')
-      loadInstallments()
+      toast.success("Parcelas removidas com sucesso!");
+      loadInstallments();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Erro ao remover parcelas')
+      toast.error(
+        error instanceof Error ? error.message : "Erro ao remover parcelas",
+      );
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'CONFIRMED':
-        return 'text-green-600 bg-green-50 dark:bg-green-950/30'
-      case 'LATE':
-        return 'text-red-600 bg-red-50 dark:bg-red-950/30'
+      case "CONFIRMED":
+        return "text-green-600 bg-green-50 dark:bg-green-950/30";
+      case "LATE":
+        return "text-red-600 bg-red-50 dark:bg-red-950/30";
       default:
-        return 'text-yellow-600 bg-yellow-50 dark:bg-yellow-950/30'
+        return "text-yellow-600 bg-yellow-50 dark:bg-yellow-950/30";
     }
-  }
+  };
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'CONFIRMED':
-        return 'Pago'
-      case 'LATE':
-        return 'Atrasado'
+      case "CONFIRMED":
+        return "Pago";
+      case "LATE":
+        return "Atrasado";
       default:
-        return 'Pendente'
+        return "Pendente";
     }
-  }
+  };
 
-  const totalValue = installments.reduce((sum, inst) => sum + inst.amount, 0)
-  const paidValue = installments.filter(i => i.status === 'CONFIRMED').reduce((sum, inst) => sum + inst.amount, 0)
-  const pendingCount = installments.filter(i => i.status === 'PENDING').length
-  const lateCount = installments.filter(i => i.status === 'LATE').length
+  const totalValue = installments.reduce((sum, inst) => sum + inst.amount, 0);
+  const paidValue = installments
+    .filter((i) => i.status === "CONFIRMED")
+    .reduce((sum, inst) => sum + inst.amount, 0);
+  const pendingCount = installments.filter(
+    (i) => i.status === "PENDING",
+  ).length;
+  const lateCount = installments.filter((i) => i.status === "LATE").length;
 
   if (loading) {
     return (
@@ -186,7 +229,7 @@ export function InstallmentManager({ clientId, canEdit }: InstallmentManagerProp
           <LoadingSpinner />
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -208,13 +251,22 @@ export function InstallmentManager({ clientId, canEdit }: InstallmentManagerProp
               </div>
             </div>
             {canEdit && installments.length === 0 && (
-              <Button onClick={() => setIsModalOpen(true)} size="sm" className="gap-2 rounded-full">
+              <Button
+                onClick={() => setIsModalOpen(true)}
+                size="sm"
+                className="gap-2 rounded-full"
+              >
                 <Plus className="w-4 h-4" />
                 Criar Parcelas
               </Button>
             )}
             {canEdit && installments.length > 0 && (
-              <Button onClick={handleDeleteAll} variant="outline" size="sm" className="gap-2 rounded-full text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30">
+              <Button
+                onClick={handleDeleteAll}
+                variant="outline"
+                size="sm"
+                className="gap-2 rounded-full text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+              >
                 <Trash2 className="w-4 h-4" />
                 Remover Todas
               </Button>
@@ -229,7 +281,9 @@ export function InstallmentManager({ clientId, canEdit }: InstallmentManagerProp
               <div className="bg-white/50 dark:bg-slate-800/50 rounded-xl p-4 backdrop-blur-sm">
                 <div className="flex items-center gap-2 mb-1">
                   <DollarSign className="w-4 h-4 text-slate-600 dark:text-slate-400" />
-                  <p className="text-xs font-medium text-slate-600 dark:text-slate-400 uppercase">Total</p>
+                  <p className="text-xs font-medium text-slate-600 dark:text-slate-400 uppercase">
+                    Total
+                  </p>
                 </div>
                 <p className="text-2xl font-bold text-slate-900 dark:text-white">
                   R$ {totalValue.toFixed(2)}
@@ -239,7 +293,9 @@ export function InstallmentManager({ clientId, canEdit }: InstallmentManagerProp
               <div className="bg-white/50 dark:bg-slate-800/50 rounded-xl p-4 backdrop-blur-sm">
                 <div className="flex items-center gap-2 mb-1">
                   <CheckCircle2 className="w-4 h-4 text-green-600" />
-                  <p className="text-xs font-medium text-slate-600 dark:text-slate-400 uppercase">Pago</p>
+                  <p className="text-xs font-medium text-slate-600 dark:text-slate-400 uppercase">
+                    Pago
+                  </p>
                 </div>
                 <p className="text-2xl font-bold text-green-600">
                   R$ {paidValue.toFixed(2)}
@@ -249,7 +305,9 @@ export function InstallmentManager({ clientId, canEdit }: InstallmentManagerProp
               <div className="bg-white/50 dark:bg-slate-800/50 rounded-xl p-4 backdrop-blur-sm">
                 <div className="flex items-center gap-2 mb-1">
                   <CalendarDays className="w-4 h-4 text-yellow-600" />
-                  <p className="text-xs font-medium text-slate-600 dark:text-slate-400 uppercase">Pendentes</p>
+                  <p className="text-xs font-medium text-slate-600 dark:text-slate-400 uppercase">
+                    Pendentes
+                  </p>
                 </div>
                 <p className="text-2xl font-bold text-yellow-600">
                   {pendingCount}
@@ -259,11 +317,11 @@ export function InstallmentManager({ clientId, canEdit }: InstallmentManagerProp
               <div className="bg-white/50 dark:bg-slate-800/50 rounded-xl p-4 backdrop-blur-sm">
                 <div className="flex items-center gap-2 mb-1">
                   <XCircle className="w-4 h-4 text-red-600" />
-                  <p className="text-xs font-medium text-slate-600 dark:text-slate-400 uppercase">Atrasados</p>
+                  <p className="text-xs font-medium text-slate-600 dark:text-slate-400 uppercase">
+                    Atrasados
+                  </p>
                 </div>
-                <p className="text-2xl font-bold text-red-600">
-                  {lateCount}
-                </p>
+                <p className="text-2xl font-bold text-red-600">{lateCount}</p>
               </div>
             </div>
 
@@ -284,35 +342,51 @@ export function InstallmentManager({ clientId, canEdit }: InstallmentManagerProp
                           <span className="text-lg font-bold text-slate-900 dark:text-white">
                             Parcela {installment.number}
                           </span>
-                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(installment.status)}`}>
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(installment.status)}`}
+                          >
                             {getStatusLabel(installment.status)}
                           </span>
                         </div>
                         <div className="grid grid-cols-2 gap-4 text-sm">
                           <div>
-                            <p className="text-slate-600 dark:text-slate-400">Valor</p>
+                            <p className="text-slate-600 dark:text-slate-400">
+                              Valor
+                            </p>
                             <p className="font-semibold text-slate-900 dark:text-white">
                               R$ {installment.amount.toFixed(2)}
                             </p>
                           </div>
                           <div>
-                            <p className="text-slate-600 dark:text-slate-400">Vencimento</p>
+                            <p className="text-slate-600 dark:text-slate-400">
+                              Vencimento
+                            </p>
                             <p className="font-semibold text-slate-900 dark:text-white">
-                              {new Date(installment.dueDate).toLocaleDateString('pt-BR')}
+                              {new Date(installment.dueDate).toLocaleDateString(
+                                "pt-BR",
+                              )}
                             </p>
                           </div>
                           {installment.paidAt && (
                             <div>
-                              <p className="text-slate-600 dark:text-slate-400">Data Pagamento</p>
+                              <p className="text-slate-600 dark:text-slate-400">
+                                Data Pagamento
+                              </p>
                               <p className="font-semibold text-green-600">
-                                {new Date(installment.paidAt).toLocaleDateString('pt-BR')}
+                                {new Date(
+                                  installment.paidAt,
+                                ).toLocaleDateString("pt-BR")}
                               </p>
                             </div>
                           )}
                           {installment.notes && (
                             <div className="col-span-2">
-                              <p className="text-slate-600 dark:text-slate-400">Observações</p>
-                              <p className="text-slate-900 dark:text-white">{installment.notes}</p>
+                              <p className="text-slate-600 dark:text-slate-400">
+                                Observações
+                              </p>
+                              <p className="text-slate-900 dark:text-white">
+                                {installment.notes}
+                              </p>
                             </div>
                           )}
                         </div>
@@ -320,12 +394,14 @@ export function InstallmentManager({ clientId, canEdit }: InstallmentManagerProp
                       {canEdit && (
                         <Button
                           onClick={() => {
-                            setEditingInstallment(installment)
+                            setEditingInstallment(installment);
                             setEditForm({
                               status: installment.status,
-                              paidAt: installment.paidAt ? formatDateInput(new Date(installment.paidAt)) : '',
-                              notes: installment.notes || '',
-                            })
+                              paidAt: installment.paidAt
+                                ? formatDateInput(new Date(installment.paidAt))
+                                : "",
+                              notes: installment.notes || "",
+                            });
                           }}
                           variant="outline"
                           size="sm"
@@ -350,7 +426,10 @@ export function InstallmentManager({ clientId, canEdit }: InstallmentManagerProp
                 Nenhuma parcela configurada
               </p>
               {canEdit && (
-                <Button onClick={() => setIsModalOpen(true)} className="gap-2 rounded-full">
+                <Button
+                  onClick={() => setIsModalOpen(true)}
+                  className="gap-2 rounded-full"
+                >
                   <Plus className="w-4 h-4" />
                   Criar Parcelas
                 </Button>
@@ -386,14 +465,21 @@ export function InstallmentManager({ clientId, canEdit }: InstallmentManagerProp
                     type="number"
                     min="1"
                     value={formData.installmentCount}
-                    onChange={(e) => setFormData({ ...formData, installmentCount: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        installmentCount: e.target.value,
+                      })
+                    }
                     required
                   />
                 </div>
 
                 <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
                   <p className="text-xs text-slate-600 dark:text-slate-400">
-                    💡 <strong>Info:</strong> O valor de cada parcela será calculado automaticamente dividindo o <strong>valor do contrato</strong> pelo número de parcelas.
+                    💡 <strong>Info:</strong> O valor de cada parcela será
+                    calculado automaticamente dividindo o{" "}
+                    <strong>valor do contrato</strong> pelo número de parcelas.
                   </p>
                 </div>
 
@@ -403,7 +489,9 @@ export function InstallmentManager({ clientId, canEdit }: InstallmentManagerProp
                     id="startDate"
                     type="date"
                     value={formData.startDate}
-                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, startDate: e.target.value })
+                    }
                     required
                   />
                 </div>
@@ -418,8 +506,12 @@ export function InstallmentManager({ clientId, canEdit }: InstallmentManagerProp
                   >
                     Cancelar
                   </Button>
-                  <Button type="submit" className="flex-1" disabled={submitting}>
-                    {submitting ? <LoadingSpinner /> : 'Criar Parcelas'}
+                  <Button
+                    type="submit"
+                    className="flex-1"
+                    disabled={submitting}
+                  >
+                    {submitting ? <LoadingSpinner /> : "Criar Parcelas"}
                   </Button>
                 </div>
               </form>
@@ -434,7 +526,9 @@ export function InstallmentManager({ clientId, canEdit }: InstallmentManagerProp
           <Card className="w-full max-w-md">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>Editar Parcela {editingInstallment.number}</CardTitle>
+                <CardTitle>
+                  Editar Parcela {editingInstallment.number}
+                </CardTitle>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -449,18 +543,22 @@ export function InstallmentManager({ clientId, canEdit }: InstallmentManagerProp
               <div>
                 <Label htmlFor="status">Status</Label>
                 <Select
-                  id="status"
                   value={editForm.status}
-                  onChange={(e) =>
+                  onValueChange={(value) =>
                     setEditForm({
                       ...editForm,
-                      status: e.target.value as 'PENDING' | 'CONFIRMED' | 'LATE',
+                      status: value as "PENDING" | "CONFIRMED" | "LATE",
                     })
                   }
                 >
-                  <option value="PENDING">Pendente</option>
-                  <option value="CONFIRMED">Pago</option>
-                  <option value="LATE">Atrasado</option>
+                  <SelectTrigger className="border-border focus:border-blue-500 focus:ring-blue-500 bg-background transition-colors">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="PENDING">Pendente</SelectItem>
+                    <SelectItem value="CONFIRMED">Pago</SelectItem>
+                    <SelectItem value="LATE">Atrasado</SelectItem>
+                  </SelectContent>
                 </Select>
               </div>
 
@@ -470,7 +568,9 @@ export function InstallmentManager({ clientId, canEdit }: InstallmentManagerProp
                   id="paidAt"
                   type="date"
                   value={editForm.paidAt}
-                  onChange={(e) => setEditForm({ ...editForm, paidAt: e.target.value })}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, paidAt: e.target.value })
+                  }
                 />
               </div>
 
@@ -479,7 +579,9 @@ export function InstallmentManager({ clientId, canEdit }: InstallmentManagerProp
                 <Textarea
                   id="notes"
                   value={editForm.notes}
-                  onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, notes: e.target.value })
+                  }
                   rows={3}
                 />
               </div>
@@ -494,8 +596,12 @@ export function InstallmentManager({ clientId, canEdit }: InstallmentManagerProp
                 >
                   Cancelar
                 </Button>
-                <Button onClick={handleUpdateInstallment} className="flex-1" disabled={submitting}>
-                  {submitting ? <LoadingSpinner /> : 'Salvar'}
+                <Button
+                  onClick={handleUpdateInstallment}
+                  className="flex-1"
+                  disabled={submitting}
+                >
+                  {submitting ? <LoadingSpinner /> : "Salvar"}
                 </Button>
               </div>
             </CardContent>
@@ -503,5 +609,5 @@ export function InstallmentManager({ clientId, canEdit }: InstallmentManagerProp
         </div>
       )}
     </div>
-  )
+  );
 }

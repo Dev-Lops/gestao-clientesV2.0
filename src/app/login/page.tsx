@@ -1,93 +1,100 @@
-'use client'
+"use client";
 
-import { AuthDebug } from '@/components/AuthDebug'
-import { Button } from '@/components/ui/button'
-import { LoadingSpinner } from '@/components/ui/loading-spinner'
-import { useUser } from '@/context/UserContext'
+import { AuthDebug } from "@/components/AuthDebug";
+import { Button } from "@/components/ui/button";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { useUser } from "@/context/UserContext";
 import {
   ArrowRight,
   CheckCircle2,
   ShieldCheck,
   Sparkles,
   Zap,
-} from 'lucide-react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { Suspense, useEffect, useState } from 'react'
+} from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 
 function LoginPageInner() {
-  const { loginWithGoogle, loading, user } = useUser()
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const inviteToken = searchParams.get('invite')
-  const [isLogging, setIsLogging] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const hasInvite = !!inviteToken
+  const { loginWithGoogle, loading, user } = useUser();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const inviteToken = searchParams.get("invite");
+  const [isLogging, setIsLogging] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const hasInvite = !!inviteToken;
 
   // Verificar se há redirect pendente ao montar
   useEffect(() => {
-    console.log('[LoginPage] 🚀 Componente montado')
-    console.log('[LoginPage] URL:', window.location.href)
-    console.log('[LoginPage] Query params:', window.location.search)
+    console.log("[LoginPage] 🚀 Componente montado");
+    console.log("[LoginPage] URL:", window.location.href);
+    console.log("[LoginPage] Query params:", window.location.search);
 
-    const wasPendingRedirect = typeof window !== 'undefined' &&
-      localStorage.getItem('pendingAuthRedirect') === 'true'
+    const wasPendingRedirect =
+      typeof window !== "undefined" &&
+      localStorage.getItem("pendingAuthRedirect") === "true";
 
-    console.log('[LoginPage] Redirect pendente?', wasPendingRedirect)
+    console.log("[LoginPage] Redirect pendente?", wasPendingRedirect);
 
     if (wasPendingRedirect) {
-      console.log('[LoginPage] 🔄 Redirect pendente detectado, aguardando processamento...')
+      console.log(
+        "[LoginPage] 🔄 Redirect pendente detectado, aguardando processamento...",
+      );
 
       // Usar função de transição para evitar cascading renders
       const timeoutId = setTimeout(() => {
-        setIsLogging(true)
-      }, 0)
+        setIsLogging(true);
+      }, 0);
 
       // Timeout de segurança: se após 15 segundos ainda estiver loading, resetar
       const cleanupTimeout = setTimeout(() => {
-        console.log('[LoginPage] ⚠️ Timeout ao processar redirect, resetando estado')
-        setIsLogging(false)
-        setError('Timeout ao processar autenticação. Por favor, tente novamente.')
-        localStorage.removeItem('pendingAuthRedirect')
-        sessionStorage.removeItem('pendingInviteToken')
-      }, 15000)
+        console.log(
+          "[LoginPage] ⚠️ Timeout ao processar redirect, resetando estado",
+        );
+        setIsLogging(false);
+        setError(
+          "Timeout ao processar autenticação. Por favor, tente novamente.",
+        );
+        localStorage.removeItem("pendingAuthRedirect");
+        sessionStorage.removeItem("pendingInviteToken");
+      }, 15000);
 
       return () => {
-        clearTimeout(timeoutId)
-        clearTimeout(cleanupTimeout)
-      }
+        clearTimeout(timeoutId);
+        clearTimeout(cleanupTimeout);
+      };
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
     if (!loading && user) {
-      console.log('[LoginPage] Usuário já autenticado, redirecionando para /')
-      router.replace('/')
+      console.log("[LoginPage] Usuário já autenticado, redirecionando para /");
+      router.replace("/");
     }
-  }, [loading, user, router])
+  }, [loading, user, router]);
 
   const handleLogin = async () => {
-    setIsLogging(true)
-    setError(null)
+    setIsLogging(true);
+    setError(null);
     try {
-      await loginWithGoogle(inviteToken)
+      await loginWithGoogle(inviteToken);
     } catch (error) {
-      console.error('[LoginPage] Erro no login:', error)
-      const err = error as { code?: string; message?: string }
+      console.error("[LoginPage] Erro no login:", error);
+      const err = error as { code?: string; message?: string };
 
       // Mensagens de erro amigáveis
-      let errorMessage = 'Erro ao fazer login. Por favor, tente novamente.'
-      if (err.code === 'auth/popup-blocked') {
-        errorMessage = 'Popup bloqueado. Redirecionando...'
-      } else if (err.code === 'auth/cancelled-popup-request') {
-        errorMessage = 'Login cancelado.'
-      } else if (err.code === 'auth/network-request-failed') {
-        errorMessage = 'Erro de conexão. Verifique sua internet.'
+      let errorMessage = "Erro ao fazer login. Por favor, tente novamente.";
+      if (err.code === "auth/popup-blocked") {
+        errorMessage = "Popup bloqueado. Redirecionando...";
+      } else if (err.code === "auth/cancelled-popup-request") {
+        errorMessage = "Login cancelado.";
+      } else if (err.code === "auth/network-request-failed") {
+        errorMessage = "Erro de conexão. Verifique sua internet.";
       }
 
-      setError(errorMessage)
-      setIsLogging(false)
+      setError(errorMessage);
+      setIsLogging(false);
     }
-  }
+  };
 
   // Se está processando redirect, mostrar tela de loading
   if (isLogging) {
@@ -105,22 +112,22 @@ function LoginPageInner() {
               Conectando...
             </h2>
             <p className="text-slate-600 dark:text-slate-400">
-              {hasInvite ? 'Processando convite' : 'Autenticando com Google'}
+              {hasInvite ? "Processando convite" : "Autenticando com Google"}
             </p>
           </div>
           <LoadingSpinner size="lg" />
         </div>
       </div>
-    )
+    );
   }
 
   return (
-    <div className="relative flex min-h-screen w-full overflow-hidden bg-linear-to-br from-slate-50 via-blue-50/30 to-slate-100 dark:from-slate-950 dark:via-blue-950/20 dark:to-slate-900 items-center justify-center">
+    <div className="relative flex min-h-screen w-full overflow-hidden bg-background text-foreground items-center justify-center">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 -left-4 w-96 h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob" />
-        <div className="absolute top-0 -right-4 w-96 h-96 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-2000" />
-        <div className="absolute -bottom-8 left-20 w-96 h-96 bg-pink-400 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-4000" />
+        <div className="absolute top-0 -left-4 w-96 h-96 rounded-full mix-blend-multiply filter blur-3xl opacity-15 animate-blob bg-blue-300/40 dark:bg-blue-600/30" />
+        <div className="absolute top-0 -right-4 w-96 h-96 rounded-full mix-blend-multiply filter blur-3xl opacity-15 animate-blob animation-delay-2000 bg-purple-300/40 dark:bg-purple-600/30" />
+        <div className="absolute -bottom-8 left-20 w-96 h-96 rounded-full mix-blend-multiply filter blur-3xl opacity-15 animate-blob animation-delay-4000 bg-pink-300/40 dark:bg-pink-600/30" />
       </div>
 
       {/* Left Panel - Brand & Features */}
@@ -149,7 +156,8 @@ function LoginPageInner() {
               </span>
             </h1>
             <p className="text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
-              Centralize clientes, projetos e equipes em uma plataforma moderna e intuitiva
+              Centralize clientes, projetos e equipes em uma plataforma moderna
+              e intuitiva
             </p>
           </div>
 
@@ -158,18 +166,18 @@ function LoginPageInner() {
             {[
               {
                 icon: CheckCircle2,
-                title: 'Gestão completa de clientes',
-                desc: 'Acompanhe cada etapa do relacionamento',
+                title: "Gestão completa de clientes",
+                desc: "Acompanhe cada etapa do relacionamento",
               },
               {
                 icon: Zap,
-                title: 'Workflow otimizado',
-                desc: 'Tarefas, prazos e prioridades organizadas',
+                title: "Workflow otimizado",
+                desc: "Tarefas, prazos e prioridades organizadas",
               },
               {
                 icon: ShieldCheck,
-                title: 'Seguro e confiável',
-                desc: 'Autenticação robusta e dados protegidos',
+                title: "Seguro e confiável",
+                desc: "Autenticação robusta e dados protegidos",
               },
             ].map((feature) => (
               <div
@@ -220,7 +228,7 @@ function LoginPageInner() {
             <div className="absolute -inset-1 bg-linear-to-r from-blue-600 to-purple-600 rounded-3xl blur opacity-20" />
 
             {/* Card */}
-            <div className="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-8 space-y-6">
+            <div className="relative bg-card text-card-foreground rounded-2xl shadow-2xl border border-border p-8 space-y-6 transition-colors">
               {/* Header */}
               <div className="text-center space-y-2">
                 {hasInvite ? (
@@ -253,7 +261,9 @@ function LoginPageInner() {
                 {isLogging || loading ? (
                   <div className="flex items-center gap-3">
                     <LoadingSpinner size="sm" className="text-white" />
-                    <span>{hasInvite ? 'Aceitando convite...' : 'Conectando...'}</span>
+                    <span>
+                      {hasInvite ? "Aceitando convite..." : "Conectando..."}
+                    </span>
                   </div>
                 ) : (
                   <div className="flex items-center justify-center gap-3">
@@ -275,7 +285,11 @@ function LoginPageInner() {
                         d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                       />
                     </svg>
-                    <span>{hasInvite ? 'Aceitar convite com Google' : 'Continuar com Google'}</span>
+                    <span>
+                      {hasInvite
+                        ? "Aceitar convite com Google"
+                        : "Continuar com Google"}
+                    </span>
                     <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
                   </div>
                 )}
@@ -293,10 +307,10 @@ function LoginPageInner() {
               {/* Divider */}
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-slate-200 dark:border-slate-800" />
+                  <div className="w-full border-t border-border" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white dark:bg-slate-900 px-2 text-slate-500">
+                  <span className="bg-card px-2 text-muted-foreground">
                     Acesso seguro
                   </span>
                 </div>
@@ -304,18 +318,18 @@ function LoginPageInner() {
 
               {/* Footer */}
               <div className="space-y-4">
-                <p className="text-center text-xs text-slate-500 dark:text-slate-500 leading-relaxed">
-                  Ao continuar, você concorda com nossos{' '}
+                <p className="text-center text-xs text-muted-foreground leading-relaxed">
+                  Ao continuar, você concorda com nossos{" "}
                   <a
                     href="#"
-                    className="font-medium text-blue-600 hover:text-blue-700 underline underline-offset-2"
+                    className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline underline-offset-2"
                   >
                     Termos de Uso
-                  </a>{' '}
-                  e{' '}
+                  </a>{" "}
+                  e{" "}
                   <a
                     href="#"
-                    className="font-medium text-blue-600 hover:text-blue-700 underline underline-offset-2"
+                    className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline underline-offset-2"
                   >
                     Política de Privacidade
                   </a>
@@ -325,23 +339,29 @@ function LoginPageInner() {
           </div>
 
           {/* Help text */}
-          <p className="text-center text-sm text-slate-600 dark:text-slate-400">
-            Precisa de uma conta?{' '}
-            <span className="font-semibold text-slate-900 dark:text-white">
+          <p className="text-center text-sm text-muted-foreground">
+            Precisa de uma conta?{" "}
+            <span className="font-semibold text-foreground">
               Solicite acesso ao administrador
             </span>
           </p>
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Carregando...</div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          Carregando...
+        </div>
+      }
+    >
       <LoginPageInner />
       <AuthDebug />
     </Suspense>
-  )
+  );
 }

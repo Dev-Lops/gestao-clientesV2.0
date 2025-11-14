@@ -30,7 +30,7 @@ Pré-requisitos:
 pnpm install
 ```
 
-1. Configure variáveis de ambiente no arquivo `.env.local`:
+1. Configure variáveis de ambiente no arquivo `.env.local` (ou copie `.env.example` para `.env`):
 
 ```bash
 NEXT_PUBLIC_FIREBASE_API_KEY=xxxxx
@@ -144,3 +144,39 @@ MIT
 ---
 
 > Mantido por Dev-Lops.
+
+## 🚢 Deploy para Produção (Rápido)
+
+Passos resumidos para rodar em produção (ex.: servidor VPS ou CI/CD):
+
+1. Configure variáveis de ambiente no host ou provedor usando `.env` (veja `.env.example`).
+
+2. Gere o Prisma Client (no build ou via CI):
+
+```bash
+pnpm prisma generate
+```
+
+1. Aplique migrações no banco de dados de produção (execute com cuidado):
+
+```bash
+pnpm prisma migrate deploy
+```
+
+1. Construa a aplicação e rode em modo `production` (ou use o Dockerfile incluído):
+
+```bash
+pnpm build
+pnpm start
+```
+
+Ou usando Docker Compose:
+
+```bash
+docker build -t gestao-clientes:latest .
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+1. Recomendações: configurar um reverse proxy (Nginx), TLS (Let's Encrypt), e variáveis de ambiente seguras.
+
+Se desejar, posso também adicionar um workflow do GitHub Actions para build/test/deploy.

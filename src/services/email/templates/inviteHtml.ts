@@ -1,9 +1,9 @@
 export type InviteHtmlParams = {
-  orgName: string
-  roleRequested: 'STAFF' | 'CLIENT'
-  clientName?: string | null
-  inviteLink: string
-}
+  orgName: string;
+  roleRequested: "STAFF" | "CLIENT";
+  clientName?: string | null;
+  inviteLink: string;
+};
 
 export function renderInviteEmailHtml({
   orgName,
@@ -11,9 +11,9 @@ export function renderInviteEmailHtml({
   clientName,
   inviteLink,
 }: InviteHtmlParams) {
-  const roleLabel = roleRequested === 'STAFF' ? 'Equipe' : 'Cliente'
-  const safeOrg = escapeHtml(orgName)
-  const safeClient = clientName ? escapeHtml(clientName) : ''
+  const roleLabel = roleRequested === "STAFF" ? "Equipe" : "Cliente";
+  const safeOrg = escapeHtml(orgName);
+  const safeClient = clientName ? escapeHtml(clientName) : "";
 
   return `
 <!doctype html>
@@ -35,7 +35,7 @@ export function renderInviteEmailHtml({
           ${
             clientName
               ? `<p style="margin:0 0 8px;font-size:14px"><span style=\"color:#334155;font-weight:600;margin-right:8px\">Cliente:</span> ${safeClient}</p>`
-              : ''
+              : ""
           }
         </div>
 
@@ -50,14 +50,14 @@ export function renderInviteEmailHtml({
       <p style="margin-top:12px;font-size:11px;color:#94a3b8;text-align:center">Esta é uma mensagem automática. Não responda este e-mail.</p>
     </div>
   </body>
-</html>`
+</html>`;
 }
 
 function escapeHtml(s: string) {
   return s
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;')
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
 }

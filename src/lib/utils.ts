@@ -1,18 +1,18 @@
-import { clsx, type ClassValue } from 'clsx'
-import { twMerge } from 'tailwind-merge'
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
 export function formatDate(date: Date | string | null | undefined) {
-  if (!date) return '—'
-  const d = typeof date === 'string' ? new Date(date) : date
-  return d.toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  })
+  if (!date) return "—";
+  const d = typeof date === "string" ? new Date(date) : date;
+  return d.toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
 }
 
 /**
@@ -23,13 +23,13 @@ export function formatDate(date: Date | string | null | undefined) {
  * @returns Date object com a data correta no timezone local
  */
 export function parseDateInput(dateString: string): Date {
-  if (!dateString) return new Date()
+  if (!dateString) return new Date();
 
   // Separa ano, mês e dia da string
-  const [year, month, day] = dateString.split('-').map(Number)
+  const [year, month, day] = dateString.split("-").map(Number);
 
   // Cria a data no timezone local (mês é 0-indexed no JS)
-  return new Date(year, month - 1, day)
+  return new Date(year, month - 1, day);
 }
 
 /**
@@ -40,16 +40,16 @@ export function parseDateInput(dateString: string): Date {
  * @returns String no formato YYYY-MM-DD
  */
 export function formatDateInput(
-  date: Date | string | null | undefined
+  date: Date | string | null | undefined,
 ): string {
-  if (!date) return ''
+  if (!date) return "";
 
-  const d = typeof date === 'string' ? new Date(date) : date
-  const year = d.getFullYear()
-  const month = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
+  const d = typeof date === "string" ? new Date(date) : date;
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
 
-  return `${year}-${month}-${day}`
+  return `${year}-${month}-${day}`;
 }
 
 /**
@@ -60,17 +60,17 @@ export function formatDateInput(
  * @returns String ISO com a data local preservada
  */
 export function toLocalISOString(date: Date): string {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-  const seconds = String(date.getSeconds()).padStart(2, '0')
-  const ms = String(date.getMilliseconds()).padStart(3, '0')
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const seconds = String(date.getSeconds()).padStart(2, "0");
+  const ms = String(date.getMilliseconds()).padStart(3, "0");
 
   // Mantém 'Z' para preservar contrato dos testes: usa componentes locais
   // e marca como UTC para evitar que toISOString() desloque a data.
-  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${ms}Z`
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${ms}Z`;
 }
 
 /**
@@ -83,9 +83,9 @@ export function toLocalISOString(date: Date): string {
 export function parseISOToLocal(isoString: string): Date {
   // Se a string vier no formato YYYY-MM-DD (sem hora), trata como data local
   if (/^\d{4}-\d{2}-\d{2}$/.test(isoString)) {
-    const [year, month, day] = isoString.split('-').map(Number)
-    return new Date(year, month - 1, day)
+    const [year, month, day] = isoString.split("-").map(Number);
+    return new Date(year, month - 1, day);
   }
   // Caso contrário, converte normalmente
-  return new Date(isoString)
+  return new Date(isoString);
 }

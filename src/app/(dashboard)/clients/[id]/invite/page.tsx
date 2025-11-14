@@ -1,22 +1,26 @@
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Mail, UserPlus } from 'lucide-react'
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Mail, UserPlus } from "lucide-react";
 
 interface ClientInvitePageProps {
-  params: Promise<{ id: string }>
+  params: Promise<{ id: string }>;
 }
 
-export default async function ClientInvitePage({ params }: ClientInvitePageProps) {
+export default async function ClientInvitePage({
+  params,
+}: ClientInvitePageProps) {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { id } = await params
+  const { id } = await params;
   // TODO: Implementar envio de convites usando id
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold text-slate-900">Convidar Usuário</h2>
+        <h2 className="text-2xl font-semibold text-slate-900">
+          Convidar Usuário
+        </h2>
         <p className="text-sm text-slate-500 mt-1">
           Convide um usuário para acessar a área deste cliente
         </p>
@@ -72,7 +76,9 @@ export default async function ClientInvitePage({ params }: ClientInvitePageProps
             <div className="text-center py-12 text-slate-500">
               <Mail className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p className="font-medium">Nenhum convite pendente</p>
-              <p className="text-sm mt-1">Os convites enviados aparecerão aqui</p>
+              <p className="text-sm mt-1">
+                Os convites enviados aparecerão aqui
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -87,16 +93,19 @@ export default async function ClientInvitePage({ params }: ClientInvitePageProps
               </div>
             </div>
             <div className="flex-1">
-              <h3 className="font-medium text-slate-900 mb-1">Como funciona?</h3>
+              <h3 className="font-medium text-slate-900 mb-1">
+                Como funciona?
+              </h3>
               <p className="text-sm text-slate-600">
-                Ao enviar o convite, o usuário receberá um e-mail com um link especial.
-                Quando aceitar, ele terá acesso exclusivo à área deste cliente, podendo
-                visualizar tarefas, mídias e outras informações relacionadas.
+                Ao enviar o convite, o usuário receberá um e-mail com um link
+                especial. Quando aceitar, ele terá acesso exclusivo à área deste
+                cliente, podendo visualizar tarefas, mídias e outras informações
+                relacionadas.
               </p>
             </div>
           </div>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

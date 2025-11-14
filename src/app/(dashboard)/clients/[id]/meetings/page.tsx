@@ -1,11 +1,13 @@
-import { MeetingsManager } from '@/features/clients/components/MeetingsManager'
+import { MeetingsManager } from "@/features/clients/components/MeetingsManager";
 
 interface ClientMeetingsPageProps {
-  params: Promise<{ id: string }>
+  params: Promise<{ id: string }>;
 }
 
-export default async function ClientMeetingsPage({ params }: ClientMeetingsPageProps) {
-  const { id } = await params
+export default async function ClientMeetingsPage({
+  params,
+}: ClientMeetingsPageProps) {
+  const { id } = await params;
 
-  return <MeetingsManager clientId={id} />
+  return <MeetingsManager clientId={id} />;
 }

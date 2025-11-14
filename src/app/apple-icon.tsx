@@ -1,11 +1,11 @@
-import { ImageResponse } from 'next/og'
+import { ImageResponse } from "next/og";
 
 export const size = {
   width: 180,
   height: 180,
-}
+};
 
-export const contentType = 'image/png'
+export const contentType = "image/png";
 
 // Apple Touch Icon - usando mesmo estilo da sidebar
 export default function AppleIcon() {
@@ -13,13 +13,13 @@ export default function AppleIcon() {
     (
       <div
         style={{
-          background: 'linear-gradient(135deg, #7c3aed 0%, #c026d3 100%)',
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderRadius: '22%',
+          background: "linear-gradient(135deg, #7c3aed 0%, #c026d3 100%)",
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          borderRadius: "22%",
         }}
       >
         {/* Sparkles Icon SVG - scaled for larger size */}
@@ -43,6 +43,6 @@ export default function AppleIcon() {
     ),
     {
       ...size,
-    }
-  )
+    },
+  );
 }

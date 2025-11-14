@@ -1,17 +1,17 @@
 interface ProgressBarProps {
-  value: number
-  max: number
-  color: 'amber' | 'blue' | 'green'
+  value: number;
+  max: number;
+  color: "amber" | "blue" | "green";
 }
 
 export function ProgressBar({ value, max, color }: ProgressBarProps) {
-  const percentage = max > 0 ? (value / max) * 100 : 0
+  const percentage = max > 0 ? (value / max) * 100 : 0;
 
   const accentClasses = {
-    amber: 'accent-amber-500',
-    blue: 'accent-blue-500',
-    green: 'accent-green-500',
-  } as const
+    amber: "accent-amber-500",
+    blue: "accent-blue-500",
+    green: "accent-green-500",
+  } as const;
 
   return (
     <progress
@@ -19,5 +19,5 @@ export function ProgressBar({ value, max, color }: ProgressBarProps) {
       max={100}
       className={`w-full h-2 ${accentClasses[color]} rounded-full overflow-hidden`}
     />
-  )
+  );
 }

@@ -1,18 +1,18 @@
-'use client'
+"use client";
 
-import { LoadingSpinner } from '@/components/ui/loading-spinner'
-import { useEffect, useState } from 'react'
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { useEffect, useState } from "react";
 
 export function PageLoader() {
-  const [show, setShow] = useState(false)
+  const [show, setShow] = useState(false);
 
   useEffect(() => {
     // Delay para evitar flash em carregamentos rápidos
-    const timer = setTimeout(() => setShow(true), 100)
-    return () => clearTimeout(timer)
-  }, [])
+    const timer = setTimeout(() => setShow(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
 
-  if (!show) return null
+  if (!show) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm dark:bg-slate-950/80">
@@ -39,7 +39,7 @@ export function PageLoader() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 export function FullPageLoader({ message }: { message?: string }) {
@@ -57,7 +57,7 @@ export function FullPageLoader({ message }: { message?: string }) {
         {/* Texto */}
         <div className="flex flex-col items-center gap-2">
           <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200">
-            {message || 'Preparando tudo para você'}
+            {message || "Preparando tudo para você"}
           </h2>
           <div className="flex gap-2">
             <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce [animation-delay:-0.3s]" />
@@ -67,7 +67,7 @@ export function FullPageLoader({ message }: { message?: string }) {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 export function CardLoader() {
@@ -78,7 +78,7 @@ export function CardLoader() {
         <p className="text-sm text-slate-500">Carregando dados...</p>
       </div>
     </div>
-  )
+  );
 }
 
 export function InlineLoader() {
@@ -87,5 +87,5 @@ export function InlineLoader() {
       <LoadingSpinner size="sm" className="text-blue-600" />
       <span>Carregando...</span>
     </div>
-  )
+  );
 }

@@ -1,44 +1,44 @@
-'use client'
+"use client";
 
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { AlertTriangle, Trash2 } from 'lucide-react'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { AlertTriangle, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 interface ClientDeletePageProps {
-  params: Promise<{ id: string }>
+  params: Promise<{ id: string }>;
 }
 
 export default function ClientDeletePage({ params }: ClientDeletePageProps) {
-  const router = useRouter()
-  const [confirmation, setConfirmation] = useState('')
-  const [loading, setLoading] = useState(false)
+  const router = useRouter();
+  const [confirmation, setConfirmation] = useState("");
+  const [loading, setLoading] = useState(false);
 
   // Precisa ser async para unwrap params
   const handleDelete = async () => {
-    const { id } = await params
+    const { id } = await params;
 
-    if (confirmation !== 'EXCLUIR') {
-      return
+    if (confirmation !== "EXCLUIR") {
+      return;
     }
 
-    setLoading(true)
+    setLoading(true);
     try {
       // TODO: Implementar API de exclusão
-      console.log('Excluindo cliente:', id)
+      console.log("Excluindo cliente:", id);
 
       // Simulação de delay
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      router.push('/clients')
+      router.push("/clients");
     } catch (error) {
-      console.error('Erro ao excluir cliente:', error)
+      console.error("Erro ao excluir cliente:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -58,7 +58,9 @@ export default function ClientDeletePage({ params }: ClientDeletePageProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2 text-sm text-slate-700">
-            <p className="font-medium">Esta ação NÃO pode ser desfeita. Será excluído permanentemente:</p>
+            <p className="font-medium">
+              Esta ação NÃO pode ser desfeita. Será excluído permanentemente:
+            </p>
             <ul className="list-disc list-inside space-y-1 ml-2">
               <li>Todas as informações do cliente</li>
               <li>Tarefas associadas</li>
@@ -71,7 +73,11 @@ export default function ClientDeletePage({ params }: ClientDeletePageProps) {
 
           <div className="pt-4 border-t border-red-200">
             <p className="text-sm text-slate-700 mb-3">
-              Para confirmar, digite <strong className="font-mono bg-white px-2 py-1 rounded">EXCLUIR</strong> no campo abaixo:
+              Para confirmar, digite{" "}
+              <strong className="font-mono bg-white px-2 py-1 rounded">
+                EXCLUIR
+              </strong>{" "}
+              no campo abaixo:
             </p>
             <Input
               type="text"
@@ -91,11 +97,11 @@ export default function ClientDeletePage({ params }: ClientDeletePageProps) {
               </Button>
               <Button
                 onClick={handleDelete}
-                disabled={confirmation !== 'EXCLUIR' || loading}
+                disabled={confirmation !== "EXCLUIR" || loading}
                 className="bg-red-600 hover:bg-red-700 text-white gap-2"
               >
                 <Trash2 className="h-4 w-4" />
-                {loading ? 'Excluindo...' : 'Excluir Permanentemente'}
+                {loading ? "Excluindo..." : "Excluir Permanentemente"}
               </Button>
             </div>
           </div>
@@ -104,14 +110,19 @@ export default function ClientDeletePage({ params }: ClientDeletePageProps) {
 
       <Card className="bg-slate-50 border-slate-200">
         <CardContent className="pt-6">
-          <h3 className="font-medium text-slate-900 mb-2">Alternativas à exclusão:</h3>
+          <h3 className="font-medium text-slate-900 mb-2">
+            Alternativas à exclusão:
+          </h3>
           <ul className="text-sm text-slate-600 space-y-1">
-            <li>• Alterar o status do cliente para &quot;Encerrado&quot; ou &quot;Pausado&quot;</li>
+            <li>
+              • Alterar o status do cliente para &quot;Encerrado&quot; ou
+              &quot;Pausado&quot;
+            </li>
             <li>• Arquivar o cliente (funcionalidade futura)</li>
             <li>• Exportar dados antes de excluir</li>
           </ul>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

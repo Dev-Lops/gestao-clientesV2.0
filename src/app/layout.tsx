@@ -1,69 +1,69 @@
-import { UserProvider } from '@/context/UserContext'
-import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-import { Toaster } from 'sonner'
-import './globals.css'
+import AppLayoutClient from "@/components/layout/AppLayoutClient";
+import { UserProvider } from "@/context/UserContext";
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import { Toaster } from "sonner";
+import "./globals.css";
 
 // Se você for usar Firebase Auth (frontend)
 
-
 // Fonte global
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: {
-    default: 'MyGest - Sistema de Gestão de Clientes',
-    template: '%s | MyGest',
+    default: "MyGest - Sistema de Gestão de Clientes",
+    template: "%s | MyGest",
   },
   description:
-    'Sistema completo de gestão de clientes com controle de tarefas, finanças, reuniões e branding. Aumente a produtividade da sua equipe com ferramentas intuitivas.',
+    "Sistema completo de gestão de clientes com controle de tarefas, finanças, reuniões e branding. Aumente a produtividade da sua equipe com ferramentas intuitivas.",
   keywords: [
-    'gestão de clientes',
-    'CRM',
-    'gerenciamento de projetos',
-    'controle financeiro',
-    'gestão de tarefas',
-    'sistema de gestão',
-    'produtividade',
-    'organização empresarial',
+    "gestão de clientes",
+    "CRM",
+    "gerenciamento de projetos",
+    "controle financeiro",
+    "gestão de tarefas",
+    "sistema de gestão",
+    "produtividade",
+    "organização empresarial",
   ],
-  authors: [{ name: 'MyGest Team' }],
-  creator: 'MyGest',
-  publisher: 'MyGest',
+  authors: [{ name: "MyGest Team" }],
+  creator: "MyGest",
+  publisher: "MyGest",
   formatDetection: {
     email: false,
     address: false,
     telephone: false,
   },
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
   ),
   alternates: {
-    canonical: '/',
+    canonical: "/",
   },
   openGraph: {
-    title: 'MyGest - Sistema de Gestão de Clientes',
+    title: "MyGest - Sistema de Gestão de Clientes",
     description:
-      'Sistema completo de gestão de clientes com controle de tarefas, finanças, reuniões e branding.',
-    url: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-    siteName: 'MyGest',
-    locale: 'pt_BR',
-    type: 'website',
+      "Sistema completo de gestão de clientes com controle de tarefas, finanças, reuniões e branding.",
+    url: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+    siteName: "MyGest",
+    locale: "pt_BR",
+    type: "website",
     images: [
       {
-        url: '/og-image.png',
+        url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: 'MyGest - Sistema de Gestão de Clientes',
+        alt: "MyGest - Sistema de Gestão de Clientes",
       },
     ],
   },
   twitter: {
-    card: 'summary_large_image',
-    title: 'MyGest - Sistema de Gestão de Clientes',
+    card: "summary_large_image",
+    title: "MyGest - Sistema de Gestão de Clientes",
     description:
-      'Sistema completo de gestão de clientes com controle de tarefas, finanças, reuniões e branding.',
-    images: ['/og-image.png'],
+      "Sistema completo de gestão de clientes com controle de tarefas, finanças, reuniões e branding.",
+    images: ["/og-image.png"],
   },
   robots: {
     index: true,
@@ -71,9 +71,9 @@ export const metadata: Metadata = {
     googleBot: {
       index: true,
       follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
     },
   },
   verification: {
@@ -81,22 +81,38 @@ export const metadata: Metadata = {
     // google: 'google-verification-code',
     // yandex: 'yandex-verification-code',
   },
-}
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
   return (
     <html lang="pt-BR">
-      <body className={`${inter.className} bg-gray-50 text-gray-900 min-h-screen`}>
-        {/* Provider de autenticação global */}
+      <body
+        className={`${inter.className} min-h-screen bg-background text-foreground antialiased transition-colors`}
+      >
+        {/* Provider de autenticação global + Sidebar (apenas para usuários autenticados) */}
         <UserProvider>
-          {children}
+          <AppLayoutClient>{children}</AppLayoutClient>
         </UserProvider>
-        <Toaster />
+        <Toaster
+          position="top-right"
+          expand={true}
+          richColors
+          closeButton
+          duration={4000}
+          toastOptions={{
+            style: {
+              background: "white",
+              color: "#1e293b",
+              border: "1px solid #e2e8f0",
+            },
+            className: "toast-custom",
+          }}
+        />
       </body>
     </html>
-  )
+  );
 }

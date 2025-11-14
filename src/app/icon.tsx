@@ -1,12 +1,12 @@
-import { ImageResponse } from 'next/og'
+import { ImageResponse } from "next/og";
 
 // Metadados da imagem
 export const size = {
   width: 32,
   height: 32,
-}
+};
 
-export const contentType = 'image/png'
+export const contentType = "image/png";
 
 // Gerador de ícone - usando mesmo estilo da sidebar
 export default function Icon() {
@@ -14,13 +14,13 @@ export default function Icon() {
     (
       <div
         style={{
-          background: 'linear-gradient(135deg, #7c3aed 0%, #c026d3 100%)',
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderRadius: '20%',
+          background: "linear-gradient(135deg, #7c3aed 0%, #c026d3 100%)",
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          borderRadius: "20%",
         }}
       >
         {/* Sparkles Icon SVG */}
@@ -44,6 +44,6 @@ export default function Icon() {
     ),
     {
       ...size,
-    }
-  )
+    },
+  );
 }

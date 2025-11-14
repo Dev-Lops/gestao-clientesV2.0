@@ -8,45 +8,45 @@
  * - Status e vencimentos
  */
 
-import { prisma } from '@/lib/prisma'
-import { Client, Installment, PaymentStatus } from '@prisma/client'
+import { prisma } from "@/lib/prisma";
+import { Client, Installment, PaymentStatus } from "@prisma/client";
 
-export type PaymentMode = 'monthly' | 'installment'
+export type PaymentMode = "monthly" | "installment";
 
 // Tipo para cliente com installments incluídos
 type ClientWithInstallments = Client & {
-  installments: Installment[]
-}
+  installments: Installment[];
+};
 
 export type MonthlyPaymentStatus = {
-  mode: PaymentMode
-  amount: number
-  isPaid: boolean
-  isLate: boolean
-  dueDate: Date
-  paidAt: Date | null
+  mode: PaymentMode;
+  amount: number;
+  isPaid: boolean;
+  isLate: boolean;
+  dueDate: Date;
+  paidAt: Date | null;
   details: {
     // For monthly: current month finance total
     // For installment: installments info
-    monthlyIncome?: number
+    monthlyIncome?: number;
     installments?: {
-      total: number
-      paid: number
-      pending: number
-      nextPendingId?: string
-    }
-  }
-}
+      total: number;
+      paid: number;
+      pending: number;
+      nextPendingId?: string;
+    };
+  };
+};
 
 export type InstallmentInfo = {
-  id: string
-  number: number
-  totalInstallments: number
-  amount: number
-  dueDate: Date
-  status: PaymentStatus
-  paidAt: Date | null
-}
+  id: string;
+  number: number;
+  totalInstallments: number;
+  amount: number;
+  dueDate: Date;
+  status: PaymentStatus;
+  paidAt: Date | null;
+};
 
 export class PaymentService {
   /**
@@ -54,31 +54,31 @@ export class PaymentService {
    */
   static async getMonthlyPaymentStatus(
     clientId: string,
-    orgId: string
+    orgId: string,
   ): Promise<MonthlyPaymentStatus> {
     const client = await prisma.client.findFirst({
       where: { id: clientId, orgId },
       include: {
         installments: {
-          orderBy: { number: 'asc' },
+          orderBy: { number: "asc" },
         },
       },
-    })
+    });
 
     if (!client) {
-      throw new Error('Cliente não encontrado')
+      throw new Error("Cliente não encontrado");
     }
 
-    const now = new Date()
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const endOfMonth = new Date(
       now.getFullYear(),
       now.getMonth() + 1,
       0,
       23,
       59,
-      59
-    )
+      59,
+    );
 
     // Modo parcelas
     if (client.isInstallment) {
@@ -86,12 +86,17 @@ export class PaymentService {
         client,
         startOfMonth,
         endOfMonth,
-        now
-      )
+        now,
+      );
     }
 
     // Modo mensal recorrente
-    return this.getRecurringPaymentStatus(client, startOfMonth, endOfMonth, now)
+    return this.getRecurringPaymentStatus(
+      client,
+      startOfMonth,
+      endOfMonth,
+      now,
+    );
   }
 
   /**
@@ -101,15 +106,15 @@ export class PaymentService {
     client: ClientWithInstallments,
     startOfMonth: Date,
     endOfMonth: Date,
-    now: Date
+    now: Date,
   ): Promise<MonthlyPaymentStatus> {
     const monthInstallments = client.installments.filter(
-      (i: Installment) => i.dueDate >= startOfMonth && i.dueDate <= endOfMonth
-    )
+      (i: Installment) => i.dueDate >= startOfMonth && i.dueDate <= endOfMonth,
+    );
 
     if (monthInstallments.length === 0) {
       return {
-        mode: 'installment',
+        mode: "installment",
         amount: 0,
         isPaid: false,
         isLate: false,
@@ -122,31 +127,31 @@ export class PaymentService {
             pending: 0,
           },
         },
-      }
+      };
     }
 
     const paidCount = monthInstallments.filter(
-      (i: Installment) => i.status === 'CONFIRMED'
-    ).length
-    const isPaid = paidCount === monthInstallments.length
+      (i: Installment) => i.status === "CONFIRMED",
+    ).length;
+    const isPaid = paidCount === monthInstallments.length;
     const totalAmount = monthInstallments.reduce(
       (sum: number, i: Installment) => sum + i.amount,
-      0
-    )
+      0,
+    );
     const latestDueDate = new Date(
       Math.max(
         ...monthInstallments.map((i: Installment) =>
-          new Date(i.dueDate).getTime()
-        )
-      )
-    )
-    const isLate = !isPaid && now > latestDueDate
+          new Date(i.dueDate).getTime(),
+        ),
+      ),
+    );
+    const isLate = !isPaid && now > latestDueDate;
     const nextPending = monthInstallments.find(
-      (i: Installment) => i.status !== 'CONFIRMED'
-    )
+      (i: Installment) => i.status !== "CONFIRMED",
+    );
 
     return {
-      mode: 'installment',
+      mode: "installment",
       amount: totalAmount,
       isPaid,
       isLate,
@@ -156,8 +161,8 @@ export class PaymentService {
             Math.max(
               ...monthInstallments
                 .filter((i: Installment) => i.paidAt !== null)
-                .map((i: Installment) => new Date(i.paidAt as Date).getTime())
-            )
+                .map((i: Installment) => new Date(i.paidAt as Date).getTime()),
+            ),
           )
         : null,
       details: {
@@ -168,7 +173,7 @@ export class PaymentService {
           nextPendingId: nextPending?.id,
         },
       },
-    }
+    };
   }
 
   /**
@@ -178,33 +183,33 @@ export class PaymentService {
     client: Client,
     startOfMonth: Date,
     endOfMonth: Date,
-    now: Date
+    now: Date,
   ): Promise<MonthlyPaymentStatus> {
     if (!client.contractValue) {
-      throw new Error('Cliente não possui valor de contrato definido')
+      throw new Error("Cliente não possui valor de contrato definido");
     }
 
     // Calcular vencimento
-    const paymentDay = Math.min(Math.max(client.paymentDay || 5, 1), 28)
-    const dueDate = new Date(now.getFullYear(), now.getMonth(), paymentDay)
+    const paymentDay = Math.min(Math.max(client.paymentDay || 5, 1), 28);
+    const dueDate = new Date(now.getFullYear(), now.getMonth(), paymentDay);
 
     // Verificar pagamentos do mês
     const monthFinances = await prisma.finance.findMany({
       where: {
         clientId: client.id,
-        type: 'income',
+        type: "income",
         date: { gte: startOfMonth, lte: endOfMonth },
       },
-    })
+    });
 
-    const totalIncome = monthFinances.reduce((sum, f) => sum + f.amount, 0)
-    const expectedAmount = client.contractValue
+    const totalIncome = monthFinances.reduce((sum, f) => sum + f.amount, 0);
+    const expectedAmount = client.contractValue;
     // Tolerância de 5% para considerar pago
-    const isPaid = totalIncome >= expectedAmount * 0.95
-    const isLate = !isPaid && now > dueDate
+    const isPaid = totalIncome >= expectedAmount * 0.95;
+    const isLate = !isPaid && now > dueDate;
 
     return {
-      mode: 'monthly',
+      mode: "monthly",
       amount: expectedAmount,
       isPaid,
       isLate,
@@ -212,13 +217,13 @@ export class PaymentService {
       paidAt:
         isPaid && monthFinances.length > 0
           ? new Date(
-              Math.max(...monthFinances.map((f) => new Date(f.date).getTime()))
+              Math.max(...monthFinances.map((f) => new Date(f.date).getTime())),
             )
           : null,
       details: {
         monthlyIncome: totalIncome,
       },
-    }
+    };
   }
 
   /**
@@ -227,43 +232,43 @@ export class PaymentService {
   static async confirmMonthlyPayment(
     clientId: string,
     orgId: string,
-    paidAmount?: number
+    paidAmount?: number,
   ): Promise<void> {
     const client = await prisma.client.findFirst({
       where: { id: clientId, orgId },
-    })
+    });
 
     if (!client) {
-      throw new Error('Cliente não encontrado')
+      throw new Error("Cliente não encontrado");
     }
 
     if (client.isInstallment) {
       throw new Error(
-        'Cliente está em modo parcelado. Use confirmInstallmentPayment.'
-      )
+        "Cliente está em modo parcelado. Use confirmInstallmentPayment.",
+      );
     }
 
     if (!client.contractValue) {
-      throw new Error('Cliente não possui valor de contrato definido')
+      throw new Error("Cliente não possui valor de contrato definido");
     }
 
-    const now = new Date()
-    const amount = paidAmount || client.contractValue
+    const now = new Date();
+    const amount = paidAmount || client.contractValue;
 
     // Verificar se já existe pagamento no mês
     const existing = await prisma.finance.findFirst({
       where: {
         clientId,
-        type: 'income',
+        type: "income",
         date: {
           gte: new Date(now.getFullYear(), now.getMonth(), 1),
           lt: new Date(now.getFullYear(), now.getMonth() + 1, 1),
         },
       },
-    })
+    });
 
     if (existing) {
-      throw new Error('Já existe um pagamento registrado para este mês')
+      throw new Error("Já existe um pagamento registrado para este mês");
     }
 
     await prisma.$transaction([
@@ -271,21 +276,21 @@ export class PaymentService {
         data: {
           orgId,
           clientId,
-          type: 'income',
+          type: "income",
           amount,
-          description: `Mensalidade ${now.toLocaleDateString('pt-BR', {
-            month: 'long',
-            year: 'numeric',
+          description: `Mensalidade ${now.toLocaleDateString("pt-BR", {
+            month: "long",
+            year: "numeric",
           })} - ${client.name}`,
-          category: 'Mensalidade',
+          category: "Mensalidade",
           date: now,
         },
       }),
       prisma.client.update({
         where: { id: clientId },
-        data: { paymentStatus: 'CONFIRMED' },
+        data: { paymentStatus: "CONFIRMED" },
       }),
-    ])
+    ]);
   }
 
   /**
@@ -293,26 +298,26 @@ export class PaymentService {
    */
   static async confirmInstallmentPayment(
     installmentId: string,
-    orgId: string
+    orgId: string,
   ): Promise<void> {
     const installment = await prisma.installment.findUnique({
       where: { id: installmentId },
       include: { client: true },
-    })
+    });
 
     if (!installment || installment.client.orgId !== orgId) {
-      throw new Error('Parcela não encontrada')
+      throw new Error("Parcela não encontrada");
     }
 
-    if (installment.status === 'CONFIRMED') {
-      throw new Error('Parcela já foi confirmada')
+    if (installment.status === "CONFIRMED") {
+      throw new Error("Parcela já foi confirmada");
     }
 
     await prisma.$transaction([
       prisma.installment.update({
         where: { id: installmentId },
         data: {
-          status: 'CONFIRMED',
+          status: "CONFIRMED",
           paidAt: new Date(),
         },
       }),
@@ -320,14 +325,14 @@ export class PaymentService {
         data: {
           orgId,
           clientId: installment.clientId,
-          type: 'income',
+          type: "income",
           amount: installment.amount,
           description: `Parcela ${installment.number} - ${installment.client.name}`,
-          category: 'Parcelas',
+          category: "Parcelas",
           date: new Date(),
         },
       }),
-    ])
+    ]);
   }
 
   /**
@@ -335,22 +340,22 @@ export class PaymentService {
    */
   static async getClientInstallments(
     clientId: string,
-    orgId: string
+    orgId: string,
   ): Promise<InstallmentInfo[]> {
     const client = await prisma.client.findFirst({
       where: { id: clientId, orgId },
       include: {
         installments: {
-          orderBy: { number: 'asc' },
+          orderBy: { number: "asc" },
         },
       },
-    })
+    });
 
     if (!client) {
-      throw new Error('Cliente não encontrado')
+      throw new Error("Cliente não encontrado");
     }
 
-    const total = client.installmentCount || client.installments.length
+    const total = client.installmentCount || client.installments.length;
 
     return client.installments.map((i) => ({
       id: i.id,
@@ -360,24 +365,24 @@ export class PaymentService {
       dueDate: i.dueDate,
       status: i.status,
       paidAt: i.paidAt,
-    }))
+    }));
   }
 
   /**
    * Atualiza status de parcelas vencidas
    */
   static async updateLateInstallments(orgId: string): Promise<number> {
-    const now = new Date()
+    const now = new Date();
 
     const result = await prisma.installment.updateMany({
       where: {
         client: { orgId },
-        status: 'PENDING',
+        status: "PENDING",
         dueDate: { lt: now },
       },
-      data: { status: 'LATE' },
-    })
+      data: { status: "LATE" },
+    });
 
-    return result.count
+    return result.count;
   }
 }

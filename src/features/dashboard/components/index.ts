@@ -1,1 +1,1 @@
-export { ActivitiesCalendar } from './ActivitiesCalendar'
+export { ActivitiesCalendar } from "./ActivitiesCalendar";

@@ -1,32 +1,32 @@
-import { adminAuth } from '@/lib/firebaseAdmin'
-import { prisma } from '@/lib/prisma'
-import { cookies } from 'next/headers'
-import { NextResponse } from 'next/server'
+import { adminAuth } from "@/lib/firebaseAdmin";
+import { prisma } from "@/lib/prisma";
+import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    const cookieStore = await cookies()
-    const token = cookieStore.get('auth')?.value
+    const cookieStore = await cookies();
+    const token = cookieStore.get("auth")?.value;
 
     if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const decoded = await adminAuth.verifyIdToken(token)
-    const userId = decoded.uid
+    const decoded = await adminAuth.verifyIdToken(token);
+    const userId = decoded.uid;
 
     // Busca o usuário e sua org
     const user = await prisma.user.findUnique({
       where: { firebaseUid: userId },
       include: { memberships: { include: { org: true } } },
-    })
+    });
 
     if (!user || user.memberships.length === 0) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const orgId = user.memberships[0].orgId
-    const role = user.memberships[0].role
+    const orgId = user.memberships[0].orgId;
+    const role = user.memberships[0].role;
 
     // Buscar contadores para o sidebar
     const [
@@ -50,7 +50,7 @@ export async function GET() {
           orgId,
           tasks: {
             some: {
-              status: { notIn: ['done', 'completed'] },
+              status: { notIn: ["done", "completed"] },
             },
           },
         },
@@ -63,7 +63,7 @@ export async function GET() {
           tasks: {
             some: {
               dueDate: { lt: new Date() },
-              status: { notIn: ['done', 'completed'] },
+              status: { notIn: ["done", "completed"] },
             },
           },
         },
@@ -76,7 +76,7 @@ export async function GET() {
       prisma.task.count({
         where: {
           orgId,
-          status: { in: ['pending', 'todo'] },
+          status: { in: ["pending", "todo"] },
         },
       }),
 
@@ -85,7 +85,7 @@ export async function GET() {
         where: {
           orgId,
           dueDate: { lt: new Date() },
-          status: { notIn: ['done', 'completed'] },
+          status: { notIn: ["done", "completed"] },
         },
       }),
 
@@ -93,7 +93,7 @@ export async function GET() {
       prisma.finance.aggregate({
         where: {
           client: { orgId },
-          type: 'income',
+          type: "income",
         },
         _sum: { amount: true },
       }),
@@ -102,7 +102,7 @@ export async function GET() {
       prisma.finance.aggregate({
         where: {
           client: { orgId },
-          type: 'expense',
+          type: "expense",
         },
         _sum: { amount: true },
       }),
@@ -126,11 +126,11 @@ export async function GET() {
           },
         },
       }),
-    ])
+    ]);
 
-    const revenue = totalRevenue._sum.amount || 0
-    const expenses = totalExpenses._sum.amount || 0
-    const balance = revenue - expenses
+    const revenue = totalRevenue._sum.amount || 0;
+    const expenses = totalExpenses._sum.amount || 0;
+    const balance = revenue - expenses;
 
     return NextResponse.json({
       role,
@@ -155,12 +155,12 @@ export async function GET() {
           upcoming: upcomingMeetings,
         },
       },
-    })
+    });
   } catch (error) {
-    console.error('Erro ao buscar contadores do sidebar:', error)
+    console.error("Erro ao buscar contadores do sidebar:", error);
     return NextResponse.json(
-      { error: 'Failed to fetch sidebar stats' },
-      { status: 500 }
-    )
+      { error: "Failed to fetch sidebar stats" },
+      { status: 500 },
+    );
   }
 }

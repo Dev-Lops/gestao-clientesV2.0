@@ -1,37 +1,43 @@
-'use client'
+"use client";
 
-import { deleteMemberAction } from '@/app/(app)/admin/members/actions'
-import { Button } from '@/components/ui/button'
-import { Trash2 } from 'lucide-react'
-import { useState } from 'react'
-import { toast } from 'sonner'
+import { deleteMemberAction } from "@/app/(app)/admin/members/actions";
+import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface DeleteMemberButtonProps {
-  memberId: string
-  displayName: string
-  onSuccess?: () => void
+  memberId: string;
+  displayName: string;
+  onSuccess?: () => void;
 }
 
-export function DeleteMemberButton({ memberId, displayName, onSuccess }: DeleteMemberButtonProps) {
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [showConfirm, setShowConfirm] = useState(false)
+export function DeleteMemberButton({
+  memberId,
+  displayName,
+  onSuccess,
+}: DeleteMemberButtonProps) {
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   async function handleDelete() {
-    setIsDeleting(true)
+    setIsDeleting(true);
     try {
-      const formData = new FormData()
-      formData.append('member_id', memberId)
-      await deleteMemberAction(formData)
-      toast.success(`${displayName} foi removido com sucesso`)
-      setShowConfirm(false)
+      const formData = new FormData();
+      formData.append("member_id", memberId);
+      await deleteMemberAction(formData);
+      toast.success(`${displayName} foi removido com sucesso`);
+      setShowConfirm(false);
 
       if (onSuccess) {
-        onSuccess()
+        onSuccess();
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Erro ao remover membro')
+      toast.error(
+        error instanceof Error ? error.message : "Erro ao remover membro",
+      );
     } finally {
-      setIsDeleting(false)
+      setIsDeleting(false);
     }
   }
 
@@ -46,7 +52,7 @@ export function DeleteMemberButton({ memberId, displayName, onSuccess }: DeleteM
           disabled={isDeleting}
           className="rounded-full"
         >
-          {isDeleting ? 'Removendo...' : 'Sim'}
+          {isDeleting ? "Removendo..." : "Sim"}
         </Button>
         <Button
           size="sm"
@@ -58,7 +64,7 @@ export function DeleteMemberButton({ memberId, displayName, onSuccess }: DeleteM
           Não
         </Button>
       </div>
-    )
+    );
   }
 
   return (
@@ -70,5 +76,5 @@ export function DeleteMemberButton({ memberId, displayName, onSuccess }: DeleteM
     >
       <Trash2 className="h-4 w-4" />
     </Button>
-  )
+  );
 }

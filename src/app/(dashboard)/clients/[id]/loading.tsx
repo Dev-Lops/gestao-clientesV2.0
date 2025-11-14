@@ -1,5 +1,5 @@
-import { Card } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ClientLoading() {
   return (
@@ -34,5 +34,5 @@ export default function ClientLoading() {
         ))}
       </div>
     </div>
-  )
+  );
 }
