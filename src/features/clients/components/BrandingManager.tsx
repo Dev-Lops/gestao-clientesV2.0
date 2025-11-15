@@ -27,7 +27,7 @@ import {
   Type,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 
 type BrandingType =
@@ -48,6 +48,15 @@ interface Branding {
   createdAt: Date;
 }
 
+interface MediaUploadResult {
+  id?: string;
+  url?: string;
+  title?: string;
+  fileName?: string;
+  mimeType?: string;
+  fileKey?: string;
+}
+
 interface BrandingManagerProps {
   clientId: string;
   initialBranding?: Branding[];
@@ -63,12 +72,16 @@ export function BrandingManager({
   const [viewerItem, setViewerItem] = useState<Branding | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [fileToUpload, setFileToUpload] = useState<File | null>(null);
+  const [filePreviewUrl, setFilePreviewUrl] = useState<string | null>(null);
+  const previewRef = useRef<string | null>(null);
 
   const [form, setForm] = useState({
     title: "",
     description: "",
     type: "logo" as BrandingType,
-    fileUrl: "",
+    fileUrl: undefined as string | undefined,
     content: "",
   });
 
@@ -105,33 +118,107 @@ export function BrandingManager({
   async function handleFileUpload(file: File) {
     setUploading(true);
     setUploadError(null);
-    try {
+    setUploadProgress(0);
+    return await new Promise<MediaUploadResult | null>((resolve) => {
+      const xhr = new XMLHttpRequest();
+      const url = `/api/clients/${clientId}/media/upload`;
+      xhr.open("POST", url);
+      xhr.responseType = "json";
+      xhr.upload.onprogress = (ev) => {
+        if (ev.lengthComputable) {
+          const pct = Math.round((ev.loaded / ev.total) * 100);
+          setUploadProgress(pct);
+        }
+      };
+      xhr.onload = () => {
+        setUploading(false);
+        setUploadProgress(100);
+        if (xhr.status >= 200 && xhr.status < 300) {
+          const media: MediaUploadResult = xhr.response;
+          if (media?.url) setForm((f) => ({ ...f, fileUrl: media.url }));
+          resolve(media);
+        } else {
+          const msg = xhr.response?.error || `Upload failed (${xhr.status})`;
+          setUploadError(String(msg));
+          resolve(null);
+        }
+      };
+      xhr.onerror = () => {
+        setUploading(false);
+        setUploadError("Upload error");
+        resolve(null);
+      };
       const fd = new FormData();
       fd.append("file", file);
       fd.append("title", file.name);
-      const res = await fetch(`/api/clients/${clientId}/media/upload`, {
-        method: "POST",
-        body: fd,
-      });
-      if (!res.ok) {
-        const json = await res.json().catch(() => ({}));
-        throw new Error(json?.error || "Upload falhou");
+      xhr.send(fd);
+    });
+  }
+
+  // Generate a thumbnail for video (capture a frame) or return object URL for images
+  async function generateThumbnail(file: File): Promise<string | null> {
+    const lower = file.name.toLowerCase();
+    const objUrl = URL.createObjectURL(file);
+    try {
+      if (lower.match(/\.(mp4|mov|avi|webm|mkv|flv|mpeg)$/)) {
+        return await new Promise<string | null>((resolve) => {
+          const video = document.createElement("video");
+          video.preload = "metadata";
+          video.src = objUrl;
+          video.muted = true;
+          video.playsInline = true;
+          const cleanup = () => {
+            video.pause();
+            video.src = "";
+            video.remove();
+          };
+          video.addEventListener("loadeddata", () => {
+            // seek to 1s or to start
+            const seekTo = Math.min(1, Math.floor(video.duration / 2));
+            const onSeek = () => {
+              try {
+                const canvas = document.createElement("canvas");
+                canvas.width = video.videoWidth || 320;
+                canvas.height = video.videoHeight || 180;
+                const ctx = canvas.getContext("2d");
+                ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const data = canvas.toDataURL("image/png");
+                cleanup();
+                resolve(data);
+              } catch {
+                cleanup();
+                resolve(null);
+              }
+            };
+            const handleSeeked = () => onSeek();
+            video.currentTime = seekTo;
+            video.addEventListener("seeked", handleSeeked, { once: true });
+          });
+          video.addEventListener("error", () => {
+            cleanup();
+            resolve(null);
+          });
+        });
       }
-      const media = await res.json();
-      // media.url is expected
-      if (media?.url) {
-        setForm((f) => ({ ...f, fileUrl: media.url }));
+      // images: return object URL (browser will handle scaling)
+      if (lower.match(/\.(jpg|jpeg|png|gif|webp|svg|bmp|tiff)$/)) {
+        return objUrl;
       }
-      return media;
-    } catch (e: unknown) {
-      console.error("Upload error:", e);
-      const msg = e instanceof Error ? e.message : String(e);
-      setUploadError(msg);
       return null;
-    } finally {
-      setUploading(false);
+    } catch {
+      URL.revokeObjectURL(objUrl);
+      return null;
     }
   }
+
+  useEffect(() => {
+    return () => {
+      if (previewRef.current) {
+        URL.revokeObjectURL(previewRef.current);
+        previewRef.current = null;
+      }
+    };
+  }, []);
   // SWR: session (for role) and branding list
   const { data: session } = useSWR<{
     user: unknown;
@@ -152,6 +239,21 @@ export function BrandingManager({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // if there's a pending local file selected, upload it first
+    if (fileToUpload) {
+      const media = await handleFileUpload(fileToUpload);
+      if (media?.url) {
+        setForm((f) => ({ ...f, fileUrl: media.url }));
+      }
+      // clear local file after upload
+      setFileToUpload(null);
+      if (filePreviewUrl) {
+        URL.revokeObjectURL(filePreviewUrl);
+        previewRef.current = null;
+        setFilePreviewUrl(null);
+      }
+    }
+
     if (editing) {
       try {
         const res = await fetch(
@@ -233,6 +335,46 @@ export function BrandingManager({
     });
     setIsModalOpen(true);
   };
+
+  // Create a branding record from an uploaded media object
+  async function createBrandingFromMedia(media: MediaUploadResult, type: BrandingType) {
+    if (!canCreate) return null;
+    try {
+      const body: {
+        title: string;
+        type: BrandingType;
+        description: string | null;
+        fileUrl: string | null;
+        content: string | null;
+      } = {
+        title: String(media.title ?? media.fileName ?? "Arquivo"),
+        type,
+        description: null,
+        fileUrl: media.url ?? null,
+        content: null,
+      };
+      const res = await fetch(`/api/clients/${clientId}/branding`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) return null;
+      const created = await res.json();
+      const newItem: Branding = {
+        id: String(created.id),
+        title: String(created.title ?? body.title),
+        type: (created.type as BrandingType) ?? body.type,
+        description: (created.description as string | undefined) ?? undefined,
+        fileUrl: (created.fileUrl as string | undefined) ?? body.fileUrl,
+        content: (created.content as string | undefined) ?? undefined,
+        createdAt: new Date(String(created.createdAt ?? new Date().toISOString())),
+      };
+      await mutate([newItem, ...(items ?? [])], { revalidate: false });
+      return newItem;
+    } catch {
+      return null;
+    }
+  }
 
   const handleDelete = async (id: string) => {
     if (!confirm("Excluir item de branding?")) return;
@@ -332,8 +474,39 @@ export function BrandingManager({
             {types.map((type) => {
               const list = items.filter((i) => i.type === type);
               return (
-                <Card key={type}>
-                  <CardHeader>
+                <Card
+                  key={type}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={async (e) => {
+                    e.preventDefault();
+                    const f = e.dataTransfer?.files?.[0];
+                    if (!f) return;
+                    const media = await handleFileUpload(f);
+                    if (media?.url) {
+                      // create branding for this type
+                      if (canCreate) {
+                        await createBrandingFromMedia(media, type);
+                      }
+                    }
+                  }}
+                >
+                  <CardHeader
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => {
+                      resetForm();
+                      setForm((f) => ({ ...f, type }));
+                      setIsModalOpen(true);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        resetForm();
+                        setForm((f) => ({ ...f, type }));
+                        setIsModalOpen(true);
+                      }
+                    }}
+                  >
                     <CardTitle className="flex items-center gap-2 text-base">
                       {iconFor(type)}
                       {titleFor(type)}
@@ -350,36 +523,60 @@ export function BrandingManager({
                           <div
                             key={item.id}
                             className="p-3 border rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors"
+                            onDragOver={(e) => e.preventDefault()}
+                            onDrop={async (e) => {
+                              e.preventDefault();
+                              const f = e.dataTransfer?.files?.[0];
+                              if (!f) return;
+                              const media = await handleFileUpload(f);
+                              if (media?.url) {
+                                // if dropping over an existing item, update it
+                                if (canUpdate) {
+                                  await fetch(
+                                    `/api/clients/${clientId}/branding?brandingId=${item.id}`,
+                                    {
+                                      method: "PATCH",
+                                      headers: { "Content-Type": "application/json" },
+                                      body: JSON.stringify({ fileUrl: media.url }),
+                                    },
+                                  );
+                                  await mutate();
+                                }
+                              }
+                            }}
                           >
                             <div className="flex items-start justify-between gap-2">
-                              <div
-                                className="flex-1 min-w-0 cursor-pointer"
-                                onClick={() => openViewer(item)}
-                              >
-                                <h4 className="font-medium text-sm text-slate-900 truncate">
-                                  {item.title}
-                                </h4>
-                                {item.description && (
-                                  <p className="text-xs text-slate-600 mt-1">
-                                    {item.description}
-                                  </p>
-                                )}
+                              <div className="flex-1 min-w-0" onClick={() => openViewer(item)}>
+                                <div className="flex items-center gap-2">
+                                  {item.fileUrl ? (
+                                    getMediaTypeFromUrl(item.fileUrl) === "image" ? (
+                                      // eslint-disable-next-line @next/next/no-img-element
+                                      <img src={item.fileUrl} alt={item.title} className="h-8 w-8 rounded object-cover" />
+                                    ) : getMediaTypeFromUrl(item.fileUrl) === "video" ? (
+                                      <video src={item.fileUrl} className="h-8 w-8 rounded object-cover" />
+                                    ) : (
+                                      <FileText className="h-5 w-5" />
+                                    )
+                                  ) : (
+                                    <div className="h-8 w-8 flex items-center justify-center rounded bg-slate-100">
+                                      {iconFor(item.type)}
+                                    </div>
+                                  )}
+                                  <div className="min-w-0">
+                                    <h4 className="font-medium text-sm text-slate-900 truncate">
+                                      {item.title}
+                                    </h4>
+                                    {item.description && (
+                                      <p className="text-xs text-slate-600 mt-1">
+                                        {item.description}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
                                 {item.content && (
                                   <p className="text-xs text-slate-500 mt-1 line-clamp-2">
                                     {item.content}
                                   </p>
-                                )}
-                                {item.fileUrl && (
-                                  <a
-                                    href={item.fileUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-xs text-blue-600 hover:underline mt-2 inline-flex items-center gap-1"
-                                    aria-label={`Baixar ${item.title}`}
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    <Download className="h-3 w-3" /> Baixar
-                                  </a>
                                 )}
                               </div>
                               <div className="flex gap-1">
@@ -515,9 +712,9 @@ export function BrandingManager({
                       <Input
                         id="fileUrl"
                         type="url"
-                        value={form.fileUrl}
+                        value={form.fileUrl ?? ""}
                         onChange={(e) =>
-                          setForm({ ...form, fileUrl: e.target.value })
+                          setForm({ ...form, fileUrl: e.target.value || undefined })
                         }
                         placeholder="https://..."
                       />
@@ -534,17 +731,45 @@ export function BrandingManager({
                         onChange={async (e) => {
                           const f = e.target.files?.[0];
                           if (!f) return;
-                          await handleFileUpload(f);
+                          // store locally and show preview; actual upload will happen on submit
+                          setFileToUpload(f);
+                          if (filePreviewUrl) {
+                            URL.revokeObjectURL(filePreviewUrl);
+                            previewRef.current = null;
+                          }
+                          // try to generate a thumbnail (video frame or image URL)
+                          const thumb = await generateThumbnail(f);
+                          if (thumb) {
+                            previewRef.current = thumb;
+                            setFilePreviewUrl(thumb);
+                          } else {
+                            const obj = URL.createObjectURL(f);
+                            previewRef.current = obj;
+                            setFilePreviewUrl(obj);
+                          }
                         }}
                         className="block w-full text-sm text-slate-700"
                       />
+                      {filePreviewUrl && (
+                        <div className="mt-2">
+                          {fileToUpload && fileToUpload.name.toLowerCase().match(/\.(mp4|mov|avi|webm|mkv|flv|mpeg)$/) ? (
+                            <video src={filePreviewUrl} controls className="w-full h-auto rounded" />
+                          ) : (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={filePreviewUrl} alt="preview" className="w-full h-auto rounded object-contain" />
+                          )}
+                        </div>
+                      )}
                       {uploading && (
-                        <div className="text-sm text-slate-500">Enviando...</div>
+                        <div className="w-full mt-2">
+                          <progress value={uploadProgress} max={100} className="w-full h-2 appearance-none" />
+                          <div className="text-xs text-slate-500 mt-1">{uploadProgress}%</div>
+                        </div>
                       )}
                       {uploadError && (
                         <div className="text-sm text-red-600">{uploadError}</div>
                       )}
-                      {form.fileUrl && (
+                      {form.fileUrl && !filePreviewUrl && (
                         <div className="text-xs text-slate-600 mt-1">
                           Arquivo associado: <a href={form.fileUrl} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">Ver / Baixar</a>
                         </div>
