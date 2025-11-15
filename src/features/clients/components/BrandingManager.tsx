@@ -73,9 +73,22 @@ export function BrandingManager({
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [fileToUpload, setFileToUpload] = useState<File | null>(null);
-  const [filePreviewUrl, setFilePreviewUrl] = useState<string | null>(null);
+  const [fileToUpload, /* setFileToUpload */] = useState<File | null>(null);
+  const [filePreviewUrl, /* setFilePreviewUrl */] = useState<string | null>(null);
   const previewRef = useRef<string | null>(null);
+
+  type UploadStatus = "idle" | "uploading" | "done" | "error";
+  type UploadItem = {
+    id: string;
+    file: File;
+    previewUrl?: string | null;
+    progress: number;
+    status: UploadStatus;
+    error?: string | null;
+    media?: MediaUploadResult | null;
+  };
+
+  const [queue, setQueue] = useState<UploadItem[]>([]);
 
   const [form, setForm] = useState({
     title: "",
@@ -116,10 +129,33 @@ export function BrandingManager({
   };
 
   async function handleFileUpload(file: File) {
+    // legacy single-file upload helper (keeps compatibility)
     setUploading(true);
     setUploadError(null);
     setUploadProgress(0);
-    return await new Promise<MediaUploadResult | null>((resolve) => {
+    const itemId = `single-${Date.now()}`;
+    const item: UploadItem = {
+      id: itemId,
+      file,
+      previewUrl: null,
+      progress: 0,
+      status: "uploading",
+      error: null,
+      media: null,
+    };
+    setQueue((q) => [item, ...q]);
+    const media = await uploadSingleFile(item, (pct) => {
+      setUploadProgress(pct);
+      setQueue((q) => q.map((it) => (it.id === itemId ? { ...it, progress: pct } : it)));
+    });
+    setUploading(false);
+    if (media?.url) setForm((f) => ({ ...f, fileUrl: media.url }));
+    return media;
+  }
+
+  // upload helper with progress callback
+  function uploadSingleFile(item: UploadItem, onProgress?: (pct: number) => void): Promise<MediaUploadResult | null> {
+    return new Promise((resolve) => {
       const xhr = new XMLHttpRequest();
       const url = `/api/clients/${clientId}/media/upload`;
       xhr.open("POST", url);
@@ -127,30 +163,21 @@ export function BrandingManager({
       xhr.upload.onprogress = (ev) => {
         if (ev.lengthComputable) {
           const pct = Math.round((ev.loaded / ev.total) * 100);
-          setUploadProgress(pct);
+          onProgress?.(pct);
         }
       };
       xhr.onload = () => {
-        setUploading(false);
-        setUploadProgress(100);
         if (xhr.status >= 200 && xhr.status < 300) {
           const media: MediaUploadResult = xhr.response;
-          if (media?.url) setForm((f) => ({ ...f, fileUrl: media.url }));
           resolve(media);
         } else {
-          const msg = xhr.response?.error || `Upload failed (${xhr.status})`;
-          setUploadError(String(msg));
           resolve(null);
         }
       };
-      xhr.onerror = () => {
-        setUploading(false);
-        setUploadError("Upload error");
-        resolve(null);
-      };
+      xhr.onerror = () => resolve(null);
       const fd = new FormData();
-      fd.append("file", file);
-      fd.append("title", file.name);
+      fd.append("file", item.file);
+      fd.append("title", item.file.name);
       xhr.send(fd);
     });
   }
@@ -240,18 +267,37 @@ export function BrandingManager({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     // if there's a pending local file selected, upload it first
-    if (fileToUpload) {
-      const media = await handleFileUpload(fileToUpload);
-      if (media?.url) {
-        setForm((f) => ({ ...f, fileUrl: media.url }));
+    // if there are queued files, upload them all (or create branding entries)
+    if (queue.length > 0) {
+      // process sequentially to simplify resource usage
+      for (const it of queue) {
+        if (it.status === "done") continue;
+        setQueue((q) => q.map(x => x.id === it.id ? { ...x, status: 'uploading' } : x));
+        const media = await uploadSingleFile(it, (pct) => {
+          setQueue((q) => q.map(x => x.id === it.id ? { ...x, progress: pct } : x));
+        });
+        setQueue((q) => q.map(x => x.id === it.id ? { ...x, status: media ? 'done' : 'error', media, error: media ? null : 'Upload falhou' } : x));
+        if (media?.url) {
+          // if editing an existing branding, update that branding; otherwise create per-file brandings
+          if (editing) {
+            try {
+              await fetch(`/api/clients/${clientId}/branding?brandingId=${editing.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fileUrl: media.url }),
+              });
+              await mutate();
+            } catch {
+              // noop
+            }
+          } else {
+            // create new branding for each uploaded file using selected type
+            await createBrandingFromMedia(media, form.type);
+          }
+        }
       }
-      // clear local file after upload
-      setFileToUpload(null);
-      if (filePreviewUrl) {
-        URL.revokeObjectURL(filePreviewUrl);
-        previewRef.current = null;
-        setFilePreviewUrl(null);
-      }
+      // clear queue after processing
+      setQueue([]);
     }
 
     if (editing) {
@@ -727,26 +773,34 @@ export function BrandingManager({
                         title="Enviar arquivo"
                         aria-label="Enviar arquivo"
                         type="file"
+                        multiple
                         accept="image/*,video/*,application/pdf"
                         onChange={async (e) => {
-                          const f = e.target.files?.[0];
-                          if (!f) return;
-                          // store locally and show preview; actual upload will happen on submit
-                          setFileToUpload(f);
-                          if (filePreviewUrl) {
-                            URL.revokeObjectURL(filePreviewUrl);
-                            previewRef.current = null;
+                          const files = Array.from(e.target.files || []);
+                          if (!files.length) return;
+                          // add multiple files to the queue with previews
+                          const newItems: UploadItem[] = [];
+                          for (const f of files) {
+                            const id = `q-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+                            let preview: string | null = null;
+                            try {
+                              preview = (await generateThumbnail(f)) || null;
+                            } catch {
+                              preview = null;
+                            }
+                            if (!preview) preview = URL.createObjectURL(f);
+                            const it: UploadItem = {
+                              id,
+                              file: f,
+                              previewUrl: preview,
+                              progress: 0,
+                              status: "idle",
+                              error: null,
+                              media: null,
+                            };
+                            newItems.push(it);
                           }
-                          // try to generate a thumbnail (video frame or image URL)
-                          const thumb = await generateThumbnail(f);
-                          if (thumb) {
-                            previewRef.current = thumb;
-                            setFilePreviewUrl(thumb);
-                          } else {
-                            const obj = URL.createObjectURL(f);
-                            previewRef.current = obj;
-                            setFilePreviewUrl(obj);
-                          }
+                          setQueue((q) => [...newItems, ...q]);
                         }}
                         className="block w-full text-sm text-slate-700"
                       />
@@ -758,6 +812,52 @@ export function BrandingManager({
                             // eslint-disable-next-line @next/next/no-img-element
                             <img src={filePreviewUrl} alt="preview" className="w-full h-auto rounded object-contain" />
                           )}
+                        </div>
+                      )}
+                      {queue.length > 0 && (
+                        <div className="space-y-2 mt-2">
+                          <h4 className="text-sm font-medium">Arquivos na fila</h4>
+                          <div className="space-y-2">
+                            {queue.map((it) => (
+                              <div key={it.id} className="flex items-center gap-3">
+                                <div className="w-12 h-12 flex items-center justify-center bg-slate-100 rounded overflow-hidden">
+                                  {it.previewUrl ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img src={it.previewUrl} alt={it.file.name} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <FileText className="h-5 w-5" />
+                                  )}
+                                </div>
+                                <div className="flex-1">
+                                  <div className="flex items-center justify-between">
+                                    <div className="truncate text-sm">{it.file.name}</div>
+                                    <div className="text-xs text-slate-500">{it.status}</div>
+                                  </div>
+                                  <div className="mt-1">
+                                    <progress value={it.progress} max={100} className="w-full h-2 appearance-none" />
+                                    <div className="text-xs text-slate-500 mt-1">{it.progress}%</div>
+                                  </div>
+                                </div>
+                                <div className="flex gap-1">
+                                  {it.status !== "uploading" && (
+                                    <Button size="xs" onClick={async () => {
+                                      // start upload for this item
+                                      setQueue((q) => q.map(x => x.id === it.id ? { ...x, status: 'uploading' } : x));
+                                      const media = await uploadSingleFile(it, (pct) => {
+                                        setQueue((q) => q.map(x => x.id === it.id ? { ...x, progress: pct } : x));
+                                      });
+                                      setQueue((q) => q.map(x => x.id === it.id ? { ...x, status: media ? 'done' : 'error', media, error: media ? null : 'Upload falhou' } : x));
+                                      if (media?.url && !editing) {
+                                        // create branding entry for this file using current form.type
+                                        await createBrandingFromMedia(media, form.type);
+                                      }
+                                    }}>Enviar</Button>
+                                  )}
+                                  <Button size="xs" variant="ghost" onClick={() => setQueue((q) => q.filter(x => x.id !== it.id))}>Remover</Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       )}
                       {uploading && (
