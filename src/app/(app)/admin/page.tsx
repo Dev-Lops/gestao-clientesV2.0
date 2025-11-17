@@ -1,5 +1,4 @@
 import AppShell from "@/components/layout/AppShell";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Card } from "@/components/ui/card";
 import { getSessionProfile } from "@/services/auth/session";
 import { redirect } from "next/navigation";
@@ -14,29 +13,25 @@ export default async function AdminPage() {
 
   if (role !== "OWNER") {
     return (
-      <ProtectedRoute>
-        <AppShell>
-          <Card className="p-8 text-center max-w-md mx-auto">
-            <div className="space-y-4">
-              <div className="text-5xl">🔒</div>
-              <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">
-                Acesso Restrito
-              </h1>
-              <p className="text-slate-500 dark:text-slate-400">
-                Apenas proprietários da organização podem acessar esta página.
-              </p>
-            </div>
-          </Card>
-        </AppShell>
-      </ProtectedRoute>
+      <AppShell>
+        <Card className="p-8 text-center max-w-md mx-auto">
+          <div className="space-y-4">
+            <div className="text-5xl">🔒</div>
+            <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">
+              Acesso Restrito
+            </h1>
+            <p className="text-slate-500 dark:text-slate-400">
+              Apenas proprietários da organização podem acessar esta página.
+            </p>
+          </div>
+        </Card>
+      </AppShell>
     );
   }
 
   return (
-    <ProtectedRoute>
-      <AppShell>
-        <MembersAdminPage />
-      </AppShell>
-    </ProtectedRoute>
+    <AppShell>
+      <MembersAdminPage />
+    </AppShell>
   );
 }

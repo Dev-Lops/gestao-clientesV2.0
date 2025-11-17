@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ExternalLink, Instagram, Loader2 } from "lucide-react";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 
 type IgMedia = {
@@ -143,12 +144,7 @@ export function InstagramGrid({ clientId, limit = 12 }: InstagramGridProps) {
                   rel="noopener noreferrer"
                   className="relative w-full aspect-square overflow-hidden rounded-lg bg-muted hover:opacity-80 hover:scale-105 transition-all group shadow-sm hover:shadow-md"
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={img}
-                    alt="Instagram post"
-                    className="h-full w-full object-cover"
-                  />
+                  <Image src={img} alt="Instagram post" fill className="object-cover" sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw" />
                   <div className="absolute inset-0 bg-linear-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-2">
                     <ExternalLink className="h-4 w-4 text-white" />
                   </div>

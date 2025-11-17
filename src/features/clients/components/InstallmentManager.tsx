@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import {
   Select,
   SelectContent,
@@ -12,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { formatDateInput, parseDateInput, toLocalISOString } from "@/lib/utils";
 import { Installment } from "@/types/tables";
@@ -226,7 +226,7 @@ export function InstallmentManager({
     return (
       <Card>
         <CardContent className="flex items-center justify-center py-8">
-          <LoadingSpinner />
+          <Spinner size="lg" variant="primary" />
         </CardContent>
       </Card>
     );
@@ -511,7 +511,7 @@ export function InstallmentManager({
                     className="flex-1"
                     disabled={submitting}
                   >
-                    {submitting ? <LoadingSpinner /> : "Criar Parcelas"}
+                    {submitting ? <Spinner size="sm" /> : "Criar Parcelas"}
                   </Button>
                 </div>
               </form>
@@ -601,7 +601,7 @@ export function InstallmentManager({
                   className="flex-1"
                   disabled={submitting}
                 >
-                  {submitting ? <LoadingSpinner /> : "Salvar"}
+                  {submitting ? <Spinner size="sm" /> : "Salvar"}
                 </Button>
               </div>
             </CardContent>

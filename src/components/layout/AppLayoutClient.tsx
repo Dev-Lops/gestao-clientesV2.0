@@ -1,7 +1,6 @@
 "use client";
 
 import AppSidebar from "@/components/app-sidebar";
-import GlobalNotifications from "@/components/GlobalNotifications";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { useUser } from "@/context/UserContext";
 import { usePathname } from "next/navigation";
@@ -29,8 +28,6 @@ export default function AppLayoutClient({
       <div className="min-h-screen flex">
         <AppSidebar />
         <SidebarInset>{children}</SidebarInset>
-        {/* Global floating notifications outside sidebar */}
-        <GlobalNotifications />
       </div>
     </SidebarProvider>
   );

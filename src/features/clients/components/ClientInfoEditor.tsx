@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import {
   Select,
   SelectContent,
@@ -12,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
 import { AppClient } from "@/types/tables";
 import { Edit, Save, X } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -300,7 +300,7 @@ export function ClientInfoEditor({ client, canEdit }: ClientInfoEditorProps) {
                 disabled={loading}
                 className="gap-2 bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg shadow-blue-500/30"
               >
-                {loading && <LoadingSpinner size="sm" />}
+                {loading && <Spinner size="sm" />}
                 <Save className="h-4 w-4" />
                 Salvar Alterações
               </Button>

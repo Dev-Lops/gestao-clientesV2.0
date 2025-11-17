@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { Spinner } from "@/components/ui/spinner";
 import { useNotifications } from "@/hooks/useNotifications";
 import { cn } from "@/lib/utils";
 import {
@@ -20,7 +20,7 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 interface NotificationCenterProps {
   variant?: "default" | "compact" | "pill";
@@ -111,6 +111,20 @@ export function NotificationCenter({
 
   const baseUnread = unreadCount > 9 ? "9+" : unreadCount;
 
+  // Deduplicate notifications by id to prevent React key collisions
+  const uniqueNotifications = useMemo(() => {
+    const seen = new Set<string>();
+    const deduped = notifications.filter(n => {
+      if (seen.has(n.id)) return false;
+      seen.add(n.id);
+      return true;
+    });
+    if (deduped.length !== notifications.length) {
+      // Log collision info (can be replaced with proper logger later)
+      console.warn('[NotificationCenter] Duplicate notification IDs filtered:', notifications.length - deduped.length);
+    }
+    return deduped;
+  }, [notifications]);
   const renderButton = () => {
     const baseBtn =
       "relative flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500";
@@ -179,20 +193,28 @@ export function NotificationCenter({
   };
 
   return (
-    <div className={"relative " + (className || "")}>
+    <div className={cn("relative", className)}>
       {renderButton()}
 
       {/* Dropdown */}
       {isOpen && (
         <>
-          {/* Overlay */}
-          <div
-            className="fixed inset-0 z-40"
+          {/* Overlay para fechar o painel ao clicar fora */}
+          <button
+            type="button"
+            aria-label="Fechar notificações"
+            className="fixed inset-0 z-40 cursor-default bg-transparent"
+            tabIndex={-1}
             onClick={() => setIsOpen(false)}
           />
 
-          {/* Notification Panel */}
-          <Card className="absolute right-0 top-12 w-96 max-h-[600px] z-50 shadow-2xl border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col">
+          {/* Painel de notificações */}
+          <Card
+            role="dialog"
+            aria-modal="true"
+            aria-label="Notificações"
+            className="absolute right-0 top-12 w-96 max-h-[600px] z-50 shadow-2xl border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col"
+          >
             {/* Header */}
             <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
               <div className="flex items-center justify-between mb-3">
@@ -204,17 +226,19 @@ export function NotificationCenter({
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8"
+                  aria-label="Fechar painel de notificações"
                   onClick={() => setIsOpen(false)}
                 >
                   <X className="h-4 w-4" />
                 </Button>
               </div>
 
-              {/* Filters */}
+              {/* Filtros */}
               <div className="flex gap-2">
                 <Button
                   variant={filter === "all" ? "default" : "outline"}
                   size="sm"
+                  aria-pressed={filter === "all"}
                   onClick={() => setFilter("all")}
                   className="flex-1"
                 >
@@ -223,6 +247,7 @@ export function NotificationCenter({
                 <Button
                   variant={filter === "unread" ? "default" : "outline"}
                   size="sm"
+                  aria-pressed={filter === "unread"}
                   onClick={() => setFilter("unread")}
                   className="flex-1"
                 >
@@ -230,7 +255,7 @@ export function NotificationCenter({
                 </Button>
               </div>
 
-              {/* Mark all as read */}
+              {/* Marcar todas como lidas */}
               {unreadCount > 0 && (
                 <Button
                   variant="ghost"
@@ -238,6 +263,7 @@ export function NotificationCenter({
                   onClick={markAllAsRead}
                   disabled={actionLoading}
                   className="w-full mt-2 text-xs"
+                  aria-label="Marcar todas como lidas"
                 >
                   <CheckCheck className="h-3 w-3 mr-1" />
                   Marcar todas como lidas
@@ -245,11 +271,11 @@ export function NotificationCenter({
               )}
             </div>
 
-            {/* Notifications List */}
+            {/* Lista de notificações */}
             <div className="flex-1 overflow-y-auto">
               {isLoading ? (
                 <div className="flex items-center justify-center p-8">
-                  <LoadingSpinner />
+                  <Spinner size="md" variant="primary" />
                 </div>
               ) : notifications.length === 0 ? (
                 <div className="flex flex-col items-center justify-center p-8 text-center text-slate-500 dark:text-slate-400">
@@ -262,21 +288,19 @@ export function NotificationCenter({
                 </div>
               ) : (
                 <div className="divide-y divide-slate-200 dark:divide-slate-700">
-                  {notifications.map((notification) => (
+                  {uniqueNotifications.map((notification) => (
                     <div
                       key={notification.id}
-                      className={`p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${
-                        notification.unread
-                          ? "bg-blue-50/50 dark:bg-blue-950/10"
-                          : ""
-                      }`}
+                      className={cn(
+                        "p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors",
+                        notification.unread && "bg-blue-50/50 dark:bg-blue-950/10"
+                      )}
                     >
                       <div className="flex gap-3">
                         <NotificationIcon
                           type={notification.type}
                           priority={notification.priority}
                         />
-
                         <div className="flex-1 min-w-0">
                           {notification.link ? (
                             <Link
@@ -286,6 +310,8 @@ export function NotificationCenter({
                                 setIsOpen(false);
                               }}
                               className="block"
+                              tabIndex={0}
+                              aria-label={notification.title}
                             >
                               <h4 className="font-medium text-sm text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400">
                                 {notification.title}
@@ -310,8 +336,6 @@ export function NotificationCenter({
                               </p>
                             </>
                           )}
-
-                          {/* Actions */}
                           <div className="flex items-center gap-2 mt-2">
                             {notification.unread && (
                               <Button
@@ -320,6 +344,7 @@ export function NotificationCenter({
                                 onClick={() => markAsRead(notification.id)}
                                 disabled={actionLoading}
                                 className="h-6 text-xs px-2"
+                                aria-label={`Marcar '${notification.title}' como lida`}
                               >
                                 <Check className="h-3 w-3 mr-1" />
                                 Marcar lida
@@ -328,11 +353,10 @@ export function NotificationCenter({
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() =>
-                                deleteNotification(notification.id)
-                              }
+                              onClick={() => deleteNotification(notification.id)}
                               disabled={actionLoading}
                               className="h-6 text-xs px-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20"
+                              aria-label={`Excluir '${notification.title}'`}
                             >
                               <Trash2 className="h-3 w-3 mr-1" />
                               Excluir

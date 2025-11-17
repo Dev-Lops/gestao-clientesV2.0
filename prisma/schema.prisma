@@ -45,6 +45,27 @@ enum PaymentStatus {
   LATE
 }
 
+enum InvoiceStatus {
+  DRAFT
+  OPEN
+  PAID
+  VOID
+  OVERDUE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  TRIALING
+  PAST_DUE
+  CANCELED
+  INACTIVE
+}
+
+enum BillingInterval {
+  MONTH
+  YEAR
+}
+
 model User {
   id           String    @id @default(cuid())
   firebaseUid  String    @unique
@@ -87,6 +108,10 @@ model Org {
   updatedAt     DateTime       @updatedAt
   notifications Notification[]
   finances      Finance[]
+  // Billing
+  subscriptions Subscription[]
+  invoices      Invoice[]
+  payments      Payment[]
 }
 
 model Member {
@@ -140,6 +165,10 @@ model Client {
   finances                Finance[]
   meetings                Meeting[]
   installments            Installment[]
+  // Billing
+  subscriptions           Subscription[]
+  invoices                Invoice[]
+  payments                Payment[]
 
   @@unique([clientUserId])
 }
@@ -171,7 +200,12 @@ model Media {
   mimeType    String? // ex: image/png, video/mp4, application/pdf
   fileSize    Int? // tamanho em bytes
   url         String? // URL pública (gerada ou legado)
+  thumbUrl    String? // URL do thumbnail (para imagens/vídeos)
   type        String // image | video | document (categoria visual)
+  // Tags e metadados
+  tags        String[]     @default([]) // array de tags para busca e organização
+  metadata    Json? // metadados customizados (JSON flexível)
+  // Organização
   folderId    String? // pasta pai (null = raiz)
   folder      MediaFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
   clientId    String
@@ -180,6 +214,9 @@ model Media {
   client      Client       @relation(fields: [clientId], references: [id])
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
+
+  @@index([clientId, folderId])
+  @@index([tags])
 }
 
 // Pastas de organização de mídias
@@ -236,6 +273,8 @@ model Branding {
   description String?
   fileUrl     String?
   content     String?  @db.Text // Para paletas de cores, tipografia, etc
+  thumbUrl    String?
+  palette     Json?
   clientId    String
   client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
@@ -292,6 +331,100 @@ model Installment {
   updatedAt DateTime      @updatedAt
 
   @@index([clientId, dueDate])
+}
+
+// Assinaturas recorrentes do cliente (base para faturas mensais)
+model Subscription {
+  id                 String             @id @default(cuid())
+  orgId              String
+  org                Org                @relation(fields: [orgId], references: [id])
+  clientId           String
+  client             Client             @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  status             SubscriptionStatus @default(ACTIVE)
+  planName           String
+  unitAmount         Float
+  currency           String             @default("BRL")
+  interval           BillingInterval    @default(MONTH)
+  trialEndsAt        DateTime?
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  cancelAtPeriodEnd  Boolean            @default(false)
+  canceledAt         DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  invoices Invoice[]
+
+  @@index([orgId, clientId])
+}
+
+// Fatura de cobrança
+model Invoice {
+  id             String        @id @default(cuid())
+  orgId          String
+  org            Org           @relation(fields: [orgId], references: [id])
+  clientId       String
+  client         Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  subscriptionId String?
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id])
+  number         String        @unique
+  status         InvoiceStatus @default(DRAFT)
+  issueDate      DateTime      @default(now())
+  dueDate        DateTime
+  subtotal       Float         @default(0)
+  discount       Float         @default(0)
+  tax            Float         @default(0)
+  total          Float         @default(0)
+  currency       String        @default("BRL")
+  notes          String?
+  externalId     String? // ID da fatura no provedor, se houver
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  items    InvoiceItem[]
+  payments Payment[]
+
+  @@index([orgId, clientId, status])
+  @@index([subscriptionId])
+}
+
+// Itens da fatura
+model InvoiceItem {
+  id          String  @id @default(cuid())
+  invoiceId   String
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Int     @default(1)
+  unitAmount  Float
+  total       Float
+}
+
+// Pagamentos de faturas
+model Payment {
+  id                String    @id @default(cuid())
+  orgId             String
+  org               Org       @relation(fields: [orgId], references: [id])
+  clientId          String
+  client            Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  invoiceId         String
+  invoice           Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  amount            Float
+  method            String // pix | card | boleto | cash | transfer
+  status            String    @default("PAID") // PAID | PENDING | FAILED | REFUNDED
+  paidAt            DateTime?
+  provider          String? // stripe | mercadopago | pagseguro | manual
+  providerPaymentId String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+// Eventos de webhook recebidos do provedor de pagamentos
+model WebhookEvent {
+  id         String   @id @default(cuid())
+  provider   String
+  eventType  String
+  payload    Json
+  receivedAt DateTime @default(now())
 }
 
 // Persistência de notificações para usuários/org

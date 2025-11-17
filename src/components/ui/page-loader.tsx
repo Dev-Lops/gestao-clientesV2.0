@@ -1,6 +1,6 @@
 "use client";
 
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { Spinner } from "@/components/ui/spinner";
 import { useEffect, useState } from "react";
 
 export function PageLoader() {
@@ -23,7 +23,7 @@ export function PageLoader() {
 
           {/* Spinner principal */}
           <div className="relative">
-            <LoadingSpinner size="xl" className="text-blue-600" />
+            <Spinner size="xl" variant="primary" />
           </div>
         </div>
 
@@ -50,7 +50,7 @@ export function FullPageLoader({ message }: { message?: string }) {
         <div className="relative">
           <div className="absolute inset-0 rounded-full bg-linear-to-tr from-blue-500 via-purple-500 to-pink-500 opacity-30 blur-2xl animate-pulse" />
           <div className="relative w-24 h-24 rounded-full bg-linear-to-tr from-blue-600 to-purple-600 flex items-center justify-center shadow-2xl">
-            <LoadingSpinner size="lg" className="text-white" />
+            <Spinner size="lg" variant="white" />
           </div>
         </div>
 
@@ -74,7 +74,7 @@ export function CardLoader() {
   return (
     <div className="flex items-center justify-center p-12">
       <div className="flex flex-col items-center gap-3">
-        <LoadingSpinner size="lg" className="text-blue-600" />
+        <Spinner size="lg" variant="primary" />
         <p className="text-sm text-slate-500">Carregando dados...</p>
       </div>
     </div>
@@ -84,7 +84,7 @@ export function CardLoader() {
 export function InlineLoader() {
   return (
     <div className="flex items-center gap-2 text-sm text-slate-600">
-      <LoadingSpinner size="sm" className="text-blue-600" />
+      <Spinner size="sm" variant="primary" />
       <span>Carregando...</span>
     </div>
   );

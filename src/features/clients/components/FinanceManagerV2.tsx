@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import {
   Select,
   SelectContent,
@@ -12,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { formatDateInput, parseDateInput } from "@/lib/utils";
 import {
@@ -250,7 +250,7 @@ export function FinanceManagerV2({ clientId }: FinanceManagerProps) {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="flex flex-col items-center gap-3">
-          <LoadingSpinner size="lg" />
+          <Spinner size="lg" variant="primary" />
           <p className="text-sm text-muted-foreground">
             Carregando finanças...
           </p>
@@ -328,14 +328,14 @@ export function FinanceManagerV2({ clientId }: FinanceManagerProps) {
 
           <Card
             className={`relative overflow-hidden border-2 shadow-xl transition-colors ${totals.balance >= 0
-                ? "border-blue-200/60 shadow-blue-200/50"
-                : "border-orange-200/60 shadow-orange-200/50"
+              ? "border-blue-200/60 shadow-blue-200/50"
+              : "border-orange-200/60 shadow-orange-200/50"
               }`}
           >
             <div
               className={`absolute top-0 left-0 w-full h-2 bg-linear-to-r ${totals.balance >= 0
-                  ? "from-blue-500 to-purple-500"
-                  : "from-orange-500 to-red-500"
+                ? "from-blue-500 to-purple-500"
+                : "from-orange-500 to-red-500"
                 }`}
             />
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -449,15 +449,15 @@ export function FinanceManagerV2({ clientId }: FinanceManagerProps) {
                   <div
                     key={finance.id}
                     className={`flex items-center justify-between p-4 rounded-lg border-2 transition-all hover:shadow-md ${finance.type === "income"
-                        ? "border-green-200 bg-green-50/50 hover:border-green-300"
-                        : "border-red-200 bg-red-50/50 hover:border-red-300"
+                      ? "border-green-200 bg-green-50/50 hover:border-green-300"
+                      : "border-red-200 bg-red-50/50 hover:border-red-300"
                       }`}
                   >
                     <div className="flex items-center gap-4 flex-1">
                       <div
                         className={`h-12 w-12 rounded-full flex items-center justify-center ${finance.type === "income"
-                            ? "bg-green-100"
-                            : "bg-red-100"
+                          ? "bg-green-100"
+                          : "bg-red-100"
                           }`}
                       >
                         {finance.type === "income" ? (
@@ -484,8 +484,8 @@ export function FinanceManagerV2({ clientId }: FinanceManagerProps) {
                       <div className="text-right">
                         <div
                           className={`text-xl font-bold ${finance.type === "income"
-                              ? "text-green-600"
-                              : "text-red-600"
+                            ? "text-green-600"
+                            : "text-red-600"
                             }`}
                         >
                           {finance.type === "income" ? "+" : "-"}
@@ -643,7 +643,7 @@ export function FinanceManagerV2({ clientId }: FinanceManagerProps) {
                     className="flex-1 bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                   >
                     {submitting && (
-                      <LoadingSpinner size="sm" className="mr-2" />
+                      <Spinner size="sm" />
                     )}
                     {editingItem ? "Salvar" : "Criar"}
                   </Button>

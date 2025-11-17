@@ -1,8 +1,8 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Spinner } from '@/components/ui/spinner';
 import {
   AlertCircle,
   Calendar,
@@ -158,7 +158,7 @@ export function PaymentStatusCard({
     return (
       <Card>
         <CardContent className="flex items-center justify-center py-12">
-          <LoadingSpinner size="lg" />
+          <Spinner size="lg" variant="primary" />
         </CardContent>
       </Card>
     );
@@ -294,7 +294,7 @@ export function PaymentStatusCard({
                 >
                   {submitting ? (
                     <>
-                      <LoadingSpinner size="sm" className="mr-2" />
+                      <Spinner size="sm" className="mr-2" />
                       Processando...
                     </>
                   ) : (
@@ -318,7 +318,7 @@ export function PaymentStatusCard({
                   >
                     {submitting ? (
                       <>
-                        <LoadingSpinner size="sm" className="mr-2" />
+                        <Spinner size="sm" className="mr-2" />
                         Processando...
                       </>
                     ) : (
@@ -357,10 +357,10 @@ export function PaymentStatusCard({
                   <div
                     key={inst.id}
                     className={`p-3 rounded-lg border flex items-center justify-between ${inst.status === "CONFIRMED"
-                        ? "bg-green-50 border-green-200"
-                        : inst.status === "LATE"
-                          ? "bg-red-50 border-red-200"
-                          : "bg-slate-50 border-slate-200"
+                      ? "bg-green-50 border-green-200"
+                      : inst.status === "LATE"
+                        ? "bg-red-50 border-red-200"
+                        : "bg-slate-50 border-slate-200"
                       }`}
                   >
                     <div className="flex items-center gap-3">

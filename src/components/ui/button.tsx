@@ -1,8 +1,9 @@
-import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
+import * as React from "react";
 
 import { cn } from "@/lib/utils";
+import { Spinner } from "./spinner";
 
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
@@ -36,25 +37,67 @@ const buttonVariants = cva(
   },
 );
 
-function Button({
-  className,
-  variant,
-  size,
-  asChild = false,
-  ...props
-}: React.ComponentProps<"button"> &
-  VariantProps<typeof buttonVariants> & {
-    asChild?: boolean;
-  }) {
-  const Comp = asChild ? Slot : "button";
-
-  return (
-    <Comp
-      data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
-      {...props}
-    />
-  );
+export interface ButtonProps
+  extends React.ComponentProps<"button">,
+  VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
+  isLoading?: boolean;
+  loadingText?: string;
 }
 
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  (
+    {
+      className,
+      variant,
+      size,
+      asChild = false,
+      isLoading = false,
+      loadingText,
+      children,
+      disabled,
+      ...props
+    },
+    ref
+  ) => {
+    const Comp = asChild ? Slot : "button";
+
+    // When using Slot (asChild), ensure a single React element child and avoid invalid props
+    if (asChild) {
+      // Slot does not accept ref, so omit it
+      return (
+        <Comp
+          data-slot="button"
+          data-loading={isLoading || undefined}
+          aria-busy={isLoading || undefined}
+          className={cn(buttonVariants({ variant, size, className }), isLoading ? "pointer-events-none opacity-70" : undefined)}
+          {...props}
+        >
+          {children}
+        </Comp>
+      );
+    }
+
+    return (
+      <Comp
+        ref={ref}
+        data-slot="button"
+        data-loading={isLoading || undefined}
+        aria-busy={isLoading || undefined}
+        disabled={isLoading || disabled}
+        className={cn(buttonVariants({ variant, size, className }))}
+        {...props}
+      >
+        {isLoading && (
+          <Spinner size="sm" className="mr-0.5" aria-hidden="true" />
+        )}
+        {isLoading && loadingText ? loadingText : children}
+      </Comp>
+    );
+  }
+);
+
+Button.displayName = "Button";
+
 export { Button, buttonVariants };
+

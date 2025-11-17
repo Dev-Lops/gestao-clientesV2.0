@@ -1,15 +1,15 @@
-import Link from "next/link";
+import { getTasksBoardData } from '@/modules/tasks/actions/getTasksBoardData'
+import { updateTaskStatus } from '@/modules/tasks/actions/updateTaskStatus'
+import type { Metadata } from 'next'
+import TasksClient from './tasks.client'
 
-export default function TasksPage() {
-  return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Tarefas</h1>
-      <p className="text-sm text-slate-600 mb-4">
-        Lista de tarefas do sistema (placeholder).
-      </p>
-      <Link href="/" className="text-blue-600">
-        Voltar ao dashboard
-      </Link>
-    </div>
-  );
+export const metadata: Metadata = {
+  title: 'Kanban de Tarefas',
+  description: 'Organize e acompanhe tarefas por status',
+  alternates: { canonical: '/tasks' },
+}
+
+export default async function TasksPage() {
+  const data = await getTasksBoardData()
+  return <TasksClient initialTasks={data.tasks} updateTaskStatusAction={updateTaskStatus} />
 }

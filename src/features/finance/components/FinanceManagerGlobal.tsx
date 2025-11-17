@@ -1,10 +1,9 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import {
   Select,
   SelectContent,
@@ -12,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from "@/components/ui/textarea";
 import { formatDateInput, parseDateInput, toLocalISOString } from "@/lib/utils";
 import {
@@ -382,7 +382,7 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="flex flex-col items-center gap-3">
-          <LoadingSpinner size="lg" />
+          <Spinner size="lg" variant="primary" />
           <p className="text-sm text-slate-500">Carregando finanças...</p>
         </div>
       </div>
@@ -391,7 +391,7 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
 
   return (
     <>
-      <div className="relative bg-linear-to-br from-slate-50 via-blue-50/30 to-slate-100">
+      <div className="relative bg-linear-to-br from-slate-50 via-blue-50/30 to-slate-100 overflow-x-hidden">
         {/* Animated background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-0 -left-4 w-96 h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob" />
@@ -399,14 +399,14 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
           <div className="absolute -bottom-8 left-20 w-96 h-96 bg-pink-400 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-4000" />
         </div>
 
-        <div className="relative space-y-6 p-6 max-w-7xl mx-auto">
+        <div className="relative space-y-6 p-4 sm:p-6 max-w-7xl mx-auto">
           {/* Header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-slate-900">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <h1 className="text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-linear-to-r from-blue-600 to-purple-600">
                 Financeiro da Organização
               </h1>
-              <p className="text-sm text-slate-600 mt-1">
+              <p className="text-sm text-slate-600">
                 Gestão completa de receitas e despesas
               </p>
             </div>
@@ -415,8 +415,8 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
                 resetForm();
                 setIsModalOpen(true);
               }}
-              size="lg"
-              className="gap-2 bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg shadow-blue-500/20"
+              size="default"
+              className="gap-2 bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg shadow-blue-500/20 shrink-0 w-full sm:w-auto"
             >
               <Plus className="h-5 w-5" />
               Nova Transação
@@ -424,19 +424,19 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid gap-6 md:grid-cols-3">
-            <Card className="relative overflow-hidden border-2 border-green-200/60 shadow-2xl shadow-green-200/50">
-              <div className="absolute top-0 left-0 w-full h-2 bg-linear-to-r from-green-500 to-emerald-500" />
+          <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-3">
+            <Card className="relative overflow-hidden border-2 border-green-200/60 shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <div className="absolute top-0 left-0 w-full h-1.5 bg-linear-to-r from-green-500 to-emerald-500" />
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-slate-700">
+                <CardTitle className="text-xs sm:text-sm font-medium text-slate-700">
                   Receita Total
                 </CardTitle>
-                <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
-                  <TrendingUp className="h-6 w-6 text-green-600" />
+                <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                  <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-green-600">
+                <div className="text-2xl sm:text-3xl font-bold text-green-600 wrap-break-word">
                   {formatCurrency(totals.income)}
                 </div>
                 <p className="text-xs text-slate-500 mt-2">
@@ -446,18 +446,18 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
               </CardContent>
             </Card>
 
-            <Card className="relative overflow-hidden border-2 border-red-200/60 shadow-2xl shadow-red-200/50">
-              <div className="absolute top-0 left-0 w-full h-2 bg-linear-to-r from-red-500 to-rose-500" />
+            <Card className="relative overflow-hidden border-2 border-red-200/60 shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <div className="absolute top-0 left-0 w-full h-1.5 bg-linear-to-r from-red-500 to-rose-500" />
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-slate-700">
+                <CardTitle className="text-xs sm:text-sm font-medium text-slate-700">
                   Despesas
                 </CardTitle>
-                <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center">
-                  <TrendingDown className="h-6 w-6 text-red-600" />
+                <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                  <TrendingDown className="h-5 w-5 sm:h-6 sm:w-6 text-red-600" />
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-red-600">
+                <div className="text-2xl sm:text-3xl font-bold text-red-600 wrap-break-word">
                   {formatCurrency(totals.expense)}
                 </div>
                 <p className="text-xs text-slate-500 mt-2">
@@ -468,40 +468,35 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
             </Card>
 
             <Card
-              className={`relative overflow-hidden border-2 shadow-2xl ${
-                totals.balance >= 0
-                  ? "border-blue-200/60 shadow-blue-200/50"
-                  : "border-orange-200/60 shadow-orange-200/50"
-              }`}
+              className={`relative overflow-hidden border-2 shadow-2xl ${totals.balance >= 0
+                ? "border-blue-200/60 shadow-lg hover:shadow-xl"
+                : "border-orange-200/60 shadow-lg hover:shadow-xl"
+                } transition-shadow duration-300`}
             >
               <div
-                className={`absolute top-0 left-0 w-full h-2 bg-linear-to-r ${
-                  totals.balance >= 0
-                    ? "from-blue-500 to-purple-500"
-                    : "from-orange-500 to-red-500"
-                }`}
+                className={`absolute top-0 left-0 w-full h-1.5 bg-linear-to-r ${totals.balance >= 0
+                  ? "from-blue-500 to-purple-500"
+                  : "from-orange-500 to-red-500"
+                  }`}
               />
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-slate-700">
+                <CardTitle className="text-xs sm:text-sm font-medium text-slate-700">
                   Saldo
                 </CardTitle>
                 <div
-                  className={`h-12 w-12 rounded-full flex items-center justify-center ${
-                    totals.balance >= 0 ? "bg-blue-100" : "bg-orange-100"
-                  }`}
+                  className={`h-10 w-10 sm:h-12 sm:w-12 rounded-full flex items-center justify-center shrink-0 ${totals.balance >= 0 ? "bg-blue-100" : "bg-orange-100"
+                    }`}
                 >
                   <DollarSign
-                    className={`h-6 w-6 ${
-                      totals.balance >= 0 ? "text-blue-600" : "text-orange-600"
-                    }`}
+                    className={`h-5 w-5 sm:h-6 sm:w-6 ${totals.balance >= 0 ? "text-blue-600" : "text-orange-600"
+                      }`}
                   />
                 </div>
               </CardHeader>
               <CardContent>
                 <div
-                  className={`text-3xl font-bold ${
-                    totals.balance >= 0 ? "text-blue-600" : "text-orange-600"
-                  }`}
+                  className={`text-2xl sm:text-3xl font-bold wrap-break-word ${totals.balance >= 0 ? "text-blue-600" : "text-orange-600"
+                    }`}
                 >
                   {formatCurrency(totals.balance)}
                 </div>
@@ -515,9 +510,9 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
 
           {/* Top Categorias - Resumo Visual */}
           {categoryStats.length > 0 && (
-            <Card className="shadow-lg bg-white/80 backdrop-blur-sm">
+            <Card className="shadow-lg bg-white/90 backdrop-blur-sm hover:shadow-xl transition-shadow duration-300">
               <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
+                <CardTitle className="text-base sm:text-lg flex items-center gap-2">
                   <Filter className="h-5 w-5 text-blue-600" />
                   Top 5 Categorias
                 </CardTitle>
@@ -526,22 +521,21 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
                 <div className="space-y-3">
                   {categoryStats.map((stat, index) => (
                     <div key={stat.category} className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <span className="text-xs font-bold text-slate-400">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 flex-1 min-w-0 overflow-hidden">
+                          <span className="text-xs font-bold text-slate-400 shrink-0">
                             #{index + 1}
                           </span>
                           <p className="text-sm font-medium text-slate-900 truncate">
                             {stat.category}
                           </p>
-                          <span className="text-xs text-slate-500">
+                          <span className="text-xs text-slate-500 shrink-0">
                             ({stat.count})
                           </span>
                         </div>
                         <div
-                          className={`text-sm font-bold ${
-                            stat.amount >= 0 ? "text-green-600" : "text-red-600"
-                          }`}
+                          className={`text-sm font-bold shrink-0 ${stat.amount >= 0 ? "text-green-600" : "text-red-600"
+                            }`}
                         >
                           {stat.amount >= 0 ? "+" : "-"}
                           {formatCurrency(Math.abs(stat.amount))}
@@ -549,11 +543,10 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
                       </div>
                       <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                         <div
-                          className={`h-full rounded-full ${
-                            stat.amount >= 0
-                              ? "bg-linear-to-r from-green-500 to-emerald-500"
-                              : "bg-linear-to-r from-red-500 to-rose-500"
-                          } ${getWidthClass(stat.amount, Math.max(...categoryStats.map((s) => Math.abs(s.amount))))}`}
+                          className={`h-full rounded-full ${stat.amount >= 0
+                            ? "bg-linear-to-r from-green-500 to-emerald-500"
+                            : "bg-linear-to-r from-red-500 to-rose-500"
+                            } ${getWidthClass(stat.amount, Math.max(...categoryStats.map((s) => Math.abs(s.amount))))}`}
                         />
                       </div>
                     </div>
@@ -565,37 +558,39 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
 
           {/* Parcelas deste mês */}
           {installments.length > 0 && (
-            <Card className="shadow-lg bg-white/80 backdrop-blur-sm">
+            <Card className="shadow-lg bg-white/90 backdrop-blur-sm hover:shadow-xl transition-shadow duration-300">
               <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
+                <CardTitle className="text-base sm:text-lg flex items-center gap-2">
                   <DollarSign className="h-5 w-5 text-violet-600" />
                   Parcelas deste mês
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {installments.map((i) => (
                     <div
                       key={i.id}
-                      className="flex items-center justify-between p-3 border rounded-lg"
+                      className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 sm:p-4 border-2 rounded-lg hover:border-violet-300 transition-colors"
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                         <div className="text-sm font-medium text-slate-900">
                           {i.client.name}
                         </div>
-                        <span className="text-xs text-slate-500">
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 font-medium">
                           Parcela {i.number}
                         </span>
-                        <span className="text-xs text-slate-500">
+                        <span className="text-xs text-slate-500 flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
                           {new Date(i.dueDate).toLocaleDateString("pt-BR")}
                         </span>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <div className="font-bold text-green-600">
+                      <div className="flex items-center gap-3 w-full sm:w-auto">
+                        <div className="font-bold text-lg text-green-600 flex-1 sm:flex-initial">
                           {formatCurrency(i.amount)}
                         </div>
                         <Button
                           size="sm"
+                          className="bg-green-600 hover:bg-green-700 shrink-0"
                           onClick={() => confirmInstallment(i.id)}
                         >
                           Registrar pagamento
@@ -609,21 +604,21 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
           )}
 
           {/* Filters */}
-          <Card className="shadow-lg bg-white/80 backdrop-blur-sm">
-            <CardContent className="pt-6">
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="flex items-center gap-2">
+          <Card className="shadow-lg bg-white/90 backdrop-blur-sm">
+            <CardContent className="pt-4 sm:pt-6">
+              <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3 sm:gap-4">
+                <div className="flex items-center gap-2 w-full sm:w-auto">
                   <Filter className="h-4 w-4 text-slate-500" />
-                  <span className="text-sm font-medium text-slate-700">
+                  <span className="text-xs sm:text-sm font-medium text-slate-700">
                     Filtros:
                   </span>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                   <Button
                     variant={filter === "all" ? "default" : "outline"}
                     size="sm"
                     onClick={() => setFilter("all")}
-                    className="text-xs"
+                    className="text-xs flex-1 sm:flex-initial"
                   >
                     Todas
                   </Button>
@@ -631,7 +626,7 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
                     variant={filter === "income" ? "default" : "outline"}
                     size="sm"
                     onClick={() => setFilter("income")}
-                    className="text-xs gap-1"
+                    className="text-xs gap-1 flex-1 sm:flex-initial"
                   >
                     <ArrowUpCircle className="h-3 w-3" />
                     Receitas
@@ -640,13 +635,13 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
                     variant={filter === "expense" ? "default" : "outline"}
                     size="sm"
                     onClick={() => setFilter("expense")}
-                    className="text-xs gap-1"
+                    className="text-xs gap-1 flex-1 sm:flex-initial"
                   >
                     <ArrowDownCircle className="h-3 w-3" />
                     Despesas
                   </Button>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 w-full sm:w-auto">
                   <Building2 className="h-4 w-4 text-slate-500" />
                   <Select
                     value={clientFilter || "__NONE__"}
@@ -654,7 +649,7 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
                       setClientFilter(value === "__NONE__" ? "" : value)
                     }
                   >
-                    <SelectTrigger className="w-48 h-8 text-xs">
+                    <SelectTrigger className="w-full sm:w-48 h-8 text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -668,20 +663,20 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="flex items-center gap-2 ml-auto">
+                <div className="flex items-center gap-2 w-full sm:w-auto sm:ml-auto">
                   <Calendar className="h-4 w-4 text-slate-500" />
                   <Input
                     type="month"
                     value={dateFilter}
                     onChange={(e) => setDateFilter(e.target.value)}
-                    className="w-40 h-8 text-xs"
+                    className="flex-1 sm:w-40 h-8 text-xs"
                   />
                   {dateFilter && (
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => setDateFilter("")}
-                      className="h-8 px-2"
+                      className="h-8 px-2 shrink-0"
                     >
                       <X className="h-4 w-4" />
                     </Button>
@@ -692,9 +687,9 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
           </Card>
 
           {/* Transactions List */}
-          <Card className="shadow-xl">
+          <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
             <CardHeader>
-              <CardTitle className="text-xl">Histórico de Transações</CardTitle>
+              <CardTitle className="text-lg sm:text-xl">Histórico de Transações</CardTitle>
             </CardHeader>
             <CardContent>
               {filteredFinances.length === 0 ? (
@@ -708,42 +703,40 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
                   </p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-3 overflow-x-hidden">
                   {filteredFinances.map((finance) => (
                     <div
                       key={finance.id}
-                      className={`flex items-center justify-between p-4 rounded-xl border-2 transition-all hover:shadow-lg ${
-                        finance.type === "income"
-                          ? "border-green-200 bg-green-50/50 hover:border-green-300"
-                          : "border-red-200 bg-red-50/50 hover:border-red-300"
-                      }`}
+                      className={`flex flex-col sm:flex-row items-start gap-3 p-3 sm:p-4 rounded-xl border-2 transition-all hover:shadow-md ${finance.type === "income"
+                        ? "border-green-200 bg-green-50/50 hover:border-green-300"
+                        : "border-red-200 bg-red-50/50 hover:border-red-300"
+                        }`}
                     >
-                      <div className="flex items-center gap-4 flex-1">
+                      <div className="flex items-start gap-3 flex-1 w-full min-w-0">
                         <div
-                          className={`h-14 w-14 rounded-full flex items-center justify-center ${
-                            finance.type === "income"
-                              ? "bg-green-100"
-                              : "bg-red-100"
-                          }`}
+                          className={`h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center shrink-0 ${finance.type === "income"
+                            ? "bg-green-100"
+                            : "bg-red-100"
+                            }`}
                         >
                           {finance.type === "income" ? (
-                            <ArrowUpCircle className="h-7 w-7 text-green-600" />
+                            <ArrowUpCircle className="h-6 w-6 sm:h-7 sm:w-7 text-green-600" />
                           ) : (
-                            <ArrowDownCircle className="h-7 w-7 text-red-600" />
+                            <ArrowDownCircle className="h-6 w-6 sm:h-7 sm:w-7 text-red-600" />
                           )}
                         </div>
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0 w-full">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <h4 className="font-semibold text-slate-900 text-base">
+                            <h4 className="font-semibold text-slate-900 text-sm sm:text-base wrap-break-word">
                               {finance.description || "Sem descrição"}
                             </h4>
                             {finance.category && (
-                              <span className="text-xs px-2 py-1 rounded-full bg-slate-200 text-slate-700 font-medium">
+                              <span className="text-xs px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 font-medium shrink-0">
                                 {finance.category}
                               </span>
                             )}
                             {finance.client && (
-                              <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700 font-medium flex items-center gap-1">
+                              <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-medium flex items-center gap-1 shrink-0">
                                 <Building2 className="h-3 w-3" />
                                 {finance.client.name}
                               </span>
@@ -752,26 +745,36 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
                           <p className="text-xs text-slate-500 mt-1">
                             {formatDate(finance.date)}
                           </p>
-                        </div>
-                        <div className="text-right">
-                          <div
-                            className={`text-2xl font-bold ${
-                              finance.type === "income"
+                          <div className="mt-2 sm:hidden">
+                            <div
+                              className={`text-xl font-bold ${finance.type === "income"
                                 ? "text-green-600"
                                 : "text-red-600"
-                            }`}
-                          >
-                            {finance.type === "income" ? "+" : "-"}
-                            {formatCurrency(finance.amount)}
+                                }`}
+                            >
+                              {finance.type === "income" ? "+" : "-"}
+                              {formatCurrency(finance.amount)}
+                            </div>
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 ml-4">
+                      <div className="hidden sm:flex text-right shrink-0 items-center">
+                        <div
+                          className={`text-xl sm:text-2xl font-bold ${finance.type === "income"
+                            ? "text-green-600"
+                            : "text-red-600"
+                            }`}
+                        >
+                          {finance.type === "income" ? "+" : "-"}
+                          {formatCurrency(finance.amount)}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 w-full sm:w-auto sm:ml-4">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleEdit(finance)}
-                          className="h-9 w-9 p-0"
+                          className="h-8 w-8 sm:h-9 sm:w-9 p-0 flex-1 sm:flex-initial"
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -779,7 +782,7 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDelete(finance.id)}
-                          className="h-9 w-9 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                          className="h-8 w-8 sm:h-9 sm:w-9 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 flex-1 sm:flex-initial"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -793,11 +796,11 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
 
           {/* Modal */}
           {isModalOpen && (
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-              <Card className="w-full max-w-lg shadow-2xl">
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+              <Card className="w-full max-w-lg shadow-2xl my-8">
                 <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-xl">
+                  <div className="flex items-center justify-between gap-4">
+                    <CardTitle className="text-lg sm:text-xl">
                       {editingItem ? "Editar Transação" : "Nova Transação"}
                     </CardTitle>
                     <Button
@@ -814,7 +817,7 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <form onSubmit={handleSubmit} className="space-y-4">
+                  <form onSubmit={handleSubmit} className="space-y-5">
                     <div className="space-y-2">
                       <Label htmlFor="type">Tipo</Label>
                       <Select
@@ -946,10 +949,10 @@ export function FinanceManagerGlobal({ orgId }: FinanceManagerGlobalProps) {
                       <Button
                         type="submit"
                         disabled={submitting}
-                        className="flex-1 bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                        className="flex-1 gap-2 bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                       >
                         {submitting && (
-                          <LoadingSpinner size="sm" className="mr-2" />
+                          <Spinner size="sm" className="mr-2" />
                         )}
                         {editingItem ? "Salvar" : "Criar"}
                       </Button>

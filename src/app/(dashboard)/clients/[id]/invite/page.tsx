@@ -1,19 +1,82 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Mail, UserPlus } from "lucide-react";
+import { can } from "@/lib/permissions";
+import { Mail, ShieldX, UserPlus } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 interface ClientInvitePageProps {
   params: Promise<{ id: string }>;
 }
 
-export default async function ClientInvitePage({
+export default function ClientInvitePage({
   params,
 }: ClientInvitePageProps) {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { id } = await params;
-  // TODO: Implementar envio de convites usando id
+  const router = useRouter();
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Buscar role do usuário
+    fetch("/api/session").then(async (res) => {
+      if (res.ok) {
+        const data = await res.json();
+        setUserRole(data.role);
+      }
+      setLoading(false);
+    });
+  }, []);
+
+  // Verificar permissão
+  const canInvite = userRole ? can(userRole as "OWNER" | "STAFF" | "CLIENT", "create", "invite") : false;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <p className="text-slate-600">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!canInvite) {
+    return (
+      <div className="space-y-6 max-w-2xl">
+        <Card className="border-red-200 bg-red-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-red-700">
+              <ShieldX className="h-5 w-5" />
+              Acesso Negado
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-slate-700 mb-4">
+              Você não tem permissão para enviar convites. Apenas proprietários (OWNER) podem realizar esta ação.
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => router.back()}
+            >
+              Voltar
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+   
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const { id } = await params;
+    // TODO: Implementar envio de convites usando id
+    console.log("Enviando convite para cliente:", id);
+  };
 
   return (
     <div className="space-y-6">
@@ -35,7 +98,7 @@ export default async function ClientInvitePage({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <form className="space-y-4">
+            <form className="space-y-4" onSubmit={handleSubmit}>
               <div className="space-y-2">
                 <Label htmlFor="email">E-mail do usuário</Label>
                 <div className="relative">

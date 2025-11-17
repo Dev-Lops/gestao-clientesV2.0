@@ -181,7 +181,7 @@ export function StrategyManager({
               const typeStrategies = getStrategiesByType(type);
               return (
                 <Card key={type}>
-                  <CardHeader>
+                  <CardHeader className="cursor-pointer p-4 bg-linear-to-r from-white/50 to-transparent">
                     <CardTitle className="flex items-center gap-2">
                       {getIconForType(type)}
                       {getTitleForType(type)}
@@ -197,7 +197,7 @@ export function StrategyManager({
                         {typeStrategies.map((strategy) => (
                           <div
                             key={strategy.id}
-                            className="p-4 border rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors"
+                            className="p-4 border border-slate-200 rounded-lg bg-white hover:shadow-md transition-transform transform hover:-translate-y-0.5"
                           >
                             <div className="flex items-start justify-between gap-2">
                               <div className="flex-1 min-w-0">

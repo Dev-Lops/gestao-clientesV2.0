@@ -256,8 +256,8 @@ export function MonthlyCalendar({
           <div
             key={day}
             className={`text-center py-2 text-xs font-semibold ${idx === 0 || idx === 6
-                ? "text-slate-400 dark:text-slate-500"
-                : "text-slate-600 dark:text-slate-400"
+              ? "text-slate-400 dark:text-slate-500"
+              : "text-slate-600 dark:text-slate-400"
               }`}
           >
             {day}
@@ -366,70 +366,76 @@ export function MonthlyCalendar({
             </p>
           ) : (
             <div className="space-y-2">
-              {selectedActivities.map((activity) => (
-                <Link
-                  key={activity.id}
-                  href={`/clients/${activity.clientId}`}
-                  className="block"
-                >
-                  <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-white dark:hover:bg-slate-800 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 transition-all group">
-                    <div
-                      className={`
-                      h-10 w-10 rounded-lg flex items-center justify-center shrink-0
-                      ${activity.type === "meeting"
-                          ? "bg-blue-100 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400"
-                          : "bg-purple-100 text-purple-600 dark:bg-purple-950/50 dark:text-purple-400"
-                        }
-                    `}
-                    >
-                      {activity.type === "meeting" ? (
-                        <Clock className="h-5 w-5" />
-                      ) : (
-                        <CheckCircle2 className="h-5 w-5" />
-                      )}
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                        {activity.title}
-                      </p>
-                      <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-                        {activity.clientName}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span
-                          className={`
-                          text-[10px] px-2 py-0.5 rounded-full font-medium
-                          ${activity.type === "meeting"
-                              ? "bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300"
-                              : "bg-purple-100 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300"
-                            }
-                        `}
-                        >
-                          {activity.type === "meeting" ? "Reunião" : "Tarefa"}
-                        </span>
-                        {activity.status && (
+              {selectedActivities.map((activity) => {
+                // Define o link de acordo com o tipo
+                const href = activity.type === "meeting"
+                  ? `/clients/${activity.clientId}/meetings`
+                  : `/clients/${activity.clientId}/tasks`;
+                return (
+                  <Link
+                    key={activity.id}
+                    href={href}
+                    className="block"
+                  >
+                    <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-white dark:hover:bg-slate-800 border 
+                    border-transparent hover:border-slate-200 dark:hover:border-slate-700 transition-all group">
+                      <div
+                        className={`
+                        h-10 w-10 rounded-lg flex items-center justify-center shrink-0
+                        ${activity.type === "meeting"
+                            ? "bg-blue-100 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400"
+                            : "bg-purple-100 text-purple-600 dark:bg-purple-950/50 dark:text-purple-400"
+                          }
+                      `}
+                      >
+                        {activity.type === "meeting" ? (
+                          <Clock className="h-5 w-5" />
+                        ) : (
+                          <CheckCircle2 className="h-5 w-5" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                          {activity.title}
+                        </p>
+                        <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+                          {activity.clientName}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1">
                           <span
                             className={`
                             text-[10px] px-2 py-0.5 rounded-full font-medium
-                            ${activity.status === "done" ||
-                                activity.status === "completed"
-                                ? "bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-300"
-                                : "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300"
+                            ${activity.type === "meeting"
+                                ? "bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300"
+                                : "bg-purple-100 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300"
                               }
                           `}
                           >
-                            {activity.status === "done" ||
-                              activity.status === "completed"
-                              ? "Concluída"
-                              : "Pendente"}
+                            {activity.type === "meeting" ? "Reunião" : "Tarefa"}
                           </span>
-                        )}
+                          {activity.status && (
+                            <span
+                              className={`
+                              text-[10px] px-2 py-0.5 rounded-full font-medium
+                              ${activity.status === "done" ||
+                                  activity.status === "completed"
+                                  ? "bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-300"
+                                  : "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300"
+                                }
+                            `}
+                            >
+                              {activity.status === "done" ||
+                                activity.status === "completed"
+                                ? "Concluída"
+                                : "Pendente"}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                );
+              })}
             </div>
           )}
         </div>

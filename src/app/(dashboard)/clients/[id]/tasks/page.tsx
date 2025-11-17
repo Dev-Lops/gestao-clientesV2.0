@@ -1,12 +1,9 @@
-import { TasksManager } from "@/features/clients/components/TasksManager";
+import { TasksPanel } from "@/features/tasks/components/TasksPanel";
 
-interface ClientTasksPageProps {
-  params: Promise<{ id: string }>;
-}
+interface ClientTasksPageProps { params: Promise<{ id: string }> }
 
-export default async function ClientTasksPage({
-  params,
-}: ClientTasksPageProps) {
+// Server component wrapper awaiting dynamic route params (Next.js streams params as Promise)
+export default async function ClientTasksPage({ params }: ClientTasksPageProps) {
   const { id } = await params;
-  return <TasksManager clientId={id} />;
+  return <TasksPanel clientId={id} />;
 }

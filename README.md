@@ -81,7 +81,59 @@ src/
 - [ ] Ajustar fluxo de login para setar cookie `auth` (middleware depende dele).
 - [ ] Adicionar Sentry ou Logtail para observabilidade.
 
-## 🔐 Permissões (RBAC)
+## 📱 WhatsApp - Cobrança Automática
+
+Sistema de envio automático de cobranças via WhatsApp com chave PIX.
+
+**Quick Start (Teste Local):**
+
+```bash
+# Copiar template
+cp .env.local.template .env.local
+
+# Configurar fake gateway (sem envios reais)
+# Já vem pré-configurado no template!
+
+# Testar
+pnpm whatsapp:test
+```
+
+**Documentação:**
+
+- 🚀 [Quick Start](docs/WHATSAPP_QUICKSTART.md) - Começar em 5 minutos
+- 📖 [Guia Completo](docs/WHATSAPP_SETUP_GUIDE.md) - Meta API, Twilio, troubleshooting
+- 💰 [Sistema de Pagamento](docs/PAYMENT_SYSTEM.md) - Faturas, cobranças, automação
+
+**Recursos:**
+
+- ✅ Mensagem profissional com itens, vencimento, chave PIX
+- ✅ Suporte Meta WhatsApp Cloud API (oficial)
+- ✅ Suporte Twilio, gateways brasileiros
+- ✅ Fake gateway para desenvolvimento
+- ✅ Envio manual ou automático (dailyJob)
+- ✅ Script de teste e diagnóstico
+
+**Configuração Mínima:**
+
+```bash
+WHATSAPP_PROVIDER=meta
+WHATSAPP_PHONE_NUMBER_ID=123456789012345
+WHATSAPP_API_TOKEN=seu_token_permanente
+PIX_KEY=sua_chave_pix
+APP_URL=https://seu-dominio.com
+WHATSAPP_SEND_AUTOMATIC=false
+```
+
+Ou para teste local rápido (sem envio real):
+
+```bash
+WHATSAPP_PROVIDER=generic
+WHATSAPP_API_URL=http://localhost:3000/api/whatsapp/fake-gateway
+WHATSAPP_API_TOKEN=fake
+PIX_KEY=teste@exemplo.com.br
+APP_URL=http://localhost:3000
+WHATSAPP_SEND_AUTOMATIC=false
+```
 
 Regra definida em `lib/permissions.ts`. Exemplo de uso:
 

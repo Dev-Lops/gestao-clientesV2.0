@@ -1,4 +1,6 @@
+import ErrorBoundary from "@/components/ErrorBoundary";
 import AppLayoutClient from "@/components/layout/AppLayoutClient";
+import SWRProvider from "@/components/providers/SWRProvider";
 import { UserProvider } from "@/context/UserContext";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
@@ -93,25 +95,31 @@ export default function RootLayout({
       <body
         className={`${inter.className} min-h-screen bg-background text-foreground antialiased transition-colors`}
       >
-        {/* Provider de autenticação global + Sidebar (apenas para usuários autenticados) */}
-        <UserProvider>
-          <AppLayoutClient>{children}</AppLayoutClient>
-        </UserProvider>
-        <Toaster
-          position="top-right"
-          expand={true}
-          richColors
-          closeButton
-          duration={4000}
-          toastOptions={{
-            style: {
-              background: "white",
-              color: "#1e293b",
-              border: "1px solid #e2e8f0",
-            },
-            className: "toast-custom",
-          }}
-        />
+        <ErrorBoundary>
+          <>
+            {/* Provider de autenticação global + Sidebar (apenas para usuários autenticados) */}
+            <SWRProvider>
+              <UserProvider>
+                <AppLayoutClient>{children}</AppLayoutClient>
+              </UserProvider>
+            </SWRProvider>
+            <Toaster
+              position="top-right"
+              expand={true}
+              richColors
+              closeButton
+              duration={4000}
+              toastOptions={{
+                style: {
+                  background: "white",
+                  color: "#1e293b",
+                  border: "1px solid #e2e8f0",
+                },
+                className: "toast-custom",
+              }}
+            />
+          </>
+        </ErrorBoundary>
       </body>
     </html>
   );

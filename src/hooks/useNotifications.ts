@@ -1,124 +1,132 @@
-import { useState } from "react";
-import useSWR from "swr";
+import { logger } from '@/lib/logger'
+import { useCallback, useRef, useState } from 'react'
+import useSWR from 'swr'
 
 interface Notification {
-  id: string;
-  type: string;
-  title: string;
-  message: string;
-  time: string;
-  unread: boolean;
-  link: string;
-  priority?: string;
-  clientId: string;
-  createdAt: Date;
+  id: string
+  type: string
+  title: string
+  message: string
+  time: string
+  unread: boolean
+  link: string
+  priority?: string
+  clientId: string
+  createdAt: Date
 }
 
 interface NotificationsResponse {
-  notifications: Notification[];
-  total: number;
-  unreadCount: number;
-  hasMore: boolean;
+  notifications: Notification[]
+  total: number
+  unreadCount: number
+  hasMore: boolean
 }
 
-const fetcher = async (url: string) => {
+/**
+ * Fetcher com suporte a AbortController
+ */
+const fetcher = async (url: string, signal?: AbortSignal) => {
   const res = await fetch(url, {
-    credentials: "include",
-  });
-  if (!res.ok) throw new Error("Failed to fetch");
-  return res.json();
-};
+    credentials: 'include',
+    signal,
+  })
+  if (!res.ok) throw new Error('Failed to fetch notifications')
+  return res.json()
+}
 
-export function useNotifications(options?: {
-  unreadOnly?: boolean;
-  limit?: number;
-  type?: string;
-}) {
-  const { unreadOnly = false, limit = 50, type } = options || {};
+export interface UseNotificationsOptions {
+  unreadOnly?: boolean
+  limit?: number
+  type?: string
+  refreshInterval?: number
+}
 
-  const params = new URLSearchParams();
-  if (unreadOnly) params.set("unread", "true");
-  params.set("limit", limit.toString());
-  if (type) params.set("type", type);
+export function useNotifications(options?: UseNotificationsOptions) {
+  const {
+    unreadOnly = false,
+    limit = 50,
+    type,
+    refreshInterval = 30000, // 30 segundos
+  } = options || {}
+
+  const abortControllerRef = useRef<AbortController | null>(null)
+
+  const params = new URLSearchParams()
+  if (unreadOnly) params.set('unread', 'true')
+  params.set('limit', limit.toString())
+  if (type) params.set('type', type)
 
   const { data, error, isLoading, mutate } = useSWR<NotificationsResponse>(
     `/api/notifications?${params.toString()}`,
-    fetcher,
-    {
-      refreshInterval: 30000, // Atualizar a cada 30 segundos
-      revalidateOnFocus: true,
+    (url) => {
+      // Cancela request anterior se existir
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+
+      // Cria novo controller
+      abortControllerRef.current = new AbortController()
+
+      return fetcher(url, abortControllerRef.current.signal)
     },
-  );
-
-  const [actionLoading, setActionLoading] = useState(false);
-
-  const markAsRead = async (id: string) => {
-    setActionLoading(true);
-    try {
-      await fetch("/api/notifications", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ action: "mark_read", id }),
-      });
-      await mutate();
-    } catch (err) {
-      console.error("Error marking notification as read:", err);
-    } finally {
-      setActionLoading(false);
+    {
+      refreshInterval,
+      revalidateOnFocus: true,
+      onError: (err) => {
+        // Ignora erros de abort (esperado quando componente desmonta)
+        if (err.name === 'AbortError') return
+        logger.error('Error fetching notifications', err)
+      },
     }
-  };
+  )
 
-  const markMultipleAsRead = async (ids: string[]) => {
-    setActionLoading(true);
-    try {
-      await fetch("/api/notifications", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ action: "mark_multiple_read", ids }),
-      });
-      await mutate();
-    } catch (err) {
-      console.error("Error marking notifications as read:", err);
-    } finally {
-      setActionLoading(false);
-    }
-  };
+  const [actionLoading, setActionLoading] = useState(false)
 
-  const markAllAsRead = async () => {
-    setActionLoading(true);
-    try {
-      await fetch("/api/notifications", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ action: "mark_all_read" }),
-      });
-      await mutate();
-    } catch (err) {
-      console.error("Error marking all as read:", err);
-    } finally {
-      setActionLoading(false);
-    }
-  };
+  const performAction = useCallback(
+    async (action: string, payload: Record<string, unknown>) => {
+      setActionLoading(true)
+      try {
+        await fetch('/api/notifications', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ action, ...payload }),
+        })
+        await mutate()
+      } catch (err) {
+        logger.error(`Error performing action ${action})`, err)
+        throw err
+      } finally {
+        setActionLoading(false)
+      }
+    },
+    [mutate]
+  )
 
-  const deleteNotification = async (id: string) => {
-    setActionLoading(true);
-    try {
-      await fetch("/api/notifications", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ action: "delete", id }),
-      });
-      await mutate();
-    } catch (err) {
-      console.error("Error deleting notification:", err);
-    } finally {
-      setActionLoading(false);
-    }
-  };
+  const markAsRead = useCallback(
+    async (id: string) => {
+      await performAction('mark_read', { id })
+    },
+    [performAction]
+  )
+
+  const markMultipleAsRead = useCallback(
+    async (ids: string[]) => {
+      await performAction('mark_multiple_read', { ids })
+    },
+    [performAction]
+  )
+
+  const markAllAsRead = useCallback(async () => {
+    await performAction('mark_all_read', {})
+  }, [performAction])
+
+  const deleteNotification = useCallback(
+    async (id: string) => {
+      await performAction('delete', { id })
+    },
+    [performAction]
+  )
 
   return {
     notifications: data?.notifications || [],
@@ -133,5 +141,5 @@ export function useNotifications(options?: {
     markAllAsRead,
     deleteNotification,
     refresh: mutate,
-  };
+  }
 }

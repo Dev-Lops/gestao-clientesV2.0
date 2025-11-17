@@ -2,8 +2,9 @@
 
 import { AuthDebug } from "@/components/AuthDebug";
 import { Button } from "@/components/ui/button";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { Spinner } from "@/components/ui/spinner";
 import { useUser } from "@/context/UserContext";
+import { logger } from "@/lib/logger";
 import {
   ArrowRight,
   CheckCircle2,
@@ -25,15 +26,15 @@ function LoginPageInner() {
 
   // Verificar se há redirect pendente ao montar
   useEffect(() => {
-    console.log("[LoginPage] 🚀 Componente montado");
-    console.log("[LoginPage] URL:", window.location.href);
-    console.log("[LoginPage] Query params:", window.location.search);
+    logger.debug('LoginPage montado', {
+      url: window.location.href,
+      queryParams: window.location.search,
+    });
 
-    const wasPendingRedirect =
-      typeof window !== "undefined" &&
-      localStorage.getItem("pendingAuthRedirect") === "true";
-
-    console.log("[LoginPage] Redirect pendente?", wasPendingRedirect);
+    const wasPendingRedirect = sessionStorage.getItem(
+      "firebaseRedirectPending",
+    );
+    logger.debug('LoginPage: verificando redirect pendente', { wasPendingRedirect });
 
     if (wasPendingRedirect) {
       console.log(
@@ -67,7 +68,7 @@ function LoginPageInner() {
 
   useEffect(() => {
     if (!loading && user) {
-      console.log("[LoginPage] Usuário já autenticado, redirecionando para /");
+      logger.debug('LoginPage: usuário já autenticado, redirecionando');
       router.replace("/");
     }
   }, [loading, user, router]);
@@ -111,11 +112,11 @@ function LoginPageInner() {
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
               Conectando...
             </h2>
-            <p className="text-slate-600 dark:text-slate-400">
+            <p className="text-slate-600 dark:text-slate-400 flex flex-col items-center justify-center gap-2 ">
               {hasInvite ? "Processando convite" : "Autenticando com Google"}
+              <Spinner size="lg" variant="primary" />
             </p>
           </div>
-          <LoadingSpinner size="lg" />
         </div>
       </div>
     );
@@ -260,7 +261,7 @@ function LoginPageInner() {
               >
                 {isLogging || loading ? (
                   <div className="flex items-center gap-3">
-                    <LoadingSpinner size="sm" className="text-white" />
+                    <Spinner size="sm" variant="white" />
                     <span>
                       {hasInvite ? "Aceitando convite..." : "Conectando..."}
                     </span>

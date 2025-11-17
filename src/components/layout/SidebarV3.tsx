@@ -15,6 +15,7 @@ import { BibleVerseWidget } from "@/features/verses/BibleVerseWidget";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  AlertCircle,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -38,7 +39,7 @@ interface SidebarV3Props {
 
 interface NavItemGroup {
   label: string;
-  items: Array<{ href: string; label: string; icon: React.ReactNode }>;
+  items: Array<{ href: string; label: string; icon: React.ReactNode; roles?: string[] }>;
 }
 
 const groups: NavItemGroup[] = [
@@ -49,11 +50,19 @@ const groups: NavItemGroup[] = [
         href: "/clients",
         label: "Clientes",
         icon: <Users className="w-4 h-4" />,
+        roles: ["OWNER", "STAFF"], // Acessível para OWNER e STAFF
       },
       {
-        href: "/finance",
-        label: "Financeiro",
+        href: "/billing",
+        label: "Cobrança",
         icon: <DollarSign className="w-4 h-4" />,
+        roles: ["OWNER"], // Apenas OWNER
+      },
+      {
+        href: "/billing/overdue",
+        label: "Inadimplência",
+        icon: <AlertCircle className="w-4 h-4" />,
+        roles: ["OWNER"],
       },
     ],
   },
@@ -64,11 +73,13 @@ const groups: NavItemGroup[] = [
         href: "/admin",
         label: "Administração",
         icon: <LayoutDashboard className="w-4 h-4" />,
+        roles: ["OWNER"], // Apenas OWNER
       },
       {
         href: "/settings",
         label: "Configurações",
         icon: <Settings className="w-4 h-4" />,
+        roles: ["OWNER", "STAFF"], // Acessível para ambos
       },
     ],
   },
@@ -78,6 +89,8 @@ export function SidebarV3({ isOpen, onClose }: SidebarV3Props) {
   const pathname = usePathname();
   const { user, logout } = useUser();
   const [orgName, setOrgName] = useState("");
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [alertsCount, setAlertsCount] = useState<number>(0);
   const { collapsed, toggleCollapsed } = useSidebar();
   const [profileOpen, setProfileOpen] = useState(false);
   const [showVerse, setShowVerse] = useState(true);
@@ -111,6 +124,8 @@ export function SidebarV3({ isOpen, onClose }: SidebarV3Props) {
       if (res.ok) {
         const data = await res.json();
         if (data?.orgName) setOrgName(data.orgName);
+        if (data?.role) setUserRole(data.role);
+        if (typeof data?.alertsCount === 'number') setAlertsCount(data.alertsCount);
       }
     });
   }, []);
@@ -124,9 +139,17 @@ export function SidebarV3({ isOpen, onClose }: SidebarV3Props) {
 
   const filteredGroups = groups.map((g) => ({
     ...g,
-    items: g.items.filter((i) =>
-      i.label.toLowerCase().includes(search.toLowerCase()),
-    ),
+    items: g.items.filter((i) => {
+      // Filtro por busca
+      if (!i.label.toLowerCase().includes(search.toLowerCase())) {
+        return false;
+      }
+      // Filtro por role
+      if (i.roles && userRole && !i.roles.includes(userRole)) {
+        return false;
+      }
+      return true;
+    }),
   }));
 
   return (
@@ -255,7 +278,10 @@ export function SidebarV3({ isOpen, onClose }: SidebarV3Props) {
                   </div>
                 )}
                 {group.items.map((item) => {
-                  const active = pathname?.startsWith(item.href);
+                  // Ajuste: evitar dupla seleção. '/billing/overdue' não deve ativar '/billing'.
+                  const active = item.href === '/billing'
+                    ? pathname === '/billing' // somente raiz exata
+                    : pathname?.startsWith(item.href);
                   return (
                     <Link
                       key={item.href}
@@ -272,7 +298,14 @@ export function SidebarV3({ isOpen, onClose }: SidebarV3Props) {
                         {item.icon}
                       </span>
                       {!collapsed && (
-                        <span className="truncate flex-1">{item.label}</span>
+                        <span className="truncate flex-1 flex items-center gap-2">
+                          {item.label}
+                          {item.href === '/billing' && alertsCount > 0 && (
+                            <span className="ml-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-red-600 text-white text-[10px] font-semibold">
+                              {alertsCount}
+                            </span>
+                          )}
+                        </span>
                       )}
                       {active && !collapsed && (
                         <span className="ml-auto h-2 w-2 rounded-full bg-blue-500" />

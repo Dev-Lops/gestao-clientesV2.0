@@ -92,49 +92,51 @@ export function BibleVerseWidget({ compact = false }: BibleVerseWidgetProps) {
 
   if (compact) {
     return (
-      <div className="p-3 rounded-lg bg-card border border-border shadow-sm transition-colors">
+      <div
+        className="p-3 rounded-lg bg-card border border-border shadow-sm transition-colors"
+        aria-label="Widget Versículo do Dia"
+        role="region"
+      >
         <div className="flex items-center justify-between mb-2">
-          <p className="text-xs font-medium text-foreground">
+          <p className="text-xs font-medium text-foreground" id="verse-widget-title">
             ✨ Versículo do dia
           </p>
           <div className="flex items-center gap-1">
             {verse && (
-              <span className="text-[9px] px-1.5 py-0.5 rounded bg-primary/10 dark:bg-primary/25 text-primary font-semibold">
-                {translationLabel}
-              </span>
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-primary/10 dark:bg-primary/25 text-primary font-semibold" aria-label={`Tradução: ${translationLabel}`}>{translationLabel}</span>
             )}
             <button
               onClick={fetchRandomVerse}
               disabled={loading}
-              className="h-5 w-5 rounded hover:bg-accent/50 dark:hover:bg-accent/30 transition-colors flex items-center justify-center disabled:opacity-50"
+              className="h-5 w-5 rounded hover:bg-accent/50 dark:hover:bg-accent/30 transition-colors flex items-center justify-center disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               title="Novo verso"
+              aria-label="Carregar novo versículo aleatório"
             >
               <RefreshCw
                 className={`h-3 w-3 text-primary ${loading ? "animate-spin" : ""}`}
+                aria-hidden="true"
               />
             </button>
           </div>
         </div>
         {error && (
-          <div className="text-[10px] text-destructive mb-2">{error}</div>
+          <div className="text-[10px] text-destructive mb-2" role="alert">{error}</div>
         )}
         {loading && !verse && (
-          <div className="text-xs text-muted-foreground">Carregando...</div>
+          <div className="text-xs text-muted-foreground" aria-live="polite">Carregando...</div>
         )}
         {verse && (
-          <div className="text-xs text-muted-foreground space-y-2">
-            <p className="line-clamp-3 leading-relaxed italic text-foreground">
-              &ldquo;{verse.text}&rdquo;
-            </p>
+          <div className="text-xs text-muted-foreground space-y-2" aria-labelledby="verse-widget-title">
+            <p className="line-clamp-3 leading-relaxed italic text-foreground" aria-label="Texto do versículo">&ldquo;{verse.text}&rdquo;</p>
             <div className="flex items-center justify-between pt-1">
-              <span className="text-[10px] text-muted-foreground font-medium">
+              <span className="text-[10px] text-muted-foreground font-medium" aria-label={`Referência: ${verse.book.name} ${verse.chapter}:${verse.verse}`}>
                 {verse.book.name} {verse.chapter}:{verse.verse}
               </span>
             </div>
           </div>
         )}
         {!verse && !loading && !error && (
-          <div className="text-[10px] text-muted-foreground">
+          <div className="text-[10px] text-muted-foreground" role="alert">
             Não foi possível carregar o versículo agora.
           </div>
         )}
@@ -143,10 +145,10 @@ export function BibleVerseWidget({ compact = false }: BibleVerseWidgetProps) {
   }
 
   return (
-    <Card>
+    <Card aria-label="Widget Versículo do Dia" role="region">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base">
+          <CardTitle className="text-base" id="verse-widget-title-full">
             Verso do Dia{verse ? ` (${translationLabel})` : ""}
           </CardTitle>
           <Button
@@ -154,24 +156,23 @@ export function BibleVerseWidget({ compact = false }: BibleVerseWidgetProps) {
             size="sm"
             onClick={fetchRandomVerse}
             disabled={loading}
-            className="h-8 w-8 p-0 rounded-full"
+            className="h-8 w-8 p-0 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             title="Novo verso aleatório"
+            aria-label="Carregar novo versículo aleatório"
           >
-            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} aria-hidden="true" />
           </Button>
         </div>
       </CardHeader>
       <CardContent>
-        {error && <div className="text-sm text-red-600 mb-3">{error}</div>}
+        {error && <div className="text-sm text-red-600 mb-3" role="alert">{error}</div>}
         {loading && !verse && (
-          <div className="text-sm text-muted-foreground">Carregando...</div>
+          <div className="text-sm text-muted-foreground" aria-live="polite">Carregando...</div>
         )}
         {verse && (
-          <div className="space-y-3">
-            <p className="text-sm text-foreground leading-relaxed">
-              &ldquo;{verse.text}&rdquo;
-            </p>
-            <p className="text-xs text-muted-foreground">
+          <div className="space-y-3" aria-labelledby="verse-widget-title-full">
+            <p className="text-sm text-foreground leading-relaxed" aria-label="Texto do versículo">&ldquo;{verse.text}&rdquo;</p>
+            <p className="text-xs text-muted-foreground" aria-label={`Referência: ${verse.book.name} ${verse.chapter}:${verse.verse}`}>
               {verse.book.name} {verse.chapter}:{verse.verse}
             </p>
             <div className="flex items-center gap-2 pt-2">
@@ -180,6 +181,8 @@ export function BibleVerseWidget({ compact = false }: BibleVerseWidgetProps) {
                 variant="outline"
                 onClick={goPrev}
                 disabled={loading || !currentId}
+                aria-label="Versículo anterior"
+                className="focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 Anterior
               </Button>
@@ -187,6 +190,8 @@ export function BibleVerseWidget({ compact = false }: BibleVerseWidgetProps) {
                 size="sm"
                 onClick={goNext}
                 disabled={loading || !currentId}
+                aria-label="Próximo versículo"
+                className="focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 Próximo
               </Button>
@@ -194,7 +199,7 @@ export function BibleVerseWidget({ compact = false }: BibleVerseWidgetProps) {
           </div>
         )}
         {!verse && !loading && !error && (
-          <div className="text-sm text-muted-foreground">
+          <div className="text-sm text-muted-foreground" role="alert">
             Não foi possível carregar o versículo agora.
           </div>
         )}

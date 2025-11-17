@@ -1,5 +1,7 @@
 "use client";
 
+// import GlobalNotifications from "@/components/GlobalNotifications";
+
 import { useUser } from "@/context/UserContext";
 import { useEffect } from "react";
 // Sidebar rendering moved to global AppSidebar (AppLayoutClient)
@@ -18,7 +20,7 @@ export default function AppShell({ children }: AppShellProps) {
     const beat = async () => {
       try {
         await fetch("/api/activity/heartbeat", { method: "POST" });
-      } catch {}
+      } catch { }
     };
     if (user) {
       // imediato no mount
@@ -48,9 +50,13 @@ export default function AppShell({ children }: AppShellProps) {
 
   // Layout fixo: Sidebar nunca rola, main ocupa todo espaço e rola
   return (
-    <div className="flex-1 min-h-0 bg-background text-foreground flex overflow-hidden transition-colors">
+    <div className="flex-1 min-h-0 text-foreground flex overflow-hidden transition-colors">
+      {/* Notificações globais flutuantes */}
+      {/* <GlobalNotifications /> */}
       <main className="flex-1 min-h-0 overflow-y-auto">
         <div className="w-full px-6 sm:px-8 py-4 sm:py-6">{children}</div>
+        {/* Command Palette (Cmd+K) */}
+
       </main>
     </div>
   );

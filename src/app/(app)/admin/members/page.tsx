@@ -23,7 +23,6 @@ import {
 } from "@/components/ui/select";
 import { DeleteMemberButton } from "@/features/admin/components/DeleteMemberButton";
 import { UpdateRoleForm } from "@/features/admin/components/UpdateRoleForm";
-import { aiModelLabel, isAIEnabled } from "@/lib/features";
 import {
   ChevronDown,
   Clock,
@@ -32,12 +31,11 @@ import {
   Mail,
   RefreshCcw,
   Shield,
-  Sparkles,
   Trash2,
   User,
   UserPlus,
   Users,
-  XCircle,
+  XCircle
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -315,7 +313,6 @@ export default function MembersAdminPage() {
     );
   }
 
-  const aiEnabled = isAIEnabled();
 
   return (
     <div className="space-y-3">
@@ -326,22 +323,8 @@ export default function MembersAdminPage() {
         iconColor="bg-indigo-600"
       />
 
-      {/* Global AI banner (Claude Sonnet 4 enabled) */}
-      {aiEnabled && (
-        <div className="rounded-xl border border-purple-200 dark:border-purple-900/40 bg-linear-to-r from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 p-2.5 flex items-center gap-3">
-          <div className="h-8 w-8 rounded-lg bg-linear-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-            <Sparkles className="h-4 w-4 text-white" />
-          </div>
-          <div className="text-sm">
-            <p className="font-medium text-foreground">
-              IA habilitada globalmente
-            </p>
-            <p className="text-muted-foreground text-xs">
-              Modelo ativo: {aiModelLabel()}
-            </p>
-          </div>
-        </div>
-      )}
+      {/* Global AI banner (Claude Sonnet 4 enabled)
+      {/* Global AI banner removido - variáveis não utilizadas */}
 
       {/* 📊 RESUMO DE ROLES - Grid Responsivo */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

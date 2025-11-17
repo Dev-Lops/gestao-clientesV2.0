@@ -4,6 +4,16 @@
     {
       "path": "/api/cron/process-monthly-payments",
       "schedule": "0 0 1 * *"
+    },
+    {
+      "path": "/api/billing/cron/daily",
+      "schedule": "0 6 * * *"
     }
-  ]
+  ],
+  "functions": {
+    "api/**/upload/route.ts": {
+      "maxDuration": 300,
+      "memory": 3008
+    }
+  }
 }

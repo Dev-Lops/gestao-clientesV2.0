@@ -1,21 +1,18 @@
+import TabsNav from "@/components/common/TabsNav";
 import AppShell from "@/components/layout/AppShell";
+import GradientPageHeader from "@/components/layout/GradientPageHeader";
 import { PageLayout } from "@/components/layout/PageLayout";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { StatusBadge } from "@/features/clients/components/StatusBadge";
 import { getSessionProfile } from "@/services/auth/session";
-import { getClientById } from "@/services/repositories/clients";
-import { ClientStatus } from "@/types/client";
+import { getClientById, listClientsByOrg } from "@/services/repositories/clients";
+import { CLIENT_STATUS_LABELS } from "@/types/enums";
 import {
   ArrowLeft,
-  Briefcase,
-  Calendar,
-  Image as ImageIcon,
-  Info,
-  Lightbulb,
-  ListTodo,
-  Trash2,
-  UserPlus,
+  ChevronLeft,
+  ChevronRight,
+  Info
 } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -47,67 +44,101 @@ export default async function ClientLayout({
     notFound();
   }
 
-  const navItems = [
-    { href: `/clients/${id}/info`, label: "Informações", icon: Info },
-    { href: `/clients/${id}/tasks`, label: "Tarefas", icon: ListTodo },
-    { href: `/clients/${id}/media`, label: "Mídias", icon: ImageIcon },
-    { href: `/clients/${id}/strategy`, label: "Estratégia", icon: Lightbulb },
-    { href: `/clients/${id}/branding`, label: "Branding", icon: Briefcase },
-    { href: `/clients/${id}/meetings`, label: "Reuniões", icon: Calendar },
-    { href: `/clients/${id}/invite`, label: "Convidar", icon: UserPlus },
+  // Definir navegação baseada no role
+  const allNavItems = [
+    { href: `/clients/${id}/info`, label: "Informações", icon: "info", roles: ["OWNER", "STAFF", "CLIENT"] },
+    { href: `/clients/${id}/tasks`, label: "Tarefas", icon: "listTodo", roles: ["OWNER", "STAFF"] },
+    { href: `/clients/${id}/media`, label: "Mídias", icon: "image", roles: ["OWNER", "STAFF", "CLIENT"] },
+    { href: `/clients/${id}/strategy`, label: "Estratégia", icon: "lightbulb", roles: ["OWNER", "STAFF"] },
+    { href: `/clients/${id}/branding`, label: "Branding", icon: "briefcase", roles: ["OWNER", "STAFF"] },
+    { href: `/clients/${id}/meetings`, label: "Reuniões", icon: "calendar", roles: ["OWNER", "STAFF", "CLIENT"] },
+    { href: `/clients/${id}/billing`, label: "Cobrança", icon: "briefcase", roles: ["OWNER"] },
+    { href: `/clients/${id}/invite`, label: "Convidar", icon: "userPlus", roles: ["OWNER"] },
     {
       href: `/clients/${id}/delete`,
       label: "Excluir",
-      icon: Trash2,
+      icon: "trash2",
       destructive: true,
+      roles: ["OWNER"],
     },
   ];
+
+  // Filtrar itens baseado no role
+  const navItems = allNavItems.filter(item =>
+    item.roles.includes(role || "")
+  );
+
+  // Buscar todos os clientes para navegação prev/next
+  const allClients = await listClientsByOrg(orgId);
+  const currentIndex = allClients.findIndex((c) => c.id === id);
+  const prevClient = currentIndex > 0 ? allClients[currentIndex - 1] : null;
+  const nextClient = currentIndex < allClients.length - 1 ? allClients[currentIndex + 1] : null;
+
+  // Gerar avatar inicial
+  // Avatar initials (kept for potential future usage)
 
   return (
     <AppShell>
       <PageLayout centered={false} maxWidth="7xl">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
-          <Link href="/clients">
-            <Button variant="outline" size="sm" className="gap-2 rounded-full">
-              <ArrowLeft className="h-4 w-4" />
-              Voltar
-            </Button>
-          </Link>
-          <div className="flex-1">
-            <h1 className="text-3xl font-semibold text-slate-900 dark:text-white">
-              {client.name}
-            </h1>
-            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-              Gerencie todas as informações do cliente
-            </p>
+        {/* Header aligned with design system */}
+        <div className="mb-6">
+          <div className="mb-3">
+            <Link href="/clients">
+              <Button variant="outline" size="sm" className="gap-2 rounded-lg">
+                <ArrowLeft className="h-4 w-4" />
+                Voltar
+              </Button>
+            </Link>
           </div>
-          <StatusBadge status={client.status as ClientStatus} />
+          <GradientPageHeader
+            icon={Info}
+            title={client.name}
+            subtitle={`Cliente desde ${new Date(client.created_at).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`}
+            gradient="primary"
+            actions={(
+              <div className="flex items-center gap-2">
+                <Badge variant={client.status === 'active' ? 'success' : client.status === 'new' ? 'info' : client.status === 'onboarding' ? 'warning' : client.status === 'paused' ? 'warning' : 'danger'}>
+                  {CLIENT_STATUS_LABELS[client.status as keyof typeof CLIENT_STATUS_LABELS]}
+                </Badge>
+                {client.plan && (
+                  <Badge variant="secondary" className="font-semibold">{client.plan}</Badge>
+                )}
+                <div className="hidden sm:flex items-center gap-1 ml-2">
+                  {prevClient ? (
+                    <Link href={`/clients/${prevClient.id}/info`}>
+                      <Button variant="ghost" size="sm" className="gap-1 rounded-lg" title={`Anterior: ${prevClient.name}`}>
+                        <ChevronLeft className="h-4 w-4" />
+                        <span className="hidden lg:inline">Anterior</span>
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Button variant="ghost" size="sm" disabled className="gap-1 rounded-lg">
+                      <ChevronLeft className="h-4 w-4" />
+                      <span className="hidden lg:inline">Anterior</span>
+                    </Button>
+                  )}
+                  {nextClient ? (
+                    <Link href={`/clients/${nextClient.id}/info`}>
+                      <Button variant="ghost" size="sm" className="gap-1 rounded-lg" title={`Próximo: ${nextClient.name}`}>
+                        <span className="hidden lg:inline">Próximo</span>
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Button variant="ghost" size="sm" disabled className="gap-1 rounded-lg">
+                      <span className="hidden lg:inline">Próximo</span>
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
+          />
         </div>
 
         {/* Navigation Tabs */}
-        <Card className="p-2 mb-6">
-          <nav className="flex flex-wrap gap-1">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link key={item.href} href={item.href}>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={`gap-2 rounded-full ${
-                      item.destructive
-                        ? "text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20"
-                        : "hover:bg-slate-100 dark:hover:bg-slate-800"
-                    }`}
-                  >
-                    <Icon className="h-4 w-4" />
-                    {item.label}
-                  </Button>
-                </Link>
-              );
-            })}
-          </nav>
+        <Card className="p-2 mb-6 border-2 shadow-lg">
+          <TabsNav items={navItems} />
         </Card>
 
         {/* Page Content */}

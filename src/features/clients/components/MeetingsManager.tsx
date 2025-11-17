@@ -18,14 +18,17 @@ import {
   CheckCircle2,
   Clock,
   Edit,
+  Loader2,
   MapPin,
   Plus,
   Trash2,
   Video,
   X,
-  XCircle,
+  XCircle
 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
+import useSWR from "swr";
 
 interface Meeting {
   id: string;
@@ -41,16 +44,46 @@ interface Meeting {
 
 interface MeetingsManagerProps {
   clientId: string;
-  initialMeetings?: Meeting[];
 }
 
-export function MeetingsManager({
-  clientId,
-  initialMeetings = [],
-}: MeetingsManagerProps) {
-  // `clientId` currently unused in this component but kept for API compatibility
-  void clientId;
-  const [meetings, setMeetings] = useState<Meeting[]>(initialMeetings);
+interface MeetingResponse {
+  id: string;
+  title: string;
+  description?: string | null;
+  startTime: string;
+  endTime: string;
+  location?: string | null;
+  status: "scheduled" | "completed" | "cancelled";
+  notes?: string | null;
+  createdAt: string;
+  clientId: string;
+}
+
+const fetcher = async (url: string) => {
+  const res = await fetch(url);
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.error || "Erro ao carregar reuniões");
+  }
+  const data: MeetingResponse[] = await res.json();
+  // Convert date strings to Date objects
+  return data.map((item) => ({
+    ...item,
+    description: item.description || undefined,
+    location: item.location || undefined,
+    notes: item.notes || undefined,
+    startTime: new Date(item.startTime),
+    endTime: new Date(item.endTime),
+    createdAt: new Date(item.createdAt),
+  }));
+};
+
+export function MeetingsManager({ clientId }: MeetingsManagerProps) {
+  const {
+    data: meetings = [],
+    mutate,
+    isLoading,
+  } = useSWR<Meeting[]>(`/api/clients/${clientId}/meetings`, fetcher);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Meeting | null>(null);
 
@@ -83,7 +116,7 @@ export function MeetingsManager({
     e.preventDefault();
 
     if (!formData.startDate || !formData.startTime || !formData.endTime) {
-      alert("Por favor, preencha data e horários");
+      toast.error("Por favor, preencha data e horários");
       return;
     }
 
@@ -98,44 +131,95 @@ export function MeetingsManager({
     endTime.setHours(endHour, endMinute, 0, 0);
 
     if (endTime <= startTime) {
-      alert("O horário de término deve ser posterior ao de início");
+      toast.error("O horário de término deve ser posterior ao de início");
       return;
     }
 
-    if (editingItem) {
-      setMeetings((prev) =>
-        prev.map((item) =>
-          item.id === editingItem.id
-            ? {
-              ...item,
-              title: formData.title,
-              description: formData.description,
-              startTime,
-              endTime,
-              location: formData.location,
-              status: formData.status,
-              notes: formData.notes,
-            }
-            : item,
-        ),
-      );
-    } else {
-      const newItem: Meeting = {
-        id: Date.now().toString(),
-        title: formData.title,
-        description: formData.description,
-        startTime,
-        endTime,
-        location: formData.location,
-        status: formData.status,
-        notes: formData.notes,
-        createdAt: new Date(),
-      };
-      setMeetings((prev) => [newItem, ...prev]);
-    }
+    try {
+      if (editingItem) {
+        // Update existing meeting
+        const res = await fetch(`/api/clients/${clientId}/meetings`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: editingItem.id,
+            title: formData.title,
+            description: formData.description || null,
+            startTime: startTime.toISOString(),
+            endTime: endTime.toISOString(),
+            location: formData.location || null,
+            status: formData.status,
+            notes: formData.notes || null,
+          }),
+        });
 
-    setIsModalOpen(false);
-    resetForm();
+        if (!res.ok) {
+          const error = await res.json();
+          throw new Error(error.error || "Erro ao atualizar reunião");
+        }
+
+        const updated = await res.json();
+        // Optimistic update
+        mutate(
+          meetings.map((m) =>
+            m.id === editingItem.id
+              ? {
+                ...updated,
+                startTime: new Date(updated.startTime),
+                endTime: new Date(updated.endTime),
+                createdAt: new Date(updated.createdAt),
+              }
+              : m
+          ),
+          false
+        );
+        toast.success("Reunião atualizada com sucesso!");
+      } else {
+        // Create new meeting
+        const res = await fetch(`/api/clients/${clientId}/meetings`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: formData.title,
+            description: formData.description || null,
+            startTime: startTime.toISOString(),
+            endTime: endTime.toISOString(),
+            location: formData.location || null,
+            status: formData.status,
+            notes: formData.notes || null,
+          }),
+        });
+
+        if (!res.ok) {
+          const error = await res.json();
+          throw new Error(error.error || "Erro ao criar reunião");
+        }
+
+        const created = await res.json();
+        // Optimistic update
+        mutate(
+          [
+            {
+              ...created,
+              startTime: new Date(created.startTime),
+              endTime: new Date(created.endTime),
+              createdAt: new Date(created.createdAt),
+            },
+            ...meetings,
+          ],
+          false
+        );
+        toast.success("Reunião agendada com sucesso!");
+      }
+
+      setIsModalOpen(false);
+      resetForm();
+    } catch (error) {
+      console.error("Error saving meeting:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Erro ao salvar reunião"
+      );
+    }
   };
 
   const handleEdit = (item: Meeting) => {
@@ -153,9 +237,31 @@ export function MeetingsManager({
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm("Tem certeza que deseja deletar esta reunião?")) {
-      setMeetings((prev) => prev.filter((item) => item.id !== id));
+  const handleDelete = async (id: string) => {
+    if (!confirm("Tem certeza que deseja deletar esta reunião?")) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/clients/${clientId}/meetings`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Erro ao deletar reunião");
+      }
+
+      // Optimistic update
+      mutate(meetings.filter((m) => m.id !== id), false);
+      toast.success("Reunião deletada com sucesso!");
+    } catch (error) {
+      console.error("Error deleting meeting:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Erro ao deletar reunião"
+      );
     }
   };
 
@@ -362,7 +468,11 @@ export function MeetingsManager({
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {sortedMeetings.length === 0 ? (
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                  </div>
+                ) : sortedMeetings.length === 0 ? (
                   <div className="text-center py-12 text-slate-500">
                     <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <p className="font-medium">Nenhuma reunião agendada</p>

@@ -3,9 +3,11 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { AlertTriangle, Trash2 } from "lucide-react";
+import { useUser } from "@/context/UserContext";
+import { can } from "@/lib/permissions";
+import { AlertTriangle, ShieldX, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface ClientDeletePageProps {
   params: Promise<{ id: string }>;
@@ -15,6 +17,18 @@ export default function ClientDeletePage({ params }: ClientDeletePageProps) {
   const router = useRouter();
   const [confirmation, setConfirmation] = useState("");
   const [loading, setLoading] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const { user } = useUser();
+
+  useEffect(() => {
+    // Buscar role do usuário
+    fetch("/api/session").then(async (res) => {
+      if (res.ok) {
+        const data = await res.json();
+        setUserRole(data.role);
+      }
+    });
+  }, []);
 
   // Precisa ser async para unwrap params
   const handleDelete = async () => {
@@ -39,6 +53,45 @@ export default function ClientDeletePage({ params }: ClientDeletePageProps) {
       setLoading(false);
     }
   };
+
+  // Verificar permissão
+  const canDelete = userRole ? can(userRole as "OWNER" | "STAFF" | "CLIENT", "delete", "client") : false;
+
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <p className="text-slate-600">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!canDelete) {
+    return (
+      <div className="max-w-2xl">
+        <Card className="border-red-200 bg-red-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-red-700">
+              <ShieldX className="h-5 w-5" />
+              Acesso Negado
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-slate-700 mb-4">
+              Você não tem permissão para excluir clientes. Apenas proprietários (OWNER) podem realizar esta ação.
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => router.back()}
+            >
+              Voltar
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-2xl">
