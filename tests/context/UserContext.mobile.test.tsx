@@ -1,24 +1,27 @@
-import { UserProvider, useUser } from '@/context/UserContext'
 import { act, render, waitFor } from '@testing-library/react'
 import { useRouter } from 'next/navigation'
+import { UserProvider, useUser } from '../../src/context/UserContext'
 
-jest.mock('next/navigation', () => ({
-  useRouter: jest.fn(() => ({
-    push: jest.fn(),
-    refresh: jest.fn(),
-    replace: jest.fn(),
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+vi.mock('next/navigation', () => ({
+  useRouter: vi.fn(() => ({
+    push: vi.fn(),
+    refresh: vi.fn(),
+    replace: vi.fn(),
   })),
 }))
 
-const mockGetRedirectResult = jest.fn()
-const mockSignOut = jest.fn()
-const mockUser = { uid: '123', getIdToken: jest.fn(() => Promise.resolve('token')) }
 
-jest.mock('@/lib/firebase', () => ({
+const mockGetRedirectResult = vi.fn()
+const mockSignOut = vi.fn()
+const mockUser = { uid: '123', getIdToken: vi.fn(() => Promise.resolve('token')) }
+
+vi.mock('@/lib/firebase', () => ({
   auth: {},
   provider: {},
 }))
-jest.mock('firebase/auth', () => ({
+vi.mock('firebase/auth', () => ({
   getRedirectResult: () => mockGetRedirectResult(),
   signOut: () => mockSignOut(),
   onAuthStateChanged: (_auth: unknown, cb: (user: unknown) => void) => {
@@ -29,7 +32,7 @@ jest.mock('firebase/auth', () => ({
 
 describe('Mobile login redirect flow', () => {
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
     localStorage.clear()
     sessionStorage.clear()
   })
@@ -40,10 +43,10 @@ describe('Mobile login redirect flow', () => {
     localStorage.setItem('pendingAuthRedirect', 'true')
 
     let redirectedPath = ''
-      ; (useRouter as jest.Mock).mockReturnValue({
+      ; (useRouter as unknown as { mockReturnValue: (value: { push: (path: string) => void; refresh: () => void; replace: () => void }) => void }).mockReturnValue({
         push: (path: string) => { redirectedPath = path },
-        refresh: jest.fn(),
-        replace: jest.fn(),
+        refresh: vi.fn(),
+        replace: vi.fn(),
       })
 
     function TestComponent() {

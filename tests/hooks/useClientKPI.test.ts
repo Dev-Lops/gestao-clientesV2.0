@@ -1,3 +1,5 @@
+import { render } from '@testing-library/react'
+import { act } from 'react'
 import { renderHook } from '@testing-library/react-hooks'
 import { describe, expect, it } from 'vitest'
 import { useClientKPI } from '../../src/hooks/useClientKPI'
@@ -13,8 +15,14 @@ const dashMock = {
 
 describe('useClientKPI', () => {
   it('retorna KPIs corretos', () => {
-    const { result } = renderHook(() => useClientKPI(dashMock))
-    const kpi = result.current
+    let kpi: ReturnType<typeof useClientKPI> = {} as any
+    function TestComponent() {
+      kpi = useClientKPI(dashMock)
+      return null
+    }
+    act(() => {
+      render(<TestComponent />)
+    })
     expect(kpi.activeTasks).toBe(3)
     expect(kpi.completedTasks).toBe(7)
     expect(kpi.media).toBe(5)
@@ -28,8 +36,14 @@ describe('useClientKPI', () => {
       ...dashMock,
       counts: { ...dashMock.counts, strategies: 0 },
     }
-    const { result } = renderHook(() => useClientKPI(dashZero))
-    const kpi = result.current
+    let kpi: ReturnType<typeof useClientKPI> = {} as any
+    function TestComponent() {
+      kpi = useClientKPI(dashZero)
+      return null
+    }
+    act(() => {
+      render(<TestComponent />)
+    })
     expect(kpi.strategiesDescription).toBe('Nenhuma estratégia cadastrada')
   })
 })
