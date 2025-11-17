@@ -113,13 +113,21 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
     let isCheckingRedirect = false;
 
-    // Check for redirect result when component mounts (for mobile login)
+
+    // Adiciona timeout visual e logs para diagnóstico
+    let loginTimeout: NodeJS.Timeout | null = null;
     const checkRedirectResult = async () => {
       if (!auth || isCheckingRedirect) return;
       isCheckingRedirect = true;
       const wasPendingRedirect = localStorage.getItem("pendingAuthRedirect") === "true";
+      if (DEBUG_AUTH) logger.debug('[UserContext] Iniciando checkRedirectResult', { wasPendingRedirect });
+      loginTimeout = setTimeout(() => {
+        if (DEBUG_AUTH) logger.error('[UserContext] Timeout no login após redirect');
+        setLoading(false);
+      }, 10000); // 10 segundos
       try {
         const result = await getRedirectResult(auth);
+        if (DEBUG_AUTH) logger.debug('[UserContext] getRedirectResult', { result });
         if (result?.user) {
           localStorage.removeItem("pendingAuthRedirect");
           const inviteToken = sessionStorage.getItem("pendingInviteToken");
@@ -132,11 +140,15 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           }
           setLoading(false);
         }
-      } catch {
+      } catch (err) {
+        if (DEBUG_AUTH) logger.error('[UserContext] Erro em getRedirectResult', err);
         localStorage.removeItem("pendingAuthRedirect");
         sessionStorage.removeItem("pendingInviteToken");
         setLoading(false);
-      } finally { isCheckingRedirect = false; }
+      } finally {
+        if (loginTimeout) clearTimeout(loginTimeout);
+        isCheckingRedirect = false;
+      }
     };
 
     checkRedirectResult();
