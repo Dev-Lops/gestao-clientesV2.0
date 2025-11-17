@@ -55,7 +55,7 @@ export function DashboardClient({ initialData, initialMonthKey }: DashboardClien
   const metrics = data.metrics
 
   return (
-    <motion.div className="space-y-10 p-6 sm:p-10 lg:p-16 bg-linear-to-br from-slate-50 to-slate-200 dark:from-slate-900 dark:to-slate-800 min-h-screen" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+    <motion.div className="space-y-8 p-3 sm:p-6 md:p-10 lg:p-16 bg-linear-to-br from-slate-50 to-slate-200 dark:from-slate-900 dark:to-slate-800 min-h-screen" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
       <GradientPageHeader
         icon={TrendingUp}
         title="Painel de Gestão"
@@ -70,7 +70,7 @@ export function DashboardClient({ initialData, initialMonthKey }: DashboardClien
         )}
       />
 
-      <section className="grid gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-4 items-stretch">
+      <section className="grid gap-4 sm:gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-stretch">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.4 }}>
           <KPICard
             icon={Users}
@@ -78,7 +78,7 @@ export function DashboardClient({ initialData, initialMonthKey }: DashboardClien
             value={clients.length}
             description="Base de clientes"
             variant="info"
-            className="rounded-2xl shadow-lg bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 p-10 min-h-[200px]"
+            className="rounded-2xl shadow-lg bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 p-4 sm:p-8 md:p-10 min-h-[120px] sm:min-h-[180px] md:min-h-[200px] w-full"
             labelClassName="text-xl font-extrabold mb-2 text-slate-800 dark:text-slate-100"
             valueClassName="text-3xl font-extrabold mb-1 text-primary"
           />
@@ -123,10 +123,10 @@ export function DashboardClient({ initialData, initialMonthKey }: DashboardClien
 
 
 
-      <div className="grid gap-10 lg:grid-cols-[3fr_2fr]">
+      <div className="grid gap-6 sm:gap-10 grid-cols-1 lg:grid-cols-[3fr_2fr]">
         <div className="space-y-10">
           {data.activities && (
-            <Card className="overflow-hidden border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-lg bg-white dark:bg-slate-900">
+            <Card className="overflow-x-auto border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-lg bg-white dark:bg-slate-900 w-full">
               <div className="p-6">
                 <MonthlyCalendar key={monthKey} activities={data.activities} initialMonth={(() => { const [y, m] = monthKey.split('-').map(Number); return new Date(y, (m || 1) - 1, 1) })()} onMonthChange={(d) => { const mm = String(d.getMonth() + 1).padStart(2, '0'); const value = `${d.getFullYear()}-${mm}`; setMonthKey(value); try { const url = new URL(window.location.href); url.searchParams.set('month', value); window.history.replaceState(null, '', url.toString()); } catch { } }} />
                 {loadingMonth && <p className="text-xs mt-2 text-muted-foreground">Atualizando mês...</p>}
@@ -135,7 +135,7 @@ export function DashboardClient({ initialData, initialMonthKey }: DashboardClien
           )}
 
           {metrics && (
-            <Card className="overflow-hidden border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-lg bg-white dark:bg-slate-900">
+            <Card className="overflow-x-auto border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-lg bg-white dark:bg-slate-900 w-full">
               <div className="p-6 space-y-6">
                 {metrics.mostPendingClient && (
                   <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900">
@@ -167,7 +167,7 @@ export function DashboardClient({ initialData, initialMonthKey }: DashboardClien
         </div>
         <div className="space-y-10">
           {/* {(role ? can(role, 'update', 'finance') : false) && data.clientsHealth && data.clientsHealth.length > 0 && (
-            <Card className="overflow-hidden border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-lg bg-white dark:bg-slate-900">
+            <Card className="overflow-x-auto border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-lg bg-white dark:bg-slate-900 w-full">
               <div className="p-6">
                 <div className="inline-flex rounded-lg border border-slate-200 dark:border-slate-700 p-1 bg-white dark:bg-slate-800 mb-4">
                   <button className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${showOnlyIssues ? 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'}`} onClick={() => setShowOnlyIssues(true)}>Problemas</button>
@@ -203,7 +203,7 @@ export function DashboardClient({ initialData, initialMonthKey }: DashboardClien
             </Card>
           )}
           {priorities.length > 0 && (
-            <Card className="overflow-hidden border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-lg bg-white dark:bg-slate-900" aria-label="Tarefas Prioritárias" role="region">
+            <Card className="overflow-x-auto border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-lg bg-white dark:bg-slate-900 w-full" aria-label="Tarefas Prioritárias" role="region">
               <div className="p-6">
                 <h3 className="text-lg font-bold text-amber-700 dark:text-amber-300 mb-4" id="priorities-title">Tarefas Prioritárias</h3>
                 <div className="grid gap-4 sm:grid-cols-2" aria-labelledby="priorities-title">

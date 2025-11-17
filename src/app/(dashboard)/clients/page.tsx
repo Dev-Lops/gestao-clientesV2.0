@@ -126,33 +126,25 @@ export default async function ClientsPage({ searchParams }: PageProps) {
 
   return (
     <AppShell>
-      <div className="space-y-6 p-4 sm:p-6 lg:p-8">
+      <div className="space-y-4 sm:space-y-6 p-2 sm:p-4 lg:p-8 w-full">
         <GradientPageHeader
           icon={Users}
           title="Meus Clientes"
           subtitle="Visualize e gerencie todos os clientes da sua organização com informações atualizadas."
           gradient="primary"
           actions={
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <Button
-                size="lg"
-                className="rounded-lg bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 shadow-lg shadow-blue-500/30 gap-2"
+                size="sm"
+                className="rounded-lg bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 sm:px-6 shadow-lg shadow-blue-500/30 gap-2 w-full sm:w-auto"
                 asChild
               >
                 <Link href="/clients/new">
                   <Plus className="w-5 h-5" />
-                  Novo Cliente
+                  <span className="hidden sm:inline">Novo Cliente</span>
+                  <span className="sm:hidden">Novo</span>
                 </Link>
               </Button>
-              {/* <Button
-                size="lg"
-                variant="outline"
-                className="rounded-lg px-6 gap-2 border-blue-300"
-                onClick={() => setFilterModalOpen(true)}
-              >
-                <Grid3x3 className="w-5 h-5" />
-                Filtros
-              </Button> */}
             </div>
           }
         />
@@ -163,7 +155,7 @@ export default async function ClientsPage({ searchParams }: PageProps) {
         /> */}
 
         {!clients.length ? (
-          <Card className="p-12 text-center border border-dashed text-slate-500 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm space-y-4">
+          <Card className="p-4 sm:p-8 text-center border border-dashed text-slate-500 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm space-y-2 sm:space-y-4">
             <div className="inline-flex w-16 h-16 rounded-2xl bg-linear-to-tr from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-600 items-center justify-center text-3xl mb-2">
               👥
             </div>
@@ -194,8 +186,8 @@ export default async function ClientsPage({ searchParams }: PageProps) {
         ) : view === "list" ? (
           /* List View */
           <Card className="overflow-hidden border-2 shadow-lg hover:shadow-xl transition-shadow">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+            <div className="overflow-x-auto w-full">
+              <table className="w-full text-xs sm:text-sm">
                 <thead className="bg-muted/50">
                   <tr className="border-b">
                     <th className="text-left p-4 font-semibold">Cliente</th>
@@ -254,7 +246,7 @@ export default async function ClientsPage({ searchParams }: PageProps) {
           </Card>
         ) : (
           /* Grid View */
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 mt-4">
+          <div className="grid gap-2 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mt-2 sm:mt-4">
             {clients.map((client) => (
               <Link key={client.id} href={`/clients/${client.id}/info`}>
                 <Card className="group relative overflow-hidden rounded-2xl border-2 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm p-6 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">

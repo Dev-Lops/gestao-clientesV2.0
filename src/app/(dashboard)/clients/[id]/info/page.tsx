@@ -134,18 +134,18 @@ export default async function ClientInfoPage({ params }: ClientInfoPageProps) {
 
   return (
     <ProtectedRoute>
-      <div className="bg-background transition-colors">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <div className="bg-background transition-colors w-full min-h-screen">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-8 space-y-8">
           {/* Grid Principal: Info + Métricas */}
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
             {/* Coluna Esquerda: Métricas, Info, Ações, Cobrança */}
-            <div className="xl:col-span-2 space-y-6">
+            <div className="xl:col-span-2 space-y-4 sm:space-y-6">
               {/* Grid: Métricas Rápidas (adjusted sizes and responsive cols) */}
               {dash ? (
                 (() => {
                   const kpi = getKPIData(dash);
                   return (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
                       <KPICard
                         className="min-h-14 flex items-center"
                         icon={FolderKanban}
@@ -199,7 +199,7 @@ export default async function ClientInfoPage({ params }: ClientInfoPageProps) {
                   );
                 })()
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4">
                   <KPICard className="min-h-5 flex items-center" icon={FolderKanban} label="Tarefas ativas" value={taskStats.total - taskStats.completed} description={`${taskStats.completed} concluídas`} variant="info" aria-label="Tarefas ativas" />
                   <KPICard className="min-h-5 flex items-center" icon={ImageIcon} label="Mídias" value={mediaStats.total} description="Arquivos de mídia" variant="neutral" aria-label="Mídias" />
                 </div>
@@ -316,7 +316,7 @@ export default async function ClientInfoPage({ params }: ClientInfoPageProps) {
               {/* Ações Rápidas (respeitando permissões) */}
               {(canCreateTask || canCreateMedia || canCreateMeeting) && (
                 <SectionCard title="Ações Rápidas" icon={FolderKanban} headerGradient="default">
-                  <div className="flex flex-wrap gap-3">
+                  <div className="flex flex-wrap gap-2 sm:gap-3">
                     {canCreateTask && (
                       <a
                         href={`/clients/${client.id}/tasks`}
@@ -358,9 +358,9 @@ export default async function ClientInfoPage({ params }: ClientInfoPageProps) {
               )}
 
               <SectionCard title="Desempenho de Tarefas" icon={FolderKanban}>
-                <div className="pt-2 space-y-5">
+                <div className="pt-2 space-y-3 sm:space-y-5">
                   {taskStats.total === 0 ? (
-                    <div className="p-4 rounded-lg bg-muted/40 border border-border/50 text-sm text-muted-foreground">
+                    <div className="p-2 sm:p-4 rounded-lg bg-muted/40 border border-border/50 text-sm text-muted-foreground">
                       Nenhuma tarefa cadastrada.
                       {canCreateTask && (
                         <>
@@ -374,8 +374,8 @@ export default async function ClientInfoPage({ params }: ClientInfoPageProps) {
                     </div>
                   ) : (
                     <>
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
+                      <div className="w-full">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 gap-1 sm:gap-2">
                           <div className="flex items-center gap-2">
                             <div className="h-2 w-2 rounded-full bg-green-500"></div>
                             <span className="text-sm font-semibold text-muted-foreground">Concluídas</span>
@@ -385,8 +385,8 @@ export default async function ClientInfoPage({ params }: ClientInfoPageProps) {
                         <ProgressBar value={taskStats.completed} max={taskStats.total} color="green" />
                       </div>
 
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
+                      <div className="w-full">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 gap-1 sm:gap-2">
                           <div className="flex items-center gap-2">
                             <div className="h-2 w-2 rounded-full bg-blue-500"></div>
                             <span className="text-sm font-semibold text-muted-foreground">Em Progresso</span>
@@ -396,8 +396,8 @@ export default async function ClientInfoPage({ params }: ClientInfoPageProps) {
                         <ProgressBar value={taskStats.inProgress} max={taskStats.total} color="blue" />
                       </div>
 
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
+                      <div className="w-full">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 gap-1 sm:gap-2">
                           <div className="flex items-center gap-2">
                             <div className="h-2 w-2 rounded-full bg-amber-500"></div>
                             <span className="text-sm font-semibold text-muted-foreground">Pendentes</span>
@@ -407,8 +407,8 @@ export default async function ClientInfoPage({ params }: ClientInfoPageProps) {
                         <ProgressBar value={taskStats.pending} max={taskStats.total} color="amber" />
                       </div>
 
-                      <div className="pt-4 mt-4 border-t border-border/50">
-                        <div className="flex items-center justify-between">
+                      <div className="pt-2 sm:pt-4 mt-2 sm:mt-4 border-t border-border/50">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 sm:gap-2">
                           <span className="text-xs text-muted-foreground font-medium">Taxa de Conclusão</span>
                           <span className="text-lg font-bold bg-linear-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">{taskStats.completionRate}%</span>
                         </div>
@@ -419,7 +419,7 @@ export default async function ClientInfoPage({ params }: ClientInfoPageProps) {
               </SectionCard>
             </div>
             {/* Coluna Direita: Alertas, Tendências, Reuniões, Vencimento, Urgentes, Contato, Mídia, Tarefas, Histórico */}
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Alertas inteligentes */}
               {(() => {
                 const alerts: Array<{ label: string; href?: string; tone: "danger" | "warning" | "info" }> = [];
@@ -461,7 +461,7 @@ export default async function ClientInfoPage({ params }: ClientInfoPageProps) {
               {/* Tendências (últimos 30 dias) */}
               {dash?.trends && (
                 <SectionCard title="Tendências (30 dias)">
-                  <div className="grid grid-cols-3 gap-3 text-sm">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 text-sm">
                     <div className="p-3 rounded-lg border border-border/60">
                       <div className="text-xs text-muted-foreground">Tarefas novas</div>
                       <div className={`font-semibold ${dash.trends.tasksCreated30dPct > 0 ? "text-green-600" : dash.trends.tasksCreated30dPct < 0 ? "text-red-600" : "text-foreground"}`}>
@@ -553,7 +553,7 @@ export default async function ClientInfoPage({ params }: ClientInfoPageProps) {
               {/* Media Library Card */}
               <SectionCard title="Biblioteca de Mídia" icon={ImageIcon} iconGradient="from-purple-600 to-pink-600">
                 <div className="pt-2">
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
                     <div className="text-center p-4 rounded-lg bg-linear-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-900/40 border border-border/50 hover:shadow-md transition-shadow">
                       <ImageIcon className="h-5 w-5 text-purple-600 mx-auto mb-2" />
                       <div className="text-2xl font-bold text-purple-600">
@@ -591,7 +591,7 @@ export default async function ClientInfoPage({ params }: ClientInfoPageProps) {
               {/* Meeting Stats */}
               <SectionCard title="Histórico de Reuniões" icon={Users}>
                 <div className="pt-2">
-                  <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-2 sm:mb-4">
                     <div className="text-center p-4 rounded-xl bg-linear-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-900/40 border border-border/50 hover:shadow-md transition-shadow">
                       <Users className="h-5 w-5 text-blue-600 mx-auto mb-2" />
                       <div className="text-3xl font-bold text-blue-600">
@@ -611,7 +611,7 @@ export default async function ClientInfoPage({ params }: ClientInfoPageProps) {
                       </p>
                     </div>
                   </div>
-                  <div className="p-5 rounded-xl bg-linear-to-r from-indigo-50 via-purple-50 to-pink-50 dark:from-indigo-950/30 dark:via-purple-950/30 dark:to-pink-950/30 border border-border/50 text-center">
+                  <div className="p-3 sm:p-5 rounded-xl bg-linear-to-r from-indigo-50 via-purple-50 to-pink-50 dark:from-indigo-950/30 dark:via-purple-950/30 dark:to-pink-950/30 border border-border/50 text-center">
                     <div className="flex items-center justify-center gap-2 mb-2">
                       <Users className="h-5 w-5 text-purple-600" />
                       <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">

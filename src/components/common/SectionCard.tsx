@@ -30,21 +30,21 @@ export function SectionCard({
   className,
 }: SectionCardProps) {
   return (
-    <Card className={cn(" shadow-lg hover:shadow-xl transition-shadow ", className)}>
-      <CardHeader className={headerGradients[headerGradient]}>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-2xl ">
-          <CardTitle className="text-lg font-semibold flex items-center gap-2 rounded">
+    <Card className={cn("shadow-lg hover:shadow-xl transition-shadow w-full p-2 sm:p-4", className)}>
+      <CardHeader className={headerGradients[headerGradient] + " p-2 sm:p-4"}>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4 rounded-2xl w-full">
+          <CardTitle className="text-base sm:text-lg font-semibold flex items-center gap-2 rounded w-full">
             {Icon ? (
-              <span className={cn("h-8 w-8 rounded-lg bg-linear-to-br flex items-center justify-center", iconGradient)}>
-                <Icon className="h-4 w-4 text-white" />
+              <span className={cn("h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-linear-to-br flex items-center justify-center", iconGradient)}>
+                <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
               </span>
             ) : null}
-            {title}
+            <span className="truncate">{title}</span>
           </CardTitle>
-          {actions ? <div className="flex items-center gap-2">{actions}</div> : null}
+          {actions ? <div className="flex items-center gap-1 sm:gap-2 w-full sm:w-auto">{actions}</div> : null}
         </div>
       </CardHeader>
-      <CardContent className="mt-4">{children}</CardContent>
+      <CardContent className="mt-2 sm:mt-4 w-full">{children}</CardContent>
     </Card>
   );
 }

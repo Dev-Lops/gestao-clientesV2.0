@@ -23,7 +23,7 @@ export default async function ProfilePage() {
 
   return (
     <AppShell>
-      <PageLayout centered={false} maxWidth="2xl">
+      <PageLayout centered={false} maxWidth="2xl" className="p-2 sm:p-4 md:p-6 lg:p-8 w-full">
         <PageHeader
           title="Meu Perfil"
           description="Veja e edite suas informações pessoais."
@@ -31,22 +31,22 @@ export default async function ProfilePage() {
           iconColor="bg-blue-600"
         />
 
-        <Card className="p-8 md:p-10 shadow-lg rounded-xl">
-          <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8">
+        <Card className="p-4 sm:p-8 md:p-10 shadow-lg rounded-xl w-full">
+          <div className="flex flex-col md:flex-row items-center gap-4 sm:gap-6 md:gap-8 w-full">
             {/* Avatar com ícone */}
-            <div className="relative h-20 w-20 rounded-full bg-blue-600 flex items-center justify-center text-white text-3xl font-bold shadow-md" aria-label="Avatar do usuário">
+            <div className="relative h-16 w-16 sm:h-20 sm:w-20 rounded-full bg-blue-600 flex items-center justify-center text-white text-2xl sm:text-3xl font-bold shadow-md" aria-label="Avatar do usuário">
               {user.name ? user.name.slice(0, 2).toUpperCase() : user.email.slice(0, 2).toUpperCase()}
               <span className="absolute bottom-0 right-0 bg-white rounded-full p-1 shadow">
                 <UserIcon className="h-5 w-5 text-blue-600" aria-hidden="true" />
               </span>
             </div>
             {/* Informações do usuário */}
-            <div className="flex-1 w-full">
-              <div className="text-2xl font-semibold text-slate-900 dark:text-white mb-1">
+            <div className="flex-1 w-full min-w-0">
+              <div className="text-lg sm:text-2xl font-semibold text-slate-900 dark:text-white mb-1 truncate">
                 {user.name ?? "Sem nome"}
               </div>
-              <div className="text-base text-slate-500 dark:text-slate-400 mb-2">{user.email}</div>
-              <div className="flex items-center gap-2 mb-2">
+              <div className="text-sm sm:text-base text-slate-500 dark:text-slate-400 mb-2 truncate">{user.email}</div>
+              <div className="flex flex-wrap items-center gap-2 mb-2">
                 <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 font-medium" aria-label="Papel do usuário">
                   {role === "OWNER"
                     ? "Administrador"
@@ -57,7 +57,7 @@ export default async function ProfilePage() {
                         : "Usuário"}
                 </span>
               </div>
-              <div className="flex flex-wrap gap-3 mt-2">
+              <div className="flex flex-wrap gap-2 sm:gap-3 mt-2">
                 <Link
                   href="/settings"
                   className="text-sm text-blue-600 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-400 rounded"
@@ -90,12 +90,12 @@ export default async function ProfilePage() {
 
         {/* Card de informações da organização */}
         {org && (
-          <Card className="mt-8 p-8 md:p-10 shadow rounded-xl">
-            <div className="mb-4">
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white">Organização</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Informações da empresa vinculada à sua conta.</p>
+          <Card className="mt-4 sm:mt-8 p-4 sm:p-8 md:p-10 shadow rounded-xl w-full">
+            <div className="mb-2 sm:mb-4">
+              <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">Organização</h3>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">Informações da empresa vinculada à sua conta.</p>
             </div>
-            <div className="grid gap-2 md:grid-cols-2">
+            <div className="grid gap-2 sm:gap-3 grid-cols-1 md:grid-cols-2">
               <div>
                 <span className="font-medium">Nome:</span> {org.name || "-"}
               </div>

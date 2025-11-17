@@ -164,18 +164,18 @@ export function ClientInfoDisplay({ client, canEdit }: ClientInfoDisplayProps) {
 
   if (!isEditing) {
     return (
-      <div className="relative">
+      <div className="relative container mx-auto px-2 sm:px-4 py-4">
         <div className="absolute -inset-1 bg-linear-to-r from-blue-600 to-purple-600 rounded-3xl blur opacity-20" />
-        <Card className="relative bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-slate-200 dark:border-slate-700">
+        <Card className="relative bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-slate-200 dark:border-slate-700 w-full max-w-4xl mx-auto">
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Informações do Cliente</CardTitle>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between w-full">
+              <CardTitle className="text-lg sm:text-xl md:text-2xl">Informações do Cliente</CardTitle>
               {canEdit && (
                 <Button
                   onClick={() => setIsEditing(true)}
                   variant="outline"
                   size="sm"
-                  className="rounded-full gap-2 backdrop-blur-sm bg-white/80 dark:bg-slate-900/80 border-slate-200 dark:border-slate-700 hover:bg-blue-50 dark:hover:bg-blue-950/50"
+                  className="rounded-full gap-2 backdrop-blur-sm bg-white/80 dark:bg-slate-900/80 border-slate-200 dark:border-slate-700 hover:bg-blue-50 dark:hover:bg-blue-950/50 w-full sm:w-auto"
                 >
                   <Edit2 className="w-4 h-4" />
                   Editar
@@ -184,38 +184,22 @@ export function ClientInfoDisplay({ client, canEdit }: ClientInfoDisplayProps) {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                  Email
-                </p>
-                <p className="text-sm text-slate-900 dark:text-white">
-                  {client.email || "Não informado"}
-                </p>
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-4 w-full">
+              <div className="flex flex-col gap-1 w-full">
+                <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Email</p>
+                <p className="text-sm sm:text-base text-slate-900 dark:text-white wrap-break-word break-all">{client.email || "Não informado"}</p>
               </div>
-              <div>
-                <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                  Telefone
-                </p>
-                <p className="text-sm text-slate-900 dark:text-white">
-                  {client.phone || "Não informado"}
-                </p>
+              <div className="flex flex-col gap-1 w-full">
+                <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Telefone</p>
+                <p className="text-sm sm:text-base text-slate-900 dark:text-white wrap-break-word break-all">{client.phone || "Não informado"}</p>
               </div>
-              <div>
-                <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                  Plano
-                </p>
-                <p className="text-sm text-slate-900 dark:text-white">
-                  {client.plan || "Não definido"}
-                </p>
+              <div className="flex flex-col gap-1 w-full">
+                <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Plano</p>
+                <p className="text-sm sm:text-base text-slate-900 dark:text-white wrap-break-word break-all">{client.plan || "Não definido"}</p>
               </div>
-              <div>
-                <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                  Canal Principal
-                </p>
-                <p className="text-sm text-slate-900 dark:text-white">
-                  {client.main_channel || "Não definido"}
-                </p>
+              <div className="flex flex-col gap-1 w-full">
+                <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Canal Principal</p>
+                <p className="text-sm sm:text-base text-slate-900 dark:text-white wrap-break-word break-all">{client.main_channel || "Não definido"}</p>
               </div>
             </div>
           </CardContent>
@@ -225,79 +209,61 @@ export function ClientInfoDisplay({ client, canEdit }: ClientInfoDisplayProps) {
   }
 
   return (
-    <div className="relative">
+    <div className="relative container mx-auto px-2 sm:px-4 py-4">
       <div className="absolute -inset-1 bg-linear-to-r from-blue-600 to-purple-600 rounded-3xl blur opacity-20" />
-      <Card className="relative bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-slate-200 dark:border-slate-700">
+      <Card className="relative bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-slate-200 dark:border-slate-700 w-full max-w-4xl mx-auto">
         <CardHeader>
-          <CardTitle className="text-2xl">Editar Cliente</CardTitle>
+          <CardTitle className="text-2xl sm:text-3xl md:text-4xl">Editar Cliente</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6 w-full">
             {/* Basic Info */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold border-b border-slate-200 dark:border-slate-700 pb-2">
-                Informações Básicas
-              </h3>
+              <h3 className="text-lg sm:text-xl font-semibold border-b border-slate-200 dark:border-slate-700 pb-2">Informações Básicas</h3>
               <div className="space-y-2">
-                <Label htmlFor="name">
-                  Nome <span className="text-red-500">*</span>
-                </Label>
+                <Label htmlFor="name">Nome <span className="text-red-500">*</span></Label>
                 <Input
                   id="name"
                   required
                   value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   disabled={loading}
-                  className="border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-slate-800"
+                  className="border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-slate-800 w-full"
                 />
               </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 w-full">
+                <div className="space-y-2 w-full">
                   <Label htmlFor="email">Email</Label>
                   <Input
                     id="email"
                     type="email"
                     value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     disabled={loading}
-                    className="border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-slate-800"
+                    className="border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-slate-800 w-full"
                   />
                 </div>
-
-                <div className="space-y-2">
+                <div className="space-y-2 w-full">
                   <Label htmlFor="phone">Telefone</Label>
                   <Input
                     id="phone"
                     type="tel"
                     value={formData.phone}
-                    onChange={(e) =>
-                      setFormData({ ...formData, phone: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     disabled={loading}
-                    className="border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-slate-800"
+                    className="border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-slate-800 w-full"
                   />
                 </div>
               </div>
-
-              <div className="grid gap-4 sm:grid-cols-3">
-                <div className="space-y-2">
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-3 w-full">
+                <div className="space-y-2 w-full">
                   <Label htmlFor="status">Status</Label>
                   <Select
                     value={formData.status}
-                    onValueChange={(value) =>
-                      setFormData({
-                        ...formData,
-                        status: value as ClientStatus,
-                      })
-                    }
+                    onValueChange={(value) => setFormData({ ...formData, status: value as ClientStatus })}
                     disabled={loading}
                   >
-                    <SelectTrigger className="border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-slate-800">
+                    <SelectTrigger className="border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-slate-800 w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -309,20 +275,14 @@ export function ClientInfoDisplay({ client, canEdit }: ClientInfoDisplayProps) {
                     </SelectContent>
                   </Select>
                 </div>
-
-                <div className="space-y-2">
+                <div className="space-y-2 w-full">
                   <Label htmlFor="plan">Plano</Label>
                   <Select
                     value={formData.plan || "__NONE__"}
-                    onValueChange={(value) =>
-                      setFormData({
-                        ...formData,
-                        plan: value === "__NONE__" ? "" : value,
-                      })
-                    }
+                    onValueChange={(value) => setFormData({ ...formData, plan: value === "__NONE__" ? "" : value })}
                     disabled={loading}
                   >
-                    <SelectTrigger className="border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-slate-800">
+                    <SelectTrigger className="border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-slate-800 w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -336,20 +296,14 @@ export function ClientInfoDisplay({ client, canEdit }: ClientInfoDisplayProps) {
                     </SelectContent>
                   </Select>
                 </div>
-
-                <div className="space-y-2">
+                <div className="space-y-2 w-full">
                   <Label htmlFor="mainChannel">Canal Principal</Label>
                   <Select
                     value={formData.mainChannel || "__NONE__"}
-                    onValueChange={(value) =>
-                      setFormData({
-                        ...formData,
-                        mainChannel: value === "__NONE__" ? "" : value,
-                      })
-                    }
+                    onValueChange={(value) => setFormData({ ...formData, mainChannel: value === "__NONE__" ? "" : value })}
                     disabled={loading}
                   >
-                    <SelectTrigger className="border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-slate-800">
+                    <SelectTrigger className="border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-slate-800 w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -365,117 +319,81 @@ export function ClientInfoDisplay({ client, canEdit }: ClientInfoDisplayProps) {
                   </Select>
                 </div>
               </div>
-
               {/* Instagram Info */}
-              <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-700">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-semibold">Instagram</h4>
+              <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-700 w-full">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between w-full">
+                  <h4 className="text-sm sm:text-base font-semibold">Instagram</h4>
                   <Button
                     type="button"
                     onClick={handleConnectInstagram}
                     disabled={loading || connectingInstagram}
                     variant="outline"
                     size="sm"
-                    className="text-xs"
+                    className="text-xs w-full sm:w-auto"
                   >
-                    {connectingInstagram
-                      ? "Conectando..."
-                      : "Conectar Instagram"}
+                    {connectingInstagram ? "Conectando..." : "Conectar Instagram"}
                   </Button>
                 </div>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
+                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 w-full">
+                  <div className="space-y-2 w-full">
                     <Label htmlFor="instagramUserId">Instagram User ID</Label>
                     <Input
                       id="instagramUserId"
                       type="text"
                       value={formData.instagramUserId}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          instagramUserId: e.target.value,
-                        })
-                      }
+                      onChange={(e) => setFormData({ ...formData, instagramUserId: e.target.value })}
                       disabled={true}
                       placeholder="Automático após conectar"
-                      className="border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-500 bg-slate-50 dark:bg-slate-900"
+                      className="border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-500 bg-slate-50 dark:bg-slate-900 w-full"
                     />
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Preenchido automaticamente após conectar
-                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Preenchido automaticamente após conectar</p>
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="instagramUsername">
-                      Instagram Username
-                    </Label>
+                  <div className="space-y-2 w-full">
+                    <Label htmlFor="instagramUsername">Instagram Username</Label>
                     <Input
                       id="instagramUsername"
                       type="text"
                       value={formData.instagramUsername}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          instagramUsername: e.target.value,
-                        })
-                      }
+                      onChange={(e) => setFormData({ ...formData, instagramUsername: e.target.value })}
                       disabled={true}
                       placeholder="Automático após conectar"
-                      className="border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-500 bg-slate-50 dark:bg-slate-900"
+                      className="border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-500 bg-slate-50 dark:bg-slate-900 w-full"
                     />
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Preenchido automaticamente após conectar
-                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Preenchido automaticamente após conectar</p>
                   </div>
                 </div>
               </div>
             </div>
-
             {/* Contract Info */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold border-b border-slate-200 dark:border-slate-700 pb-2">
-                Informações de Contrato
-              </h3>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
+            <div className="space-y-4 w-full">
+              <h3 className="text-lg sm:text-xl font-semibold border-b border-slate-200 dark:border-slate-700 pb-2">Informações de Contrato</h3>
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 w-full">
+                <div className="space-y-2 w-full">
                   <Label htmlFor="contractStart">Início do Contrato</Label>
                   <Input
                     id="contractStart"
                     type="date"
                     value={formData.contractStart}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        contractStart: e.target.value,
-                      })
-                    }
+                    onChange={(e) => setFormData({ ...formData, contractStart: e.target.value })}
                     disabled={loading}
-                    className="border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-slate-800"
+                    className="border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-slate-800 w-full"
                   />
                 </div>
-
-                <div className="space-y-2">
+                <div className="space-y-2 w-full">
                   <Label htmlFor="contractEnd">Término do Contrato</Label>
                   <Input
                     id="contractEnd"
                     type="date"
                     value={formData.contractEnd}
-                    onChange={(e) =>
-                      setFormData({ ...formData, contractEnd: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, contractEnd: e.target.value })}
                     disabled={loading}
-                    className="border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-slate-800"
+                    className="border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-slate-800 w-full"
                   />
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Deixe vazio para indeterminado
-                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Deixe vazio para indeterminado</p>
                 </div>
               </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 w-full">
+                <div className="space-y-2 w-full">
                   <Label htmlFor="paymentDay">Dia de Pagamento</Label>
                   <Input
                     id="paymentDay"
@@ -483,19 +401,14 @@ export function ClientInfoDisplay({ client, canEdit }: ClientInfoDisplayProps) {
                     min="1"
                     max="31"
                     value={formData.paymentDay}
-                    onChange={(e) =>
-                      setFormData({ ...formData, paymentDay: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, paymentDay: e.target.value })}
                     placeholder="Ex: 5, 10, 15..."
                     disabled={loading}
-                    className="border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-slate-800"
+                    className="border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-slate-800 w-full"
                   />
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Dia do mês (1-31)
-                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Dia do mês (1-31)</p>
                 </div>
-
-                <div className="space-y-2">
+                <div className="space-y-2 w-full">
                   <Label htmlFor="contractValue">Valor Mensal (R$)</Label>
                   <Input
                     id="contractValue"
@@ -503,26 +416,20 @@ export function ClientInfoDisplay({ client, canEdit }: ClientInfoDisplayProps) {
                     min="0"
                     step="0.01"
                     value={formData.contractValue}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        contractValue: e.target.value,
-                      })
-                    }
+                    onChange={(e) => setFormData({ ...formData, contractValue: e.target.value })}
                     placeholder="Ex: 1500.00"
                     disabled={loading}
-                    className="border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-slate-800"
+                    className="border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-slate-800 w-full"
                   />
                 </div>
               </div>
             </div>
-
             {/* Actions */}
-            <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+            <div className="flex flex-col gap-2 sm:flex-row sm:gap-3 pt-4 border-t border-slate-200 dark:border-slate-700 w-full">
               <Button
                 type="submit"
                 disabled={loading}
-                className="rounded-full bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg shadow-blue-500/30 gap-2"
+                className="rounded-full bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg shadow-blue-500/30 gap-2 w-full sm:w-auto"
               >
                 {loading ? (
                   "Salvando..."
@@ -538,7 +445,7 @@ export function ClientInfoDisplay({ client, canEdit }: ClientInfoDisplayProps) {
                 variant="outline"
                 onClick={handleCancel}
                 disabled={loading}
-                className="rounded-full backdrop-blur-sm bg-white/80 dark:bg-slate-900/80 border-slate-200 dark:border-slate-700 gap-2"
+                className="rounded-full backdrop-blur-sm bg-white/80 dark:bg-slate-900/80 border-slate-200 dark:border-slate-700 gap-2 w-full sm:w-auto"
               >
                 <X className="w-4 h-4" />
                 Cancelar
