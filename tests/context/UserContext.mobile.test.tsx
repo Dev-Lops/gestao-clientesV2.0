@@ -20,6 +20,7 @@ const mockUser = { uid: '123', getIdToken: vi.fn(() => Promise.resolve('token'))
 vi.mock('@/lib/firebase', () => ({
   auth: {},
   provider: {},
+  firebaseApp: {},
 }))
 vi.mock('firebase/auth', () => ({
   getRedirectResult: () => mockGetRedirectResult(),

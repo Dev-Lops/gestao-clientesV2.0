@@ -1,6 +1,5 @@
 import { render } from '@testing-library/react'
 import { act } from 'react'
-import { renderHook } from '@testing-library/react-hooks'
 import { describe, expect, it } from 'vitest'
 import { useClientKPI } from '../../src/hooks/useClientKPI'
 
