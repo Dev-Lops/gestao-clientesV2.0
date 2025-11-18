@@ -17,30 +17,37 @@ import { Readable } from 'stream'
 const USE_S3 = process.env.USE_S3 === 'true'
 const LOCAL_UPLOAD_DIR = process.env.LOCAL_UPLOAD_DIR || './uploads'
 
+const S3_BUCKET = process.env.AWS_S3_BUCKET || ''
 let s3Client: S3Client | null = null
 if (USE_S3) {
-  const config: {
-    region: string
-    credentials: { accessKeyId: string; secretAccessKey: string }
-    endpoint?: string
-    forcePathStyle?: boolean
-  } = {
-    region: process.env.AWS_REGION || 'us-east-1',
-    credentials: {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
-    },
-  }
+  const accessKeyId = process.env.AWS_ACCESS_KEY_ID || ''
+  const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY || ''
+  const endpoint = process.env.AWS_ENDPOINT_URL
+  const regionEnv = process.env.AWS_REGION
+  const region = endpoint ? regionEnv || 'auto' : regionEnv || 'us-east-1'
 
-  // Suporte a Cloudflare R2, Backblaze B2, etc (endpoint customizado)
-  if (process.env.AWS_ENDPOINT_URL) {
-    config.endpoint = process.env.AWS_ENDPOINT_URL
-    config.forcePathStyle = true // Necessário para compatibilidade
+  const canUseS3 = !!(accessKeyId && secretAccessKey && S3_BUCKET)
+  if (!canUseS3) {
+    console.warn(
+      '[storage] USE_S3=true mas credenciais/bucket ausentes. Fallback para armazenamento local.'
+    )
+  } else {
+    const config: {
+      region: string
+      credentials: { accessKeyId: string; secretAccessKey: string }
+      endpoint?: string
+      forcePathStyle?: boolean
+    } = {
+      region,
+      credentials: { accessKeyId, secretAccessKey },
+    }
+    if (endpoint) {
+      config.endpoint = endpoint
+      config.forcePathStyle = true // Necessário para compatibilidade com R2
+    }
+    s3Client = new S3Client(config)
   }
-
-  s3Client = new S3Client(config)
 }
-const S3_BUCKET = process.env.AWS_S3_BUCKET || ''
 
 /**
  * Gera um nome de arquivo único e seguro
