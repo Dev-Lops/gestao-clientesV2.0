@@ -34,6 +34,14 @@ const nextConfig = {
         : []),
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: '/uploads/:path*',
+        destination: '/api/uploads/:path*',
+      },
+    ]
+  },
   // Suporte para uploads grandes (até 1.5GB)
   experimental: {
     serverActions: {
