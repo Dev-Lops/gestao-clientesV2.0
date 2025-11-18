@@ -1,16 +1,14 @@
 "use client";
-import { KPICard } from '@/components/common/KPICard';
-import { GradientPageHeader } from '@/components/layout/GradientPageHeader';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { KpiCard, KpiGrid } from '@/components/ui/kpi-card';
 import { MonthlyCalendar } from '@/features/dashboard/components/MonthlyCalendar';
 import { AppRole } from '@/lib/permissions';
 import { DashboardData } from '@/modules/dashboard/domain/schema';
 import { motion } from 'framer-motion';
-import { Activity, CheckCircle2, Clock, ListTodo, TrendingUp, Users } from 'lucide-react';
+import { Activity, ArrowUpRight, Calendar, CheckCircle2, Clock, ListTodo, TrendingUp, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-
 interface DashboardClientProps { initialData: DashboardData; initialMonthKey: string; role: AppRole | null }
 
 export function DashboardClient({ initialData, initialMonthKey }: DashboardClientProps) {
@@ -55,183 +53,317 @@ export function DashboardClient({ initialData, initialMonthKey }: DashboardClien
   const metrics = data.metrics
 
   return (
-    <motion.div className="space-y-8 p-3 sm:p-6 md:p-10 lg:p-16 bg-linear-to-br from-slate-50 to-slate-200 dark:from-slate-900 dark:to-slate-800 min-h-screen" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-      <GradientPageHeader
-        icon={TrendingUp}
-        title="Painel de Gestão"
-        subtitle={`Olá, ${data.user.name || 'Usuário'}! Aqui está um resumo do seu negócio`}
-        gradient="primary"
-        actions={(
-          <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3 }}>
-            <div className="px-6 py-3 rounded-2xl bg-white/40 backdrop-blur-md border border-white/40 shadow-md">
-              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+    <div className="page-background">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        {/* Header */}
+        <motion.div
+          className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <div>
+            <h1 className="text-3xl font-bold text-gradient-primary mb-2">
+              Painel de Gestão
+            </h1>
+            <p className="text-slate-600 dark:text-slate-400">
+              Olá, {data.user.name || 'Usuário'}! Aqui está um resumo do seu negócio
+            </p>
+          </div>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.3 }}
+          >
+            <div className="px-6 py-3 rounded-xl bg-linear-to-br from-white/80 to-white/60 dark:from-slate-800/80 dark:to-slate-900/60 backdrop-blur-md border-2 border-slate-200 dark:border-slate-700 shadow-lg">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                  {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                </p>
+              </div>
             </div>
           </motion.div>
-        )}
-      />
-
-      <section className="grid gap-4 sm:gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-stretch">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.4 }}>
-          <KPICard
-            icon={Users}
-            label="Total de Clientes"
-            value={clients.length}
-            description="Base de clientes"
-            variant="info"
-            className="rounded-2xl shadow-lg bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 p-4 sm:p-8 md:p-10 min-h-[120px] sm:min-h-[180px] md:min-h-[200px] w-full"
-            labelClassName="text-xl font-extrabold mb-2 text-slate-800 dark:text-slate-100"
-            valueClassName="text-3xl font-extrabold mb-1 text-primary"
-          />
         </motion.div>
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.4 }}>
-          <KPICard
-            icon={ListTodo}
-            label="Tarefas Pendentes"
-            value={pendingTasks.length}
-            description="Requerem atenção"
-            variant="warning"
-            className="rounded-2xl shadow-lg bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 p-10 min-h-[200px]"
-            labelClassName=" font-extrabold mb-2 text-amber-700 dark:text-amber-300"
-            valueClassName="text-3xl font-extrabold mb-1 text-amber-700 dark:text-amber-300"
-          />
-        </motion.div>
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.4 }}>
-          <KPICard
-            icon={Activity}
-            label="Em Progresso"
-            value={inProgressTasks.length}
-            description="Do total de tarefas"
-            variant="neutral"
-            className="rounded-2xl shadow-lg bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 p-10 min-h-[200px]"
-            labelClassName="text-xl font-extrabold mb-2 text-blue-700 dark:text-blue-300"
-            valueClassName="text-3xl font-extrabold mb-1 text-blue-700 dark:text-blue-300"
-          />
-        </motion.div>
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.4 }}>
-          <KPICard
-            icon={CheckCircle2}
-            label="Concluídas"
-            value={completedTasks.length}
-            description="Taxa de conclusão"
-            variant="success"
-            className="rounded-2xl shadow-lg bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 p-10 min-h-[200px]"
-            labelClassName="text-xl font-extrabold mb-2 text-emerald-700 dark:text-emerald-300"
-            valueClassName="text-3xl font-extrabold mb-1 text-emerald-700 dark:text-emerald-300"
-          />
-        </motion.div>
-      </section>
+
+        {/* KPIs */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <KpiGrid columns={4}>
+            <KpiCard
+              variant="blue"
+              icon={Users}
+              value={clients.length}
+              label="Total de Clientes"
+              description="Base de clientes"
+            />
+            <KpiCard
+              variant="amber"
+              icon={ListTodo}
+              value={pendingTasks.length}
+              label="Tarefas Pendentes"
+              description="Requerem atenção"
+            />
+            <KpiCard
+              variant="indigo"
+              icon={Activity}
+              value={inProgressTasks.length}
+              label="Em Progresso"
+              description="Do total de tarefas"
+            />
+            <KpiCard
+              variant="emerald"
+              icon={CheckCircle2}
+              value={completedTasks.length}
+              label="Concluídas"
+              description={`${tasks.length > 0 ? Math.round((completedTasks.length / tasks.length) * 100) : 0}% taxa de conclusão`}
+              progress={tasks.length > 0 ? Math.round((completedTasks.length / tasks.length) * 100) : 0}
+            />
+          </KpiGrid>
+        </motion.section>
 
 
 
-      <div className="grid gap-6 sm:gap-10 grid-cols-1 lg:grid-cols-[3fr_2fr]">
-        <div className="space-y-10">
-          {data.activities && (
-            <Card className="overflow-x-auto border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-lg bg-white dark:bg-slate-900 w-full">
-              <div className="p-6">
-                <MonthlyCalendar key={monthKey} activities={data.activities} initialMonth={(() => { const [y, m] = monthKey.split('-').map(Number); return new Date(y, (m || 1) - 1, 1) })()} onMonthChange={(d) => { const mm = String(d.getMonth() + 1).padStart(2, '0'); const value = `${d.getFullYear()}-${mm}`; setMonthKey(value); try { const url = new URL(window.location.href); url.searchParams.set('month', value); window.history.replaceState(null, '', url.toString()); } catch { } }} />
-                {loadingMonth && <p className="text-xs mt-2 text-muted-foreground">Atualizando mês...</p>}
-              </div>
-            </Card>
-          )}
 
-          {metrics && (
-            <Card className="overflow-x-auto border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-lg bg-white dark:bg-slate-900 w-full">
-              <div className="p-6 space-y-6">
-                {metrics.mostPendingClient && (
-                  <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900">
-                    <h4 className="text-xs font-bold mb-1">Mais Tarefas Pendentes</h4>
-                    <p className="text-base font-semibold">{metrics.mostPendingClient.name}</p>
-                    <p className="text-xs text-slate-600">{metrics.mostPendingClient.pending} tarefas</p>
-                  </div>
-                )}
-                {metrics.mostUrgentClient && (
-                  <div className="p-4 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900">
-                    <h4 className="text-xs font-bold mb-1">Mais Tarefas Urgentes</h4>
-                    <p className="text-base font-semibold">{metrics.mostUrgentClient.name}</p>
-                    <p className="text-xs text-slate-600">{metrics.mostUrgentClient.urgent} urgentes</p>
-                  </div>
-                )}
-                <div className="pt-4 border-t border-slate-200 dark:border-slate-700 grid grid-cols-2 gap-4">
-                  <div className="text-center p-4 rounded-xl bg-blue-50 dark:bg-blue-950/20">
-                    <p className="text-3xl font-extrabold text-blue-600 dark:text-blue-400">{metrics.totals.clients}</p>
-                    <p className="text-xs text-slate-600">Clientes</p>
-                  </div>
-                  <div className="text-center p-4 rounded-xl bg-purple-50 dark:bg-purple-950/20">
-                    <p className="text-3xl font-extrabold text-purple-600 dark:text-purple-400">{metrics.totals.tasks}</p>
-                    <p className="text-xs text-slate-600">Tarefas</p>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          )}
-        </div>
-        <div className="space-y-10">
-          {/* {(role ? can(role, 'update', 'finance') : false) && data.clientsHealth && data.clientsHealth.length > 0 && (
-            <Card className="overflow-x-auto border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-lg bg-white dark:bg-slate-900 w-full">
-              <div className="p-6">
-                <div className="inline-flex rounded-lg border border-slate-200 dark:border-slate-700 p-1 bg-white dark:bg-slate-800 mb-4">
-                  <button className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${showOnlyIssues ? 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'}`} onClick={() => setShowOnlyIssues(true)}>Problemas</button>
-                  <button className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${!showOnlyIssues ? 'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'}`} onClick={() => setShowOnlyIssues(false)}>Todos</button>
-                </div>
-                <ClientsWithBottlenecks clients={data.clientsHealth as ClientHealthMetrics[]} maxDisplay={3} showOnlyIssues={showOnlyIssues} canViewAmounts={true} />
-              </div>
-            </Card>
-          )} */}
-          {metrics && metrics.urgentTasks.length > 0 && (
-            <Card className="overflow-hidden border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-lg bg-white dark:bg-slate-900">
-              <div className="p-6 space-y-4">
-                <h3 className="text-lg font-bold text-red-600 dark:text-red-400 mb-2">Tarefas Mais Urgentes</h3>
-                {metrics.urgentTasks.slice(0, 4).map(t => (
-                  <Link key={t.id} href={`/clients/${t.client.id}/tasks`} className="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-red-300 dark:hover:border-red-700 transition-all bg-white dark:bg-slate-800 group">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Clock className="h-5 w-5 text-red-500" />
-                          <h4 className="font-semibold text-base truncate">{t.title}</h4>
-                        </div>
-                        <p className="text-xs text-slate-600 dark:text-slate-400 mb-2">{t.client.name}</p>
-                        <div className="flex items-center gap-4 text-xs text-slate-500">
-                          <span>Score: {t.urgencyScore.toFixed(0)}</span>
-                          {t.dueDate && <span>{new Date(t.dueDate).toLocaleDateString('pt-BR')}</span>}
-                        </div>
-                      </div>
-                      <span className="px-3 py-1 rounded-full bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-300 text-xs font-bold uppercase">{t.priority}</span>
+        {/* Grid Principal */}
+        <motion.div
+          className="grid grid-cols-1 xl:grid-cols-3 gap-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+
+          {/* Coluna Principal (2/3) */}
+          <div className="xl:col-span-2 space-y-6">
+
+            {/* Calendário Mensal */}
+            {data.activities && (
+              <Card variant="default" hover>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 bg-linear-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-lg">
+                      <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                     </div>
-                  </Link>
-                ))}
-              </div>
-            </Card>
-          )}
-          {priorities.length > 0 && (
-            <Card className="overflow-x-auto border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-lg bg-white dark:bg-slate-900 w-full" aria-label="Tarefas Prioritárias" role="region">
-              <div className="p-6">
-                <h3 className="text-lg font-bold text-amber-700 dark:text-amber-300 mb-4" id="priorities-title">Tarefas Prioritárias</h3>
-                <div className="grid gap-4 sm:grid-cols-2" aria-labelledby="priorities-title">
-                  {priorities.slice(0, 6).map(task => (
-                    <Link
-                      key={task.id}
-                      href={`/clients/${task.client.id}/tasks`}
-                      className="p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-amber-300 dark:hover:border-amber-700 transition-all bg-white dark:bg-slate-800 group focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
-                      aria-label={`Tarefa: ${task.title}, Cliente: ${task.client.name}, Status: ${task.status}${task.dueDate ? ', Vencimento: ' + new Date(task.dueDate).toLocaleDateString('pt-BR') : ''}`}
-                      role="link"
-                    >
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <h4 className="font-semibold text-base truncate">{task.title}</h4>
-                        <span className="px-2 py-1 rounded-full bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 text-xs font-bold uppercase">{task.status}</span>
-                      </div>
-                      <p className="text-xs text-slate-600 dark:text-slate-400">{task.client.name}</p>
-                      {task.dueDate && <p className="text-xs text-slate-500 mt-2">{new Date(task.dueDate).toLocaleDateString('pt-BR')}</p>}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </Card>
-          )}
+                    <CardTitle>Calendário de Atividades</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <MonthlyCalendar
+                    key={monthKey}
+                    activities={data.activities}
+                    initialMonth={(() => {
+                      const [y, m] = monthKey.split('-').map(Number);
+                      return new Date(y, (m || 1) - 1, 1)
+                    })()}
+                    onMonthChange={(d) => {
+                      const mm = String(d.getMonth() + 1).padStart(2, '0');
+                      const value = `${d.getFullYear()}-${mm}`;
+                      setMonthKey(value);
+                      try {
+                        const url = new URL(window.location.href);
+                        url.searchParams.set('month', value);
+                        window.history.replaceState(null, '', url.toString());
+                      } catch { }
+                    }}
+                  />
+                  {loadingMonth && (
+                    <p className="text-xs mt-2 text-slate-600 dark:text-slate-400 animate-pulse">
+                      Atualizando mês...
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
-        </div>
+            {/* Métricas Detalhadas */}
+            {metrics && (
+              <Card variant="default" hover>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 bg-linear-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 rounded-lg">
+                      <TrendingUp className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <CardTitle>Métricas do Negócio</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {metrics.mostPendingClient && (
+                    <div className="p-4 rounded-xl bg-linear-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 border-2 border-amber-200 dark:border-amber-800">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <h4 className="text-xs font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wider mb-1">
+                            Mais Tarefas Pendentes
+                          </h4>
+                          <p className="text-lg font-bold text-slate-900 dark:text-white">
+                            {metrics.mostPendingClient.name}
+                          </p>
+                          <p className="text-sm text-slate-600 dark:text-slate-400">
+                            {metrics.mostPendingClient.pending} tarefas aguardando
+                          </p>
+                        </div>
+                        <div className="p-2 bg-amber-100 dark:bg-amber-900/50 rounded-lg">
+                          <ListTodo className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {metrics.mostUrgentClient && (
+                    <div className="p-4 rounded-xl bg-linear-to-br from-red-50 to-rose-50 dark:from-red-950/30 dark:to-rose-950/30 border-2 border-red-200 dark:border-red-800">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <h4 className="text-xs font-semibold text-red-700 dark:text-red-300 uppercase tracking-wider mb-1">
+                            Mais Tarefas Urgentes
+                          </h4>
+                          <p className="text-lg font-bold text-slate-900 dark:text-white">
+                            {metrics.mostUrgentClient.name}
+                          </p>
+                          <p className="text-sm text-slate-600 dark:text-slate-400">
+                            {metrics.mostUrgentClient.urgent} tarefas urgentes
+                          </p>
+                        </div>
+                        <div className="p-2 bg-red-100 dark:bg-red-900/50 rounded-lg">
+                          <Clock className="h-5 w-5 text-red-600 dark:text-red-400" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="pt-4 border-t-2 border-slate-200 dark:border-slate-700">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="text-center p-4 rounded-xl bg-linear-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-200 dark:border-blue-800">
+                        <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                          {metrics.totals.clients}
+                        </p>
+                        <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mt-1 uppercase tracking-wider">
+                          Clientes
+                        </p>
+                      </div>
+                      <div className="text-center p-4 rounded-xl bg-linear-to-br from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 border border-purple-200 dark:border-purple-800">
+                        <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">
+                          {metrics.totals.tasks}
+                        </p>
+                        <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mt-1 uppercase tracking-wider">
+                          Tarefas
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Sidebar (1/3) */}
+          <div className="space-y-6">
+
+            {/* Tarefas Mais Urgentes */}
+            {metrics && metrics.urgentTasks.length > 0 && (
+              <Card variant="default" hover className="border-red-200 dark:border-red-800">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
+                      <Clock className="h-5 w-5 text-red-600 dark:text-red-400" />
+                    </div>
+                    <CardTitle className="text-base">Tarefas Mais Urgentes</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {metrics.urgentTasks.slice(0, 4).map(t => (
+                      <Link
+                        key={t.id}
+                        href={`/clients/${t.client.id}/tasks`}
+                        className="block p-3 rounded-lg border-2 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-900/40 transition-all group"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                              <h4 className="font-semibold text-sm truncate text-slate-900 dark:text-white">
+                                {t.title}
+                              </h4>
+                            </div>
+                            <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">
+                              {t.client.name}
+                            </p>
+                            <div className="flex items-center gap-2 text-xs text-slate-500">
+                              <span>Score: {t.urgencyScore.toFixed(0)}</span>
+                              {t.dueDate && (
+                                <span>• {new Date(t.dueDate).toLocaleDateString('pt-BR')}</span>
+                              )}
+                            </div>
+                          </div>
+                          <span className="px-2 py-1 rounded-full bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 text-xs font-bold uppercase shrink-0">
+                            {t.priority}
+                          </span>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                  {metrics.urgentTasks.length > 4 && (
+                    <Link
+                      href="/clients"
+                      className="inline-flex items-center gap-2 mt-3 text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium transition-colors"
+                    >
+                      Ver todas as tarefas urgentes
+                      <ArrowUpRight className="h-4 w-4" />
+                    </Link>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Tarefas Prioritárias */}
+            {priorities.length > 0 && (
+              <Card variant="default" hover className="border-amber-200 dark:border-amber-800">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
+                      <ListTodo className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <CardTitle className="text-base">Tarefas Prioritárias</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {priorities.slice(0, 6).map(task => (
+                      <Link
+                        key={task.id}
+                        href={`/clients/${task.client.id}/tasks`}
+                        className="block p-3 rounded-lg border-2 border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-all group"
+                      >
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <h4 className="font-semibold text-sm truncate text-slate-900 dark:text-white">
+                            {task.title}
+                          </h4>
+                          <span className="px-2 py-1 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 text-xs font-bold uppercase shrink-0">
+                            {task.status}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">
+                          {task.client.name}
+                        </p>
+                        {task.dueDate && (
+                          <p className="text-xs text-slate-500 flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {new Date(task.dueDate).toLocaleDateString('pt-BR')}
+                          </p>
+                        )}
+                      </Link>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+        </motion.div>
       </div>
-    </motion.div>
+    </div>
   )
 }
-
-// StatCard replaced by KPICard for standardized visuals
