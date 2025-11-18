@@ -2,6 +2,10 @@
 // This re-uses the existing implementation from the (dashboard) route group (which renders at /)
 import DashboardRootPage from "../(dashboard)/page";
 
-export default function DashboardAliasPage() {
-  return <DashboardRootPage />;
+export default async function DashboardAliasPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string>>;
+}) {
+  return <DashboardRootPage searchParams={searchParams} />;
 }

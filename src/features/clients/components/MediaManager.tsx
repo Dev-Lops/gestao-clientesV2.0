@@ -10,6 +10,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { AppRole, can } from "@/lib/permissions";
 import { fetcher } from "@/lib/swr";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   ChevronRight,
@@ -33,7 +34,6 @@ import {
 import Image from "next/image";
 import { DragEvent, useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
-import useSWR from "swr";
 
 type MediaType = "image" | "video" | "document";
 
@@ -99,29 +99,57 @@ export function MediaManager({ clientId }: MediaManagerProps) {
     tagInput: "",
   });
 
-  // SWR session + media + folders
-  const { data: session } = useSWR<{
-    user: unknown;
-    orgId: string | null;
-    role: AppRole | null;
-  }>("/api/session", fetcher);
+  const queryClient = useQueryClient();
 
-  const {
-    data: media,
-    error: mediaError,
-    isLoading: mediaLoading,
-    mutate: mutateMedia,
-  } = useSWR<MediaItem[]>(
-    `/api/clients/${clientId}/media?folderId=${currentFolderId || ""}`,
-    fetcher,
-  );
+  const { data: session } = useQuery<{ user: unknown; orgId: string | null; role: AppRole | null }>({
+    queryKey: ["session"],
+    queryFn: () => fetcher("/api/session"),
+  });
 
-  const {
-    data: folders,
-    error: foldersError,
-    isLoading: foldersLoading,
-    mutate: mutateFolders,
-  } = useSWR<MediaFolder[]>(`/api/clients/${clientId}/media/folders`, fetcher);
+  const mediaQuery = useQuery<MediaItem[]>({
+    queryKey: ["media", clientId, currentFolderId],
+    queryFn: () => fetcher(`/api/clients/${clientId}/media?folderId=${currentFolderId || ""}`),
+  });
+
+  const foldersQuery = useQuery<MediaFolder[]>({
+    queryKey: ["folders", clientId],
+    queryFn: () => fetcher(`/api/clients/${clientId}/media/folders`),
+  });
+
+  const media = mediaQuery.data;
+  const mediaError = mediaQuery.error;
+  const mediaLoading = mediaQuery.isLoading;
+  const folders = foldersQuery.data;
+  const foldersError = foldersQuery.error;
+  const foldersLoading = foldersQuery.isLoading;
+
+  // Adaptação de mutate para otimizações locais similares ao SWR
+  const mutateMedia = (updater?: ((prev: MediaItem[] | undefined) => MediaItem[]) | MediaItem[] | Record<string, never>) => {
+    if (updater) {
+      if (typeof updater === "function") {
+        queryClient.setQueryData(["media", clientId, currentFolderId], (prev: MediaItem[] | undefined) => updater(prev));
+      } else if (Array.isArray(updater)) {
+        queryClient.setQueryData(["media", clientId, currentFolderId], updater);
+      } else {
+        queryClient.invalidateQueries({ queryKey: ["media", clientId] });
+      }
+    } else {
+      queryClient.invalidateQueries({ queryKey: ["media", clientId] });
+    }
+  };
+  const mutateFolders = (updater?: ((prev: MediaFolder[] | undefined) => MediaFolder[]) | MediaFolder[] | Record<string, never>) => {
+    if (updater) {
+      if (typeof updater === "function") {
+        queryClient.setQueryData(["folders", clientId], (prev: MediaFolder[] | undefined) => updater(prev));
+      } else if (Array.isArray(updater)) {
+        queryClient.setQueryData(["folders", clientId], updater);
+      } else {
+        queryClient.invalidateQueries({ queryKey: ["folders", clientId] });
+      }
+    } else {
+      queryClient.invalidateQueries({ queryKey: ["folders", clientId] });
+    }
+  };
 
   const role = session?.role ?? null;
   const canCreate = role ? can(role, "create", "media") : false;
@@ -276,8 +304,7 @@ export function MediaManager({ clientId }: MediaManagerProps) {
       if (editingFolder) {
         await mutateFolders(
           (prev) =>
-            (prev ?? []).map((f) => (f.id === saved.id ? saved : f)),
-          { revalidate: false },
+            (prev ?? []).map((f) => (f.id === saved.id ? saved : f))
         );
         toast.success("Pasta atualizada!");
       } else {
@@ -356,7 +383,7 @@ export function MediaManager({ clientId }: MediaManagerProps) {
       });
 
       const uploaded = await Promise.all(uploadPromises);
-      await mutateMedia([...uploaded, ...items], { revalidate: false });
+      await mutateMedia([...uploaded, ...items]);
       toast.success(
         `${uploaded.length} arquivo${uploaded.length > 1 ? "s" : ""} enviado${uploaded.length > 1 ? "s" : ""}!`,
       );
@@ -407,8 +434,7 @@ export function MediaManager({ clientId }: MediaManagerProps) {
         (prev) =>
           (prev ?? []).map((i) =>
             i.id === editingItem.id ? { ...i, ...updated } : i,
-          ),
-        { revalidate: false },
+          )
       );
       toast.success("Mídia atualizada!");
       setIsUploadModalOpen(false);
@@ -425,9 +451,7 @@ export function MediaManager({ clientId }: MediaManagerProps) {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Falha ao excluir");
-      await mutateMedia((prev) => (prev ?? []).filter((i) => i.id !== id), {
-        revalidate: false,
-      });
+      await mutateMedia((prev) => (prev ?? []).filter((i) => i.id !== id));
       toast.success("Mídia excluída!");
     } catch {
       toast.error("Erro ao excluir");
@@ -442,9 +466,7 @@ export function MediaManager({ clientId }: MediaManagerProps) {
         { method: "DELETE" },
       );
       if (!res.ok) throw new Error("Falha ao excluir pasta");
-      await mutateFolders((prev) => (prev ?? []).filter((f) => f.id !== id), {
-        revalidate: false,
-      });
+      await mutateFolders((prev) => (prev ?? []).filter((f) => f.id !== id));
       toast.success("Pasta excluída!");
     } catch {
       toast.error("Erro ao excluir pasta");

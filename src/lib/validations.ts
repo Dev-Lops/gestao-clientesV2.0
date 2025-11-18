@@ -71,6 +71,13 @@ export const clientSchema = z.object({
   paymentDay: z.number().int().min(1).max(31).optional().nullable(),
   contractStart: z.coerce.date().optional().nullable(),
   contractEnd: z.coerce.date().optional().nullable(),
+  isInstallment: z.boolean().optional(),
+  installmentCount: z.number().int().min(1).max(12).optional().nullable(),
+  installmentValue: z.number().nonnegative().optional().nullable(),
+  installmentPaymentDays: z
+    .array(z.number().int().min(1).max(31))
+    .optional()
+    .nullable(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
 })
@@ -88,6 +95,10 @@ export const createClientSchema = z.object({
   paymentDay: z.number().int().min(1).max(31).optional(),
   contractStart: z.coerce.date().optional(),
   contractEnd: z.coerce.date().optional(),
+  isInstallment: z.boolean().optional(),
+  installmentCount: z.number().int().min(1).max(12).optional(),
+  installmentValue: z.number().nonnegative().optional(),
+  installmentPaymentDays: z.array(z.number().int().min(1).max(31)).optional(),
 })
 
 /**

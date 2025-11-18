@@ -17,17 +17,18 @@ function getCurrentMonthKey() {
   return `${now.getFullYear()}-${mm}`
 }
 
-export default async function DashboardPage({ searchParams }: { searchParams?: Record<string, string> }) {
-  const session = await getSessionProfile()
+export default async function DashboardPage({ searchParams }: { searchParams: Promise<Record<string, string>> }) {
+  const params = await searchParams;
+  const session = await getSessionProfile();
   if (!session.user || !session.orgId) {
-    redirect('/login')
+    redirect('/login');
   }
   // Se role CLIENT, redireciona para primeira associação como antes
   if (session.role === 'CLIENT') {
-    const firstClient = await prisma.client.findFirst({ where: { clientUserId: session.user.id } })
-    if (firstClient) redirect(`/clients/${firstClient.id}/info`)
+    const firstClient = await prisma.client.findFirst({ where: { clientUserId: session.user.id } });
+    if (firstClient) redirect(`/clients/${firstClient.id}/info`);
   }
-  const monthKey = searchParams?.month || getCurrentMonthKey()
-  const data = await getDashboardData(monthKey)
-  return <DashboardClient initialData={data} initialMonthKey={monthKey} role={session.role} />
+  const monthKey = params?.month || getCurrentMonthKey();
+  const data = await getDashboardData(monthKey);
+  return <DashboardClient initialData={data} initialMonthKey={monthKey} role={session.role} />;
 }

@@ -2,8 +2,9 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { adaptVerse } from "@/features/verses/lib/verse-utils";
 import { RefreshCw } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 interface Verse {
   id: number;
@@ -19,43 +20,46 @@ interface BibleVerseWidgetProps {
   compact?: boolean;
 }
 
+async function fetchVerseJSON(url: string, signal?: AbortSignal): Promise<Verse> {
+  const res = await fetch(url, { cache: "no-store", signal });
+  if (!res.ok) {
+    const msg = await res.text();
+    throw new Error(msg || "Falha ao carregar versículo");
+  }
+  const data = await res.json();
+  return adaptVerse(data) as Verse;
+}
+
 export function BibleVerseWidget({ compact = false }: BibleVerseWidgetProps) {
   const [verse, setVerse] = useState<Verse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentId, setCurrentId] = useState<number | null>(null);
+  const [translation, setTranslation] = useState<string>('almeida');
 
-  async function fetchRandomVerse() {
+  const fetchRandomVerse = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/verses/random`, { cache: "no-store" });
-      if (!res.ok) {
-        const msg = await res.text();
-        throw new Error(msg || "Falha ao carregar versículo");
-      }
-      const data = await res.json();
-      setVerse(data);
-      setCurrentId(data.id);
+      const v = await fetchVerseJSON(`/api/verses/random?translation=${translation}`, signal);
+      setVerse(v);
+      // Se o ID não for válido (> 0), desabilita navegação
+      setCurrentId(v.id > 0 ? v.id : null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erro desconhecido");
     } finally {
       setLoading(false);
     }
-  }
+  }, [translation]);
 
   async function goNext() {
-    if (!currentId) return;
+    if (currentId == null) return;
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/verses/${currentId}/next`, {
-        cache: "no-store",
-      });
-      if (!res.ok) throw new Error("Falha ao carregar próximo versículo");
-      const data = await res.json();
-      setCurrentId(data.id);
-      setVerse(data);
+      const v = await fetchVerseJSON(`/api/verses/${currentId}/next`);
+      setCurrentId(v.id > 0 ? v.id : null);
+      setVerse(v);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erro desconhecido");
     } finally {
@@ -64,17 +68,13 @@ export function BibleVerseWidget({ compact = false }: BibleVerseWidgetProps) {
   }
 
   async function goPrev() {
-    if (!currentId) return;
+    if (currentId == null) return;
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/verses/${currentId}/previous`, {
-        cache: "no-store",
-      });
-      if (!res.ok) throw new Error("Falha ao carregar versículo anterior");
-      const data = await res.json();
-      setCurrentId(data.id);
-      setVerse(data);
+      const v = await fetchVerseJSON(`/api/verses/${currentId}/previous`);
+      setCurrentId(v.id > 0 ? v.id : null);
+      setVerse(v);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erro desconhecido");
     } finally {
@@ -83,8 +83,25 @@ export function BibleVerseWidget({ compact = false }: BibleVerseWidgetProps) {
   }
 
   useEffect(() => {
-    void fetchRandomVerse();
+    const controller = new AbortController();
+    fetchRandomVerse(controller.signal);
+    return () => controller.abort();
+  }, [fetchRandomVerse]);
+
+  // Carrega tradução persistida
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('verseTranslation');
+      if (stored) setTranslation(stored);
+    } catch { }
   }, []);
+
+  // Persiste tradução
+  useEffect(() => {
+    try {
+      localStorage.setItem('verseTranslation', translation);
+    } catch { }
+  }, [translation]);
 
   const translationLabel =
     verse?.translationId?.toUpperCase() ||
@@ -106,7 +123,7 @@ export function BibleVerseWidget({ compact = false }: BibleVerseWidgetProps) {
               <span className="text-[9px] px-1.5 py-0.5 rounded bg-primary/10 dark:bg-primary/25 text-primary font-semibold" aria-label={`Tradução: ${translationLabel}`}>{translationLabel}</span>
             )}
             <button
-              onClick={fetchRandomVerse}
+              onClick={() => fetchRandomVerse()}
               disabled={loading}
               className="h-5 w-5 rounded hover:bg-accent/50 dark:hover:bg-accent/30 transition-colors flex items-center justify-center disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               title="Novo verso"
@@ -154,7 +171,7 @@ export function BibleVerseWidget({ compact = false }: BibleVerseWidgetProps) {
           <Button
             variant="ghost"
             size="sm"
-            onClick={fetchRandomVerse}
+            onClick={() => fetchRandomVerse()}
             disabled={loading}
             className="h-8 w-8 p-0 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             title="Novo verso aleatório"
@@ -165,9 +182,34 @@ export function BibleVerseWidget({ compact = false }: BibleVerseWidgetProps) {
         </div>
       </CardHeader>
       <CardContent>
-        {error && <div className="text-sm text-red-600 mb-3" role="alert">{error}</div>}
+        <div className="flex items-center gap-2 mb-3">
+          <label className="text-xs text-muted-foreground" htmlFor="translation-select">Tradução:</label>
+          <select
+            id="translation-select"
+            className="text-xs bg-background border border-border rounded px-2 py-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            value={translation}
+            onChange={(e) => setTranslation(e.target.value)}
+            disabled={loading}
+            aria-label="Selecionar tradução bíblica"
+          >
+            <option value="almeida">Almeida</option>
+            <option value="nvi">NVI</option>
+          </select>
+        </div>
+        {error && (
+          <div className="text-sm text-red-600 mb-3 flex items-center gap-3" role="alert">
+            <span>{error}</span>
+            <Button size="sm" variant="outline" onClick={() => fetchRandomVerse()} aria-label="Tentar novamente">
+              Tentar novamente
+            </Button>
+          </div>
+        )}
         {loading && !verse && (
-          <div className="text-sm text-muted-foreground" aria-live="polite">Carregando...</div>
+          <div className="space-y-2" aria-live="polite" aria-busy="true">
+            <div className="h-4 w-40 rounded bg-muted animate-pulse" />
+            <div className="h-3 w-full rounded bg-muted animate-pulse" />
+            <div className="h-3 w-5/6 rounded bg-muted animate-pulse" />
+          </div>
         )}
         {verse && (
           <div className="space-y-3" aria-labelledby="verse-widget-title-full">

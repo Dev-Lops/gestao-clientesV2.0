@@ -6,7 +6,7 @@ import { TaskModal } from "@/features/tasks/components/TaskModal";
 import { TaskStats as StatsCards } from "@/features/tasks/components/TaskStats";
 import { useTasks } from "@/features/tasks/hooks/useTasks";
 import { Task, TaskPriority, TaskStatus } from "@/features/tasks/types";
-import { formatDateInput, parseDateInput, toLocalISOString } from "@/lib/utils";
+import { parseDateInput, toLocalISOString } from "@/lib/utils";
 import type { DragEndEvent, DragStartEvent, UniqueIdentifier } from '@dnd-kit/core';
 import {
   DndContext,
@@ -138,7 +138,7 @@ function KanbanColumn({ column, tasks, handleEdit, handleDelete }: KanbanColumnP
 interface TasksPanelProps { clientId: string; initialTasks?: Task[] }
 
 export function TasksPanel({ clientId, initialTasks = [] }: TasksPanelProps) {
-  const { tasks, filtered, stats, isLoading, mutate, search, setSearch, statusFilter, setStatusFilter, error } = useTasks({ clientId, initial: initialTasks })
+  const { tasks, filtered, stats, isLoading, refetch, invalidate, search, setSearch, statusFilter, setStatusFilter, error } = useTasks({ clientId, initial: initialTasks })
 
   // Kanban columns
   const columns = [
@@ -166,48 +166,44 @@ export function TasksPanel({ clientId, initialTasks = [] }: TasksPanelProps) {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Excluir tarefa?")) return
-    const prev = tasks
-    mutate(prev.filter(t => t.id !== id), false)
     try {
       const res = await fetch(`/api/clients/${clientId}/tasks?taskId=${id}`, { method: "DELETE" })
       if (!res.ok) throw new Error("Falha ao excluir tarefa")
-      mutate()
-    } catch { mutate(prev, false) }
+      await invalidate()
+    } catch (err) {
+      console.error(err)
+    }
   }
 
   const handleStatusChange = async (id: string, status: TaskStatus) => {
-    const prev = tasks
-    mutate(prev.map(t => t.id === id ? { ...t, status } : t), false)
     try {
       const res = await fetch(`/api/clients/${clientId}/tasks?taskId=${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status }) })
       if (!res.ok) throw new Error("Falha ao atualizar status")
-      mutate()
-    } catch { mutate(prev, false) }
+      await invalidate()
+    } catch (err) {
+      console.error(err)
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const payload = { ...form, clientId, dueDate: form.dueDate ? toLocalISOString(parseDateInput(form.dueDate)) : null };
     if (editing) {
-      const prev = tasks;
-      mutate(prev.map(t => t.id === editing.id ? { ...t, ...form } : t), false);
       try {
         const res = await fetch(`/api/clients/${clientId}/tasks?taskId=${editing.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
         if (!res.ok) throw new Error("Falha ao atualizar tarefa");
-        const updated = await res.json();
-        mutate(prev.map(t => t.id === editing.id ? { ...t, title: updated.title, description: updated.description ?? undefined, status: updated.status, priority: updated.priority, assignee: updated.assignee ?? undefined, dueDate: updated.dueDate ? formatDateInput(updated.dueDate) : undefined } : t), false);
-      } catch { mutate(prev, false); }
+        await invalidate();
+      } catch (err) {
+        console.error(err);
+      }
     } else {
-      const prev = tasks;
-      const tempId = `temp-${Date.now()}`;
-      const optimistic: Task = { id: tempId, title: form.title, description: form.description || undefined, status: form.status, priority: form.priority, assignee: form.assignee || undefined, dueDate: form.dueDate || undefined, createdAt: new Date() };
-      mutate([optimistic, ...prev], false);
       try {
         const res = await fetch(`/api/clients/${clientId}/tasks`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
         if (!res.ok) throw new Error("Falha ao criar tarefa");
-        const created = await res.json();
-        mutate([{ id: created.id, title: created.title, description: created.description ?? undefined, status: created.status, priority: created.priority, assignee: created.assignee ?? undefined, dueDate: created.dueDate ? formatDateInput(created.dueDate) : undefined, createdAt: new Date(created.createdAt) }, ...prev], false);
-      } catch { mutate(prev, false); }
+        await invalidate();
+      } catch (err) {
+        console.error(err);
+      }
     }
     setIsModalOpen(false); resetForm();
   }
@@ -255,7 +251,7 @@ export function TasksPanel({ clientId, initialTasks = [] }: TasksPanelProps) {
                 {JSON.stringify(error.body as Record<string, unknown>, null, 2)}
               </pre>
             ) : null}
-            <Button size="sm" variant="outline" onClick={() => mutate()} className="mt-2">Tentar novamente</Button>
+            <Button size="sm" variant="outline" onClick={() => refetch()} className="mt-2">Tentar novamente</Button>
           </div>
         </div>
       </div>

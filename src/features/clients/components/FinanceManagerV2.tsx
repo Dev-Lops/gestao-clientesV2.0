@@ -598,7 +598,6 @@ export function FinanceManagerV2({ clientId }: FinanceManagerProps) {
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Selecione...</SelectItem>
                       {CATEGORIES[formData.type].map((cat) => (
                         <SelectItem key={cat} value={cat}>
                           {cat}

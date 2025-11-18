@@ -287,13 +287,36 @@ export class BillingService {
     orgId: string,
     options?: { sendNotifications?: boolean; sendWhatsAppFull?: boolean }
   ) {
-    const clients = await prisma.client.findMany({ where: { orgId } })
+    const clients = await prisma.client.findMany({
+      where: {
+        orgId,
+        status: { notIn: ['cancelado', 'canceled'] }, // Não gerar faturas para clientes cancelados
+      },
+    })
     const now = new Date()
     const generated: string[] = []
     const generatedInvoices: { id: string; clientId: string }[] = []
+
     for (const c of clients) {
       try {
-        if (c.contractValue && !c.isInstallment) {
+        // Verificar se o contrato está ativo
+        if (!c.contractStart || (c.contractEnd && now > c.contractEnd)) {
+          continue // Pular clientes sem contrato ativo
+        }
+
+        // Verificar se o contrato já começou
+        if (now < c.contractStart) {
+          continue // Contrato ainda não iniciou
+        }
+
+        // Se é pagamento parcelado, não gerar faturas mensais automáticas
+        // As parcelas já foram criadas no cadastro do cliente
+        if (c.isInstallment) {
+          continue
+        }
+
+        // Gerar fatura mensal apenas para clientes com contractValue
+        if (c.contractValue) {
           const inv = await this.generateMonthlyInvoice(c.id, orgId)
           generated.push(inv.id)
           // Só consideramos como "nova" se status estiver OPEN e issueDate dentro do dia (evita antigas retornadas)

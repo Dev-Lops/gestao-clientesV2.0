@@ -59,7 +59,7 @@ export async function GET(req: Request) {
 
     const orgId = user.memberships[0].orgId
 
-    // Tasks mais completas (para métricas), limit maior
+    // Tasks otimizadas com select apenas dos campos necessários
     const [clients, tasks, meetings, finances] = await Promise.all([
       prisma.client.findMany({
         where: { orgId },
@@ -95,7 +95,7 @@ export async function GET(req: Request) {
         },
       }),
       prisma.finance.findMany({
-        where: { client: { orgId } },
+        where: { orgId },
         select: {
           clientId: true,
           type: true,

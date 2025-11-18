@@ -1,6 +1,11 @@
 import { can } from '@/lib/permissions'
 import { prisma } from '@/lib/prisma'
 import {
+  checkRateLimit,
+  rateLimitExceeded,
+  uploadRatelimit,
+} from '@/lib/ratelimit'
+import {
   generateFileKey,
   getMediaTypeFromMime,
   isAllowedMimeType,
@@ -22,6 +27,14 @@ export async function POST(
     const { user, orgId, role } = await getSessionProfile()
     if (!user || !orgId || !role) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Rate limiting para uploads
+    const identifier = `${user.id}-upload`
+    const rateLimitResult = await checkRateLimit(identifier, uploadRatelimit)
+
+    if (!rateLimitResult.success) {
+      return rateLimitExceeded(rateLimitResult.reset)
     }
 
     if (!can(role, 'create', 'media')) {

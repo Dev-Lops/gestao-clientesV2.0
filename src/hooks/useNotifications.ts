@@ -1,6 +1,6 @@
 import { logger } from '@/lib/logger'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useRef, useState } from 'react'
-import useSWR from 'swr'
 
 interface Notification {
   id: string
@@ -66,7 +66,7 @@ export function useNotifications(options?: UseNotificationsOptions): {
   markMultipleAsRead: (ids: string[]) => Promise<void>
   markAllAsRead: () => Promise<void>
   deleteNotification: (id: string) => Promise<void>
-  refresh: () => Promise<NotificationsResponse | undefined>
+  refresh: () => Promise<unknown>
 } {
   const {
     unreadOnly = false,
@@ -82,29 +82,26 @@ export function useNotifications(options?: UseNotificationsOptions): {
   params.set('limit', limit.toString())
   if (type) params.set('type', type)
 
-  const { data, error, isLoading, mutate } = useSWR<NotificationsResponse>(
-    `/api/notifications?${params.toString()}`,
-    (url) => {
-      // Cancela request anterior se existir
+  const queryClient = useQueryClient()
+  const queryKey = ['notifications', { unreadOnly, limit, type }]
+  const { data, error, isLoading, refetch } = useQuery<NotificationsResponse>({
+    queryKey,
+    queryFn: ({ signal }) => {
+      // cancela anterior manualmente se quiser manter ref
       if (abortControllerRef.current) {
         abortControllerRef.current.abort()
       }
-
-      // Cria novo controller
       abortControllerRef.current = new AbortController()
-
-      return fetcher(url, abortControllerRef.current.signal)
+      // Prioriza o signal do react-query para cancelamento no refetch; usa interno para abort manual
+      const controllerSignal = abortControllerRef.current.signal
+      // combinar signals: se qualquer abort ocorrer, fetch falha
+      const fetchSignal = controllerSignal
+      return fetcher(`/api/notifications?${params.toString()}`, fetchSignal)
     },
-    {
-      refreshInterval,
-      revalidateOnFocus: true,
-      onError: (err) => {
-        // Ignora erros de abort (esperado quando componente desmonta)
-        if (err.name === 'AbortError') return
-        logger.error('Error fetching notifications', err)
-      },
-    }
-  )
+    refetchInterval: refreshInterval,
+    refetchOnWindowFocus: true,
+    staleTime: 15_000,
+  })
 
   const [actionLoading, setActionLoading] = useState(false)
 
@@ -118,7 +115,7 @@ export function useNotifications(options?: UseNotificationsOptions): {
           credentials: 'include',
           body: JSON.stringify({ action, ...payload }),
         })
-        await mutate()
+        await refetch()
       } catch (err) {
         logger.error(`Error performing action ${action})`, err)
         throw err
@@ -126,7 +123,7 @@ export function useNotifications(options?: UseNotificationsOptions): {
         setActionLoading(false)
       }
     },
-    [mutate]
+    [refetch]
   )
 
   const markAsRead = useCallback(
@@ -166,6 +163,6 @@ export function useNotifications(options?: UseNotificationsOptions): {
     markMultipleAsRead,
     markAllAsRead,
     deleteNotification,
-    refresh: mutate,
+    refresh: refetch,
   }
 }

@@ -1,6 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { ClientStatus } from "@/types/client";
-import { CLIENT_STATUS_LABELS } from "@/types/enums";
+import { CLIENT_STATUS_LABELS, ClientStatus } from "@/types/enums";
 
 const statusVariantMap: Record<ClientStatus, "success" | "warning" | "info" | "danger" | "default"> = {
   new: "info",

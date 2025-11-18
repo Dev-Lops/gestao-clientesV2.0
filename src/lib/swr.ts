@@ -1,8 +1,8 @@
 export async function fetcher<T>(url: string): Promise<T> {
-  const res = await fetch(url, { cache: "no-store" });
+  const res = await fetch(url, { cache: 'no-store' })
   if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(text || `Request failed: ${res.status}`);
+    const text = await res.text().catch(() => '')
+    throw new Error(text || `Request failed: ${res.status}`)
   }
-  return res.json();
+  return res.json()
 }

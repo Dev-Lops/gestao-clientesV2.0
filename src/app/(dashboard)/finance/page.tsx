@@ -1,6 +1,6 @@
 import AppShell from "@/components/layout/AppShell";
 import { PageLayout } from "@/components/layout/PageLayout";
-import { FinanceManagerGlobal } from "@/features/finance/components/FinanceManagerGlobal";
+import { FinanceManagerGlobal } from "@/features/finance/components/FinanceManagerGlobalLazy";
 import { can, type AppRole } from "@/lib/permissions";
 import { getSessionProfile } from "@/services/auth/session";
 import { redirect } from "next/navigation";

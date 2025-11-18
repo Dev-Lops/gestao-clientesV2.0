@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { formatDateInput, parseDateInput } from "@/lib/utils";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Calendar,
   CheckCircle2,
@@ -28,7 +29,6 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import useSWR from "swr";
 
 interface Meeting {
   id: string;
@@ -79,11 +79,11 @@ const fetcher = async (url: string) => {
 };
 
 export function MeetingsManager({ clientId }: MeetingsManagerProps) {
-  const {
-    data: meetings = [],
-    mutate,
-    isLoading,
-  } = useSWR<Meeting[]>(`/api/clients/${clientId}/meetings`, fetcher);
+  const queryClient = useQueryClient();
+  const { data: meetings = [], isLoading } = useQuery<Meeting[]>({
+    queryKey: ["meetings", clientId],
+    queryFn: () => fetcher(`/api/clients/${clientId}/meetings`),
+  });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Meeting | null>(null);
 
@@ -160,19 +160,16 @@ export function MeetingsManager({ clientId }: MeetingsManagerProps) {
 
         const updated = await res.json();
         // Optimistic update
-        mutate(
-          meetings.map((m) =>
-            m.id === editingItem.id
-              ? {
-                ...updated,
-                startTime: new Date(updated.startTime),
-                endTime: new Date(updated.endTime),
-                createdAt: new Date(updated.createdAt),
-              }
-              : m
-          ),
-          false
-        );
+        queryClient.setQueryData(["meetings", clientId], meetings.map((m) =>
+          m.id === editingItem.id
+            ? {
+              ...updated,
+              startTime: new Date(updated.startTime),
+              endTime: new Date(updated.endTime),
+              createdAt: new Date(updated.createdAt),
+            }
+            : m
+        ));
         toast.success("Reunião atualizada com sucesso!");
       } else {
         // Create new meeting
@@ -197,18 +194,15 @@ export function MeetingsManager({ clientId }: MeetingsManagerProps) {
 
         const created = await res.json();
         // Optimistic update
-        mutate(
-          [
-            {
-              ...created,
-              startTime: new Date(created.startTime),
-              endTime: new Date(created.endTime),
-              createdAt: new Date(created.createdAt),
-            },
-            ...meetings,
-          ],
-          false
-        );
+        queryClient.setQueryData(["meetings", clientId], [
+          {
+            ...created,
+            startTime: new Date(created.startTime),
+            endTime: new Date(created.endTime),
+            createdAt: new Date(created.createdAt),
+          },
+          ...meetings,
+        ]);
         toast.success("Reunião agendada com sucesso!");
       }
 
@@ -255,7 +249,7 @@ export function MeetingsManager({ clientId }: MeetingsManagerProps) {
       }
 
       // Optimistic update
-      mutate(meetings.filter((m) => m.id !== id), false);
+      queryClient.setQueryData(["meetings", clientId], meetings.filter((m) => m.id !== id));
       toast.success("Reunião deletada com sucesso!");
     } catch (error) {
       console.error("Error deleting meeting:", error);

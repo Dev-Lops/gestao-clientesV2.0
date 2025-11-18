@@ -1,6 +1,2 @@
-export type ClientStatus =
-  | "new"
-  | "onboarding"
-  | "active"
-  | "paused"
-  | "closed";
+// Consolidado: reexporta do arquivo unificado enums.ts
+export { CLIENT_STATUS, type ClientStatus } from './enums'

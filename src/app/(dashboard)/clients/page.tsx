@@ -1,3 +1,4 @@
+import { GenerateInvoiceButton } from "@/components/GenerateInvoiceButton";
 import AppShell from "@/components/layout/AppShell";
 import GradientPageHeader from "@/components/layout/GradientPageHeader";
 import { Badge } from "@/components/ui/badge";
@@ -234,6 +235,7 @@ export default async function ClientsPage({ searchParams }: PageProps) {
                             Abrir
                           </Button>
                         </Link>
+                        <GenerateInvoiceButton  clientId={client.id} />
                       </td>
                     </tr>
                   ))}

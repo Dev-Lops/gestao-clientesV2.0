@@ -14,6 +14,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { AppRole, can } from "@/lib/permissions";
 import { fetcher } from "@/lib/swr";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Download,
   Edit,
@@ -29,7 +30,6 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import useSWR from "swr";
 
 type BrandingType =
   | "logo"
@@ -251,17 +251,42 @@ export function BrandingManager({
       }
     };
   }, []);
-  // SWR: session (for role) and branding list
-  const { data: session } = useSWR<{
+
+  const queryClient = useQueryClient()
+
+  // React Query: session (for role) and branding list
+  const { data: session } = useQuery<{
     user: unknown;
     orgId: string | null;
     role: AppRole | null;
-  }>("/api/session", fetcher);
-  const { data, error, isLoading, mutate } = useSWR<Branding[]>(
-    `/api/clients/${clientId}/branding`,
-    fetcher,
-    { fallbackData: initialBranding },
-  );
+  }>({
+    queryKey: ['/api/session'],
+    queryFn: () => fetcher('/api/session'),
+    staleTime: 5 * 60 * 1000, // 5 min
+  })
+
+  const brandingQueryKey = [`/api/clients/${clientId}/branding`]
+  const { data, error, isLoading } = useQuery<Branding[]>({
+    queryKey: brandingQueryKey,
+    queryFn: () => fetcher(brandingQueryKey[0]),
+    initialData: initialBranding,
+    staleTime: 60_000,
+  })
+
+  // Optimistic mutate helper
+  const mutate = async (
+    optimisticData?: Branding[] | ((prev?: Branding[]) => Branding[]),
+    options?: { revalidate?: boolean }
+  ) => {
+    if (typeof optimisticData === 'function') {
+      queryClient.setQueryData<Branding[]>(brandingQueryKey, optimisticData)
+    } else if (optimisticData !== undefined) {
+      queryClient.setQueryData<Branding[]>(brandingQueryKey, optimisticData)
+    }
+    if (options?.revalidate !== false) {
+      await queryClient.invalidateQueries({ queryKey: brandingQueryKey })
+    }
+  }
 
   const items = data ?? [];
   const role = session?.role ?? null;

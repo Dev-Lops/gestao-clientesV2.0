@@ -1,5 +1,6 @@
 import { can } from '@/lib/permissions'
 import { prisma } from '@/lib/prisma'
+import { sanitizeObject } from '@/lib/sanitize'
 import { createTaskSchema, updateTaskSchema } from '@/lib/validations'
 import { getSessionProfile } from '@/services/auth/session'
 import { NextRequest, NextResponse } from 'next/server'
@@ -31,6 +32,18 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 
     const tasks = await prisma.task.findMany({
       where: { clientId, orgId },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        status: true,
+        priority: true,
+        assignee: true,
+        dueDate: true,
+        clientId: true,
+        createdAt: true,
+        updatedAt: true,
+      },
       orderBy: { createdAt: 'desc' },
     })
     return NextResponse.json(tasks)
@@ -57,6 +70,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Validate with Zod
     const validated = createTaskSchema.parse(body)
 
+    // Sanitize user-generated content
+    const sanitized = sanitizeObject(validated, {
+      textFields: ['title', 'description', 'assignee'],
+    })
+
     const client = await prisma.client.findFirst({
       where: { id: clientId, orgId },
     })
@@ -70,12 +88,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       data: {
         clientId,
         orgId,
-        title: validated.title,
-        description: validated.description ?? null,
-        status: validated.status ?? 'todo',
-        priority: validated.priority ?? 'medium',
-        assignee: validated.assignee ?? null,
-        dueDate: validated.dueDate ?? null,
+        title: sanitized.title,
+        description: sanitized.description ?? null,
+        status: sanitized.status ?? 'todo',
+        priority: sanitized.priority ?? 'medium',
+        assignee: sanitized.assignee ?? null,
+        dueDate: sanitized.dueDate ?? null,
       },
     })
 
@@ -110,6 +128,11 @@ export async function PATCH(request: NextRequest) {
     // Validate with Zod (partial for updates)
     const validated = updateTaskSchema.parse(body)
 
+    // Sanitize user-generated content
+    const sanitized = sanitizeObject(validated, {
+      textFields: ['title', 'description', 'assignee'],
+    })
+
     const task = await prisma.task.findUnique({ where: { id: taskId } })
     if (!task || task.orgId !== orgId)
       return NextResponse.json(
@@ -120,12 +143,12 @@ export async function PATCH(request: NextRequest) {
     const updated = await prisma.task.update({
       where: { id: taskId },
       data: {
-        title: validated.title,
-        description: validated.description,
-        status: validated.status,
-        priority: validated.priority,
-        assignee: validated.assignee,
-        dueDate: validated.dueDate,
+        title: sanitized.title,
+        description: sanitized.description,
+        status: sanitized.status,
+        priority: sanitized.priority,
+        assignee: sanitized.assignee,
+        dueDate: sanitized.dueDate,
       },
     })
 

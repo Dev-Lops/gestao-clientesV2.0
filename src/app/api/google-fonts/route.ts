@@ -1,4 +1,10 @@
 import GOOGLE_FONTS_FALLBACK from '@/lib/google-fonts-fallback'
+import {
+  checkRateLimit,
+  getIdentifier,
+  publicRatelimit,
+  rateLimitExceeded,
+} from '@/lib/ratelimit'
 import { NextResponse } from 'next/server'
 
 type CacheEntry = {
@@ -26,8 +32,16 @@ interface GoogleFontItem {
 //   items: GoogleFontItem[]
 // }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    // Rate limiting para endpoints públicos
+    const identifier = getIdentifier(request)
+    const rateLimitResult = await checkRateLimit(identifier, publicRatelimit)
+
+    if (!rateLimitResult.success) {
+      return rateLimitExceeded(rateLimitResult.reset)
+    }
+
     if (cache && Date.now() - cache.ts < CACHE_TTL) {
       return NextResponse.json({ families: cache.data })
     }

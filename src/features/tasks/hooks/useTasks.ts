@@ -1,7 +1,7 @@
 'use client'
 import { formatDateInput } from '@/lib/utils'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
-import useSWR from 'swr'
 import { Task, TaskPriority, TaskStats, TaskStatus } from '../types'
 
 interface UseTasksOptions {
@@ -13,9 +13,17 @@ export function useTasks({ clientId, initial = [] }: UseTasksOptions) {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<TaskStatus | 'all'>('all')
 
-  const { data, isLoading, mutate, error } = useSWR<Task[]>(
-    clientId ? `/api/clients/${clientId}/tasks` : null,
-    async (url) => {
+  const queryClient = useQueryClient()
+  const {
+    data: tasksData = initial,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery<Task[] | unknown>({
+    queryKey: ['tasks', clientId],
+    enabled: !!clientId,
+    queryFn: async () => {
+      const url = `/api/clients/${clientId}/tasks`
       const res = await fetch(url, { cache: 'no-store' })
       if (!res.ok) {
         let body: unknown = undefined
@@ -44,9 +52,12 @@ export function useTasks({ clientId, initial = [] }: UseTasksOptions) {
         createdAt: new Date(String(t.createdAt ?? new Date().toISOString())),
       }))
     },
-    { fallbackData: initial }
+    initialData: initial,
+  })
+  const tasks = useMemo(
+    () => (Array.isArray(tasksData) ? tasksData : initial),
+    [tasksData, initial]
   )
-  const tasks = useMemo(() => data || [], [data])
 
   const stats: TaskStats = useMemo(
     () => ({
@@ -72,7 +83,9 @@ export function useTasks({ clientId, initial = [] }: UseTasksOptions) {
     filtered,
     stats,
     isLoading,
-    mutate,
+    refetch,
+    invalidate: () =>
+      queryClient.invalidateQueries({ queryKey: ['tasks', clientId] }),
     search,
     setSearch,
     statusFilter,

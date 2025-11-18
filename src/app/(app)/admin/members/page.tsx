@@ -23,6 +23,8 @@ import {
 } from "@/components/ui/select";
 import { DeleteMemberButton } from "@/features/admin/components/DeleteMemberButton";
 import { UpdateRoleForm } from "@/features/admin/components/UpdateRoleForm";
+import { formatDate } from "@/lib/utils";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronDown,
   Clock,
@@ -39,7 +41,6 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import useSWR from "swr";
 
 // 🔹 Mapas de papéis
 type Role = "OWNER" | "STAFF" | "CLIENT";
@@ -56,10 +57,13 @@ const ROLE_DESCRIPTION: Record<Role, string> = {
   CLIENT: "Acesso restrito à própria área",
 };
 
-// 🔹 Fetcher para SWR
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
-const invitesFetcher = (url: string) => fetch(url).then((r) => r.json());
-const clientsFetcher = (url: string) => fetch(url).then((r) => r.json());
+// 🔹 Fetch helpers (React Query)
+// Generic JSON fetcher with typed response
+async function fetchJson<T>(url: string): Promise<T> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Erro ao carregar: ${url}`);
+  return res.json();
+}
 
 // 🔹 Tipagem do membro
 type Member = {
@@ -75,23 +79,42 @@ type Member = {
   online?: boolean;
 };
 
-// 🔹 Utilitário de data
-function formatDate(value: string | null): string {
-  if (!value) return "—";
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "—" : date.toLocaleDateString("pt-BR");
+interface Invite {
+  id: string;
+  status: string;
+  email: string;
+  roleRequested: string;
+  expiresAt: string;
+  token: string;
+  created_at?: string;
 }
 
+interface ApiList<T> {
+  data: T;
+}
+
+// 🔹 Utilitário de data (usar util compartilhado via import)
+
 export default function MembersAdminPage() {
-  const { data, error, isLoading, mutate } = useSWR("/api/members", fetcher, {
-    refreshInterval: 30_000,
-    revalidateOnFocus: true,
+  const queryClient = useQueryClient();
+  const {
+    data: membersData,
+    error,
+    isLoading,
+  } = useQuery<ApiList<Member[]>>({
+    queryKey: ["members"],
+    queryFn: () => fetchJson<ApiList<Member[]>>("/api/members"),
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
   });
-  const { data: invitesData, mutate: mutateInvites } = useSWR(
-    "/api/invites",
-    invitesFetcher,
-  );
-  const { data: clientsData } = useSWR("/api/clients?lite=1", clientsFetcher);
+  const { data: invitesData } = useQuery<ApiList<Invite[]>>({
+    queryKey: ["invites"],
+    queryFn: () => fetchJson<ApiList<Invite[]>>("/api/invites"),
+  });
+  const { data: clientsData } = useQuery<ApiList<{ id: string; name: string }[]>>({
+    queryKey: ["clients", "lite"],
+    queryFn: () => fetchJson<ApiList<{ id: string; name: string }[]>>("/api/clients?lite=1"),
+  });
   const [selectedRole, setSelectedRole] = useState<Role>("STAFF");
   const [selectedClient, setSelectedClient] = useState<string | undefined>(
     undefined,
@@ -99,6 +122,12 @@ export default function MembersAdminPage() {
   const [submitting, setSubmitting] = useState(false);
   const [resendingId, setResendingId] = useState<string | null>(null);
   const [showInvites, setShowInvites] = useState(false);
+
+  // Avatar inicial do membro (primeira letra do nome/email)
+  function getAvatarInitial(name?: string | null, email?: string | null) {
+    const base = (name || email || "").trim();
+    return base ? base.charAt(0).toUpperCase() : "?";
+  }
 
   // Filtrar apenas convites não aceitos (PENDING, CANCELED, EXPIRED)
   const activeInvites =
@@ -116,14 +145,14 @@ export default function MembersAdminPage() {
     );
 
   // 🧨 Erro de carregamento
-  if (error || !data?.data)
+  if (error || !membersData?.data)
     return (
       <div className="p-10 text-center text-red-600 font-medium">
         Erro ao carregar membros.
       </div>
     );
 
-  const members: Member[] = data.data;
+  const members: Member[] = membersData.data;
   const totalByRole = members.reduce<Record<Role, number>>(
     (acc, member) => {
       const role = (member.role as Role) || "CLIENT";
@@ -158,7 +187,7 @@ export default function MembersAdminPage() {
       } else {
         toast.success("Convite processado.");
       }
-      mutateInvites();
+      queryClient.invalidateQueries({ queryKey: ["invites"] });
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : "Erro ao enviar convite.",
@@ -175,7 +204,7 @@ export default function MembersAdminPage() {
       fd.append("invite_id", inviteId);
       await cancelInviteAction(fd);
       toast.success("Convite cancelado");
-      mutateInvites();
+      queryClient.invalidateQueries({ queryKey: ["invites"] });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Erro ao cancelar convite");
     }
@@ -188,7 +217,7 @@ export default function MembersAdminPage() {
       fd.append("invite_id", inviteId);
       await deleteInviteAction(fd);
       toast.success("Convite excluído");
-      mutateInvites();
+      queryClient.invalidateQueries({ queryKey: ["invites"] });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Erro ao excluir convite");
     }
@@ -201,7 +230,7 @@ export default function MembersAdminPage() {
       fd.append("invite_id", inviteId);
       await resendInviteAction(fd);
       toast.success("Convite reenviado");
-      mutateInvites();
+      queryClient.invalidateQueries({ queryKey: ["invites"] });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Erro ao reenviar convite");
     } finally {
@@ -225,7 +254,7 @@ export default function MembersAdminPage() {
         await deactivateMemberAction(fd);
         toast.success("Membro desativado");
       }
-      mutate();
+      queryClient.invalidateQueries({ queryKey: ["members"] });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Erro ao atualizar status");
     }
@@ -295,6 +324,131 @@ export default function MembersAdminPage() {
     );
   }
 
+  // Componente reutilizável: Card de Convite + Formulário
+  function InviteCard({
+    responsiveClass,
+    idSuffix,
+  }: {
+    responsiveClass: string;
+    idSuffix: string;
+  }) {
+    return (
+      <Card className={`rounded-xl border border-border bg-card shadow-sm overflow-hidden ${responsiveClass}`}>
+        <div className="border-b border-border/50 px-5 py-3 bg-linear-to-r from-indigo-50 via-purple-50 to-pink-50 dark:from-indigo-950/30 dark:via-purple-950/30 dark:to-pink-950/30">
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-lg bg-indigo-600">
+              <UserPlus className="h-4 w-4 text-white" />
+            </div>
+            <h2 className="text-lg font-semibold text-foreground">
+              Convidar novo membro
+            </h2>
+          </div>
+        </div>
+
+        <form action={handleInvite} className="p-5">
+          <input type="hidden" name="allow_resend_existing" value="true" />
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label
+                htmlFor={`invite-email-${idSuffix}`}
+                className="text-sm font-medium text-foreground"
+              >
+                E-mail do convidado
+              </Label>
+              <Input
+                id={`invite-email-${idSuffix}`}
+                name="email"
+                type="email"
+                required
+                placeholder="pessoa@empresa.com"
+                autoComplete="email"
+                inputMode="email"
+                pattern="[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}"
+                className="h-11 border-border bg-background focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label
+                htmlFor={`invite-role-${idSuffix}`}
+                className="text-sm font-medium text-foreground"
+              >
+                Papel na organização
+              </Label>
+              <Select
+                value={selectedRole}
+                onValueChange={(value) => {
+                  setSelectedRole(value as Role);
+                  setSelectedClient(undefined);
+                }}
+                defaultValue="STAFF"
+              >
+                <SelectTrigger id={`invite-role-${idSuffix}`} className="h-11 bg-background">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="STAFF">Equipe</SelectItem>
+                  <SelectItem value="CLIENT">Cliente</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {selectedRole === "CLIENT" && (
+              <div className="space-y-2">
+                <Label
+                  htmlFor={`invite-client-${idSuffix}`}
+                  className="text-sm font-medium text-foreground"
+                >
+                  Vincular a cliente
+                </Label>
+                <Select
+                  value={selectedClient ?? "__AUTO__"}
+                  onValueChange={(value) =>
+                    setSelectedClient(value === "__AUTO__" ? undefined : value)
+                  }
+                >
+                  <SelectTrigger id={`invite-client-${idSuffix}`} className="h-11 bg-background">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__AUTO__">Criar novo cliente automaticamente</SelectItem>
+                    {clientsData?.data?.map((client: { id: string; name: string }) => (
+                      <SelectItem key={client.id} value={client.id}>
+                        {client.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end pt-3 border-t border-border/50 mt-4">
+            <Button
+              type="submit"
+              disabled={submitting}
+              className="bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 px-8 h-11 gap-2 shadow-lg"
+              aria-busy={submitting}
+              aria-disabled={submitting}
+            >
+              {submitting ? (
+                <>
+                  <RefreshCcw className="h-4 w-4 animate-spin" />
+                  Enviando...
+                </>
+              ) : (
+                <>
+                  <UserPlus className="h-4 w-4" />
+                  Enviar convite
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
+      </Card>
+    );
+  }
+
   function InviteStatusBadge({ status }: { status: string }) {
     const styles =
       status === "PENDING"
@@ -315,7 +469,7 @@ export default function MembersAdminPage() {
 
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-6">
       <PageHeader
         title="Administração"
         description="Gerencie membros e permissões da organização"
@@ -323,11 +477,43 @@ export default function MembersAdminPage() {
         iconColor="bg-indigo-600"
       />
 
-      {/* Global AI banner (Claude Sonnet 4 enabled)
-      {/* Global AI banner removido - variáveis não utilizadas */}
+      {/* Hero sofisticado */}
+      <Card className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-lg">
+        <div className="absolute inset-0 pointer-events-none opacity-60 bg-linear-to-br from-indigo-500/10 via-fuchsia-500/10 to-emerald-500/10" />
+        <div className="relative p-6 lg:p-8">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/60 px-3 py-1 text-[10px] uppercase tracking-wider">
+                <span className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
+                Central de Membros
+              </div>
+              <h1 className="text-2xl lg:text-3xl font-bold leading-tight">
+                Equipe, Convites e Acessos em um só lugar
+              </h1>
+              <p className="text-sm text-muted-foreground max-w-2xl">
+                Convide novos colaboradores, ajuste permissões e acompanhe o status de acesso com uma experiência elegante e organizada.
+              </p>
+            </div>
+            <div className="grid grid-cols-3 gap-3 min-w-[280px]">
+              <div className="rounded-xl bg-linear-to-br from-violet-600 to-purple-700 text-white p-3 shadow-sm">
+                <div className="text-[10px] uppercase opacity-80">Owners</div>
+                <div className="text-2xl font-bold">{totalByRole.OWNER}</div>
+              </div>
+              <div className="rounded-xl bg-linear-to-br from-sky-600 to-blue-700 text-white p-3 shadow-sm">
+                <div className="text-[10px] uppercase opacity-80">Equipe</div>
+                <div className="text-2xl font-bold">{totalByRole.STAFF}</div>
+              </div>
+              <div className="rounded-xl bg-linear-to-br from-emerald-600 to-green-700 text-white p-3 shadow-sm">
+                <div className="text-[10px] uppercase opacity-80">Clientes</div>
+                <div className="text-2xl font-bold">{totalByRole.CLIENT}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Card>
 
-      {/* 📊 RESUMO DE ROLES - Grid Responsivo */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {/* 📊 RESUMO DE ROLES - Grid Responsivo (polido) */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {(["OWNER", "STAFF", "CLIENT"] as Role[]).map((roleKey) => {
           const Icon =
             roleKey === "OWNER" ? Shield : roleKey === "STAFF" ? Users : User;
@@ -338,27 +524,27 @@ export default function MembersAdminPage() {
             CLIENT: "from-emerald-500 to-green-600",
           };
           const bgColors = {
-            OWNER: "bg-linear-to-br from-violet-50 to-purple-50",
-            STAFF: "bg-linear-to-br from-sky-50 to-blue-50",
-            CLIENT: "bg-linear-to-br from-emerald-50 to-green-50",
+            OWNER: "bg-linear-to-br from-violet-50/80 to-purple-50/80 dark:from-violet-950/20 dark:to-purple-950/20",
+            STAFF: "bg-linear-to-br from-sky-50/80 to-blue-50/80 dark:from-sky-950/20 dark:to-blue-950/20",
+            CLIENT: "bg-linear-to-br from-emerald-50/80 to-green-50/80 dark:from-emerald-950/20 dark:to-green-950/20",
           };
           return (
             <Card
               key={roleKey}
-              className={`rounded-xl border border-border shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group ${bgColors[roleKey]}`}
+              className={`rounded-xl border border-border shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group ${bgColors[roleKey]} backdrop-blur-sm`}
             >
               <div className="p-4">
                 <div className="flex items-start justify-between mb-3">
                   <div
-                    className={`p-2.5 rounded-lg bg-linear-to-r ${colors[roleKey]} shadow-md`}
+                    className={`p-2.5 rounded-lg bg-linear-to-r ${colors[roleKey]} shadow-md shadow-black/10`}
                   >
                     <Icon className="w-5 h-5 text-white" />
                   </div>
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground bg-card/80 px-2.5 py-1 rounded-full">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/80 bg-card/80 px-2.5 py-1 rounded-full border border-border/70">
                     {ROLE_LABEL[roleKey]}
                   </span>
                 </div>
-                <div className="space-y-0.5">
+                <div className="space-y-1">
                   <p className="text-3xl font-bold text-foreground">{count}</p>
                   <p className="text-xs text-muted-foreground leading-relaxed">
                     {ROLE_DESCRIPTION[roleKey]}
@@ -377,126 +563,8 @@ export default function MembersAdminPage() {
       <div className="lg:grid lg:grid-cols-3 lg:gap-4">
         {/* Coluna esquerda: membros (desktop 2cols, mobile full) */}
         <div className="lg:col-span-2 space-y-3">
-          {/* 📨 CONVITE - Card Melhorado (mobile only) */}
-          <Card className="rounded-xl border border-border bg-card shadow-sm overflow-hidden lg:hidden transition-colors">
-            <div className="border-b border-border/50 px-5 py-3 bg-linear-to-r from-indigo-50 via-purple-50 to-pink-50 dark:from-indigo-950/30 dark:via-purple-950/30 dark:to-pink-950/30">
-              <div className="flex items-center gap-2">
-                <div className="p-2 rounded-lg bg-indigo-600">
-                  <UserPlus className="h-4 w-4 text-white" />
-                </div>
-                <h2 className="text-lg font-semibold text-foreground">
-                  Convidar novo membro
-                </h2>
-              </div>
-            </div>
-
-            <form action={handleInvite} className="p-5">
-              <input type="hidden" name="allow_resend_existing" value="true" />
-              <div className="space-y-4 mb-5">
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="invite-email"
-                    className="text-sm font-medium text-foreground"
-                  >
-                    E-mail do convidado
-                  </Label>
-                  <Input
-                    id="invite-email"
-                    name="email"
-                    type="email"
-                    required
-                    placeholder="pessoa@empresa.com"
-                    autoComplete="email"
-                    inputMode="email"
-                    pattern="[^\s@]+@[^\s@]+\.[^\s@]{2,}"
-                    className="h-11 border-border bg-background focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="invite-role"
-                    className="text-sm font-medium text-foreground"
-                  >
-                    Papel na organização
-                  </Label>
-                  <Select
-                    value={selectedRole}
-                    onValueChange={(value) => {
-                      setSelectedRole(value as Role);
-                      setSelectedClient(undefined);
-                    }}
-                    defaultValue="STAFF"
-                  >
-                    <SelectTrigger className="h-11 bg-background">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="STAFF">Equipe</SelectItem>
-                      <SelectItem value="CLIENT">Cliente</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {selectedRole === "CLIENT" && (
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="invite-client"
-                      className="text-sm font-medium text-foreground"
-                    >
-                      Vincular a cliente
-                    </Label>
-                    <Select
-                      value={selectedClient ?? "__AUTO__"}
-                      onValueChange={(value) =>
-                        setSelectedClient(
-                          value === "__AUTO__" ? undefined : value,
-                        )
-                      }
-                    >
-                      <SelectTrigger className="h-11 bg-background">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__AUTO__">
-                          Criar novo cliente automaticamente
-                        </SelectItem>
-                        {clientsData?.data?.map(
-                          (client: { id: string; name: string }) => (
-                            <SelectItem key={client.id} value={client.id}>
-                              {client.name}
-                            </SelectItem>
-                          ),
-                        )}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex justify-end pt-3 border-t border-border/50">
-                <Button
-                  type="submit"
-                  disabled={submitting}
-                  className="bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 px-8 h-11 gap-2 shadow-lg"
-                  aria-busy={submitting}
-                  aria-disabled={submitting}
-                >
-                  {submitting ? (
-                    <>
-                      <RefreshCcw className="h-4 w-4 animate-spin" />
-                      Enviando...
-                    </>
-                  ) : (
-                    <>
-                      <UserPlus className="h-4 w-4" />
-                      Enviar convite
-                    </>
-                  )}
-                </Button>
-              </div>
-            </form>
-          </Card>
+          {/* 📨 CONVITE - Card Reutilizável (mobile only) */}
+          <InviteCard responsiveClass="lg:hidden" idSuffix="sm" />
 
           {/* 👥 LISTA DE MEMBROS - Grid Melhorado */}
           <Card className="rounded-xl border border-border bg-card shadow-sm overflow-hidden transition-colors">
@@ -532,11 +600,14 @@ export default function MembersAdminPage() {
                 {members.map((m) => (
                   <div
                     key={m.id}
-                    className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 px-5 py-3 hover:bg-accent/30 transition-colors"
+                    className="group relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 px-5 py-3 rounded-xl hover:bg-accent/30 transition-colors border border-transparent hover:border-border/60"
                   >
                     <div className="flex-1 space-y-2">
                       <div className="flex items-center gap-3 flex-wrap">
-                        <p className="text-base font-semibold text-foreground">
+                        <div className="w-9 h-9 rounded-full bg-linear-to-br from-indigo-600 to-purple-600 text-white flex items-center justify-center text-xs font-semibold ring-2 ring-indigo-500/20">
+                          {getAvatarInitial(m.full_name, m.email)}
+                        </div>
+                        <p className="text-base font-semibold text-foreground leading-none">
                           {m.full_name || m.email?.split("@")[0] || "Usuário"}
                         </p>
                         <RoleBadge role={(m.role as Role) || "CLIENT"} />
@@ -546,9 +617,9 @@ export default function MembersAdminPage() {
                           lastActive={m.last_active_at}
                         />
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <Mail className="h-3.5 w-3.5" />
-                        <span>{m.email || "—"}</span>
+                        <span className="truncate max-w-60">{m.email || "—"}</span>
                         <span className="opacity-50">•</span>
                         <Clock className="h-3.5 w-3.5" />
                         <span>Desde {formatDate(m.created_at)}</span>
@@ -559,7 +630,7 @@ export default function MembersAdminPage() {
                       <UpdateRoleForm
                         memberId={m.id}
                         currentRole={m.role || "CLIENT"}
-                        onSuccess={() => mutate()}
+                        onSuccess={() => queryClient.invalidateQueries({ queryKey: ["members"] })}
                       />
 
                       <Button
@@ -568,7 +639,7 @@ export default function MembersAdminPage() {
                           m.status === "inactive" ? "default" : "outline"
                         }
                         onClick={() => toggleMemberActive(m.id, m.status)}
-                        className={`rounded-lg ${m.status === "inactive" ? "bg-green-600 hover:bg-green-700" : ""}`}
+                        className={`rounded-lg shadow-sm ${m.status === "inactive" ? "bg-green-600 hover:bg-green-700 text-white" : ""}`}
                       >
                         {m.status === "inactive" ? "Ativar" : "Desativar"}
                       </Button>
@@ -577,7 +648,7 @@ export default function MembersAdminPage() {
                         <DeleteMemberButton
                           memberId={m.id}
                           displayName={m.full_name || m.email || "Usuário"}
-                          onSuccess={() => mutate()}
+                          onSuccess={() => queryClient.invalidateQueries({ queryKey: ["members"] })}
                         />
                       )}
                     </div>
@@ -590,133 +661,15 @@ export default function MembersAdminPage() {
 
         {/* Coluna direita: form + invites (desktop only) */}
         <div className="hidden lg:block lg:col-span-1 space-y-3">
-          {/* 📨 CONVITE - Card (desktop) */}
-          <Card className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-            <div className="border-b border-slate-100 px-5 py-3 bg-linear-to-r from-indigo-50 via-purple-50 to-pink-50">
-              <div className="flex items-center gap-2">
-                <div className="p-2 rounded-lg bg-indigo-600">
-                  <UserPlus className="h-4 w-4 text-white" />
-                </div>
-                <h2 className="text-lg font-semibold text-slate-900">
-                  Convidar novo membro
-                </h2>
-              </div>
-            </div>
-
-            <form action={handleInvite} className="p-5">
-              <input type="hidden" name="allow_resend_existing" value="true" />
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="invite-email-lg"
-                    className="text-sm font-medium text-slate-700"
-                  >
-                    E-mail do convidado
-                  </Label>
-                  <Input
-                    id="invite-email-lg"
-                    name="email"
-                    type="email"
-                    required
-                    placeholder="pessoa@empresa.com"
-                    autoComplete="email"
-                    inputMode="email"
-                    pattern="[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}"
-                    className="h-11 border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="invite-role-lg"
-                    className="text-sm font-medium text-slate-700"
-                  >
-                    Papel na organização
-                  </Label>
-                  <Select
-                    value={selectedRole}
-                    onValueChange={(value) => {
-                      setSelectedRole(value as Role);
-                      setSelectedClient(undefined);
-                    }}
-                    defaultValue="STAFF"
-                  >
-                    <SelectTrigger className="h-11 bg-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="STAFF">Equipe</SelectItem>
-                      <SelectItem value="CLIENT">Cliente</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {selectedRole === "CLIENT" && (
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="invite-client-lg"
-                      className="text-sm font-medium text-slate-700"
-                    >
-                      Vincular a cliente
-                    </Label>
-                    <Select
-                      value={selectedClient ?? "__AUTO__"}
-                      onValueChange={(value) =>
-                        setSelectedClient(
-                          value === "__AUTO__" ? undefined : value,
-                        )
-                      }
-                    >
-                      <SelectTrigger className="h-11 bg-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__AUTO__">
-                          Criar novo cliente automaticamente
-                        </SelectItem>
-                        {clientsData?.data?.map(
-                          (client: { id: string; name: string }) => (
-                            <SelectItem key={client.id} value={client.id}>
-                              {client.name}
-                            </SelectItem>
-                          ),
-                        )}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex justify-end pt-3 border-t border-slate-100">
-                <Button
-                  type="submit"
-                  disabled={submitting}
-                  className="bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 px-8 h-11 gap-2 shadow-lg"
-                  aria-busy={submitting}
-                  aria-disabled={submitting}
-                >
-                  {submitting ? (
-                    <>
-                      <RefreshCcw className="h-4 w-4 animate-spin" />
-                      Enviando...
-                    </>
-                  ) : (
-                    <>
-                      <UserPlus className="h-4 w-4" />
-                      Enviar convite
-                    </>
-                  )}
-                </Button>
-              </div>
-            </form>
-          </Card>
+          {/* 📨 CONVITE - Card Reutilizável (desktop only) */}
+          <InviteCard responsiveClass="" idSuffix="lg" />
 
           {/* ✉️ CONVITES ENVIADOS - Grid Melhorado */}
-          <Card className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+          <Card className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
             <Button
               type="button"
               onClick={() => setShowInvites((v) => !v)}
-              className="w-full text-left flex items-center justify-between border-b border-slate-100 px-5 py-3 bg-linear-to-r from-amber-50 via-orange-50 to-yellow-50 hover:brightness-95"
+              className="w-full text-left flex items-center justify-between border-b border-border/50 px-5 py-3 bg-linear-to-r from-amber-50 via-orange-50 to-yellow-50 hover:brightness-95 dark:from-amber-950/30 dark:via-orange-950/30 dark:to-yellow-950/30"
               aria-expanded={showInvites ? "true" : "false"}
             >
               <div className="flex items-center gap-2">
@@ -752,7 +705,7 @@ export default function MembersAdminPage() {
                   </p>
                 </div>
               ) : (
-                <div className="divide-y divide-slate-100">
+                <div className="divide-y divide-border/50">
                   {activeInvites.map(
                     (invite: {
                       id: string;
@@ -764,7 +717,7 @@ export default function MembersAdminPage() {
                     }) => (
                       <div
                         key={invite.id}
-                        className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 px-5 py-3 hover:bg-slate-50/80 transition-colors"
+                        className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 px-5 py-3 hover:bg-accent/30 transition-colors"
                       >
                         <div className="flex-1 space-y-2">
                           <div className="flex items-center gap-3 flex-wrap">

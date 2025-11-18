@@ -44,8 +44,23 @@ export async function GET(req: NextRequest) {
       where,
       skip,
       take: pageSize,
+      select: {
+        id: true,
+        type: true,
+        amount: true,
+        description: true,
+        category: true,
+        date: true,
+        clientId: true,
+        createdAt: true,
+        client: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
       orderBy: { date: 'desc' },
-      include: { client: true },
     }),
     prisma.finance.count({ where }),
   ])

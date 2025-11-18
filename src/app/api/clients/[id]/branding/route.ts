@@ -1,5 +1,6 @@
 import { can } from '@/lib/permissions'
 import { prisma } from '@/lib/prisma'
+import { sanitizeObject } from '@/lib/sanitize'
 import { getSessionProfile } from '@/services/auth/session'
 import { Prisma } from '@prisma/client'
 import { NextRequest, NextResponse } from 'next/server'
@@ -49,6 +50,14 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     }
     const { id: clientId } = await params
     const body = await req.json()
+
+    // Sanitize user-generated content
+    const sanitized = sanitizeObject(body, {
+      textFields: ['title', 'description'],
+      urlFields: ['fileUrl', 'thumbUrl'],
+      htmlFields: ['content'],
+    })
+
     const client = await prisma.client.findFirst({
       where: { id: clientId, orgId },
     })
@@ -60,13 +69,13 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const created = await prisma.branding.create({
       data: {
         clientId,
-        title: body.title,
-        type: body.type,
-        description: body.description ?? null,
-        fileUrl: body.fileUrl ?? null,
-        content: body.content ?? null,
-        thumbUrl: body.thumbUrl ?? null,
-        palette: body.palette ?? null,
+        title: sanitized.title,
+        type: sanitized.type,
+        description: sanitized.description ?? null,
+        fileUrl: sanitized.fileUrl ?? null,
+        content: sanitized.content ?? null,
+        thumbUrl: sanitized.thumbUrl ?? null,
+        palette: sanitized.palette ?? null,
       },
     })
     return NextResponse.json(created)
@@ -92,23 +101,31 @@ export async function PATCH(req: NextRequest) {
     if (!brandingId)
       return NextResponse.json({ error: 'ID não fornecido' }, { status: 400 })
     const body = await req.json()
+
+    // Sanitize user-generated content
+    const sanitized = sanitizeObject(body, {
+      textFields: ['title', 'description'],
+      urlFields: ['fileUrl', 'thumbUrl'],
+      htmlFields: ['content'],
+    })
+
     // Build update object and allow explicit nulls. Use hasOwnProperty to
     // distinguish between "missing" and explicit `null` values from the client.
     const updateData: Prisma.BrandingUpdateInput = {}
-    if (Object.prototype.hasOwnProperty.call(body, 'title'))
-      updateData.title = body.title
-    if (Object.prototype.hasOwnProperty.call(body, 'type'))
-      updateData.type = body.type
-    if (Object.prototype.hasOwnProperty.call(body, 'description'))
-      updateData.description = body.description
-    if (Object.prototype.hasOwnProperty.call(body, 'fileUrl'))
-      updateData.fileUrl = body.fileUrl // allow null to clear
-    if (Object.prototype.hasOwnProperty.call(body, 'content'))
-      updateData.content = body.content
-    if (Object.prototype.hasOwnProperty.call(body, 'thumbUrl'))
-      updateData.thumbUrl = body.thumbUrl
-    if (Object.prototype.hasOwnProperty.call(body, 'palette'))
-      updateData.palette = body.palette
+    if (Object.prototype.hasOwnProperty.call(sanitized, 'title'))
+      updateData.title = sanitized.title
+    if (Object.prototype.hasOwnProperty.call(sanitized, 'type'))
+      updateData.type = sanitized.type
+    if (Object.prototype.hasOwnProperty.call(sanitized, 'description'))
+      updateData.description = sanitized.description
+    if (Object.prototype.hasOwnProperty.call(sanitized, 'fileUrl'))
+      updateData.fileUrl = sanitized.fileUrl // allow null to clear
+    if (Object.prototype.hasOwnProperty.call(sanitized, 'content'))
+      updateData.content = sanitized.content
+    if (Object.prototype.hasOwnProperty.call(sanitized, 'thumbUrl'))
+      updateData.thumbUrl = sanitized.thumbUrl
+    if (Object.prototype.hasOwnProperty.call(sanitized, 'palette'))
+      updateData.palette = sanitized.palette
     const found = await prisma.branding.findUnique({
       where: { id: brandingId },
       include: { client: true },

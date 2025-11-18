@@ -36,33 +36,29 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const handleAuthResult = useCallback(async (firebaseUser: User, inviteToken?: string | null) => {
     if (DEBUG_AUTH) logger.debug('UserContext: setUser', { uid: firebaseUser.uid });
     setUser(firebaseUser);
+    // Não é possível checar cookie httpOnly via JS, confiar no backend
     const idToken = await firebaseUser.getIdToken(true);
     if (!idToken) throw new Error("Falha ao obter ID token");
 
-    let response: Response
-    // const errorJson: { error?: string } | null = null
+    let response: Response;
     try {
       const apiUrl = typeof window !== 'undefined' ? new URL('/api/session', window.location.origin).toString() : '/api/session';
       response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken, skipOrgCreation: inviteToken ? true : false })
+        body: JSON.stringify({ idToken, skipOrgCreation: inviteToken ? true : false }),
+        credentials: 'include',
       });
 
       if (!response.ok) {
         let errorText = '';
         let errorJson: { error?: string } | undefined;
-
         try {
-          // Tenta parsear como JSON primeiro
           errorJson = await response.json();
           errorText = JSON.stringify(errorJson);
         } catch {
-          // Se falhar, clona a resposta não consumida e tenta text()
-          // Mas isso não funciona porque já consumimos o stream
           errorText = 'Erro ao autenticar';
         }
-
         if (DEBUG_AUTH) logger.error('UserContext: erro sessão', errorText);
         const invalid = /Invalid token/.test(errorText) || errorJson?.error === 'Invalid token';
         if (invalid && auth) { await signOut(auth); setUser(null); }
@@ -95,7 +91,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       }
       if (DEBUG_AUTH) logger.debug('UserContext: redirect', { nextPath });
       router.refresh();
-      if (nextPath) router.push(nextPath);
+      // Adiciona pequeno delay para garantir que sessão/cookie foi propagado
+      setTimeout(() => {
+        if (nextPath) router.push(nextPath);
+      }, 300);
     } catch (error) {
       console.error('Error in handleAuthResult:', error);
       throw error;

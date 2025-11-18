@@ -18,16 +18,60 @@ export async function proxy(req: NextRequest) {
   const isInviteValidation =
     pathname.startsWith('/api/invites/accept') && req.method === 'GET'
 
+  // Cria response que será modificada com headers de segurança
+  const response = NextResponse.next()
+
+  // Adiciona headers de segurança
+  if (process.env.NODE_ENV === 'production') {
+    // CORS - apenas permite o domínio da aplicação
+    const appUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL
+    if (appUrl) {
+      response.headers.set('Access-Control-Allow-Origin', appUrl)
+      response.headers.set(
+        'Access-Control-Allow-Methods',
+        'GET, POST, PUT, PATCH, DELETE, OPTIONS'
+      )
+      response.headers.set(
+        'Access-Control-Allow-Headers',
+        'Content-Type, Authorization'
+      )
+    }
+
+    // Security headers
+    response.headers.set('X-Content-Type-Options', 'nosniff')
+    response.headers.set('X-Frame-Options', 'DENY')
+    response.headers.set('X-XSS-Protection', '1; mode=block')
+    response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+    response.headers.set(
+      'Permissions-Policy',
+      'camera=(), microphone=(), geolocation=()'
+    )
+
+    // Content Security Policy
+    response.headers.set(
+      'Content-Security-Policy',
+      [
+        "default-src 'self'",
+        "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://accounts.google.com https://*.googletagmanager.com",
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+        "font-src 'self' https://fonts.gstatic.com data:",
+        "img-src 'self' data: https: blob:",
+        "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net wss://*.firebaseio.com",
+        "frame-src 'self' https://accounts.google.com",
+      ].join('; ')
+    )
+  }
+
   // Permite rota de callback passar sem verificação (ela mesma valida o token)
   if (isAuthCallback) {
-    return NextResponse.next()
+    return response
   }
 
   if (!token) {
     // Permite validar convite sem autenticação (GET /api/invites/accept)
-    if (isInviteValidation) return NextResponse.next()
+    if (isInviteValidation) return response
 
-    if (isLoginRoute) return NextResponse.next()
+    if (isLoginRoute) return response
 
     return NextResponse.redirect(new URL('/login', req.url))
   }
@@ -48,7 +92,7 @@ export async function proxy(req: NextRequest) {
     return NextResponse.redirect(new URL('/', req.url))
   }
 
-  return NextResponse.next()
+  return response
 }
 
 export const config = {

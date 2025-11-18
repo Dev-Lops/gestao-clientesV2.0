@@ -84,6 +84,7 @@ model Client {
   installmentCount        Int?
   installmentValue        Float?
   isInstallment           Boolean        @default(false)
+  installmentPaymentDays  Int[]          @default([])
   instagramUserId         String?
   instagramUsername       String?
   instagramAccessToken    String?
@@ -102,6 +103,10 @@ model Client {
   strategies              Strategy[]
   subscriptions           Subscription[]
   tasks                   Task[]
+
+  @@index([orgId, status])
+  @@index([orgId, createdAt])
+  @@index([email])
 }
 
 model Task {
@@ -120,6 +125,7 @@ model Task {
   org         Org       @relation(fields: [orgId], references: [id])
 
   @@index([clientId, status])
+  @@index([orgId, dueDate])
 }
 
 model Media {
@@ -303,6 +309,8 @@ model Invoice {
   payments       Payment[]
 
   @@index([orgId, clientId, status])
+  @@index([orgId, dueDate])
+  @@index([clientId, status])
   @@index([subscriptionId])
 }
 
@@ -405,6 +413,7 @@ enum InvoiceStatus {
   PAID
   VOID
   OVERDUE
+  CANCELED
 }
 
 enum SubscriptionStatus {

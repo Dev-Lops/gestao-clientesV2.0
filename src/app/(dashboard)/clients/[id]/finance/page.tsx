@@ -1,4 +1,4 @@
-import { FinanceManagerV2 } from "@/features/clients/components";
+import { FinanceManagerV2 } from "@/features/clients/components/FinanceManagerV2Lazy";
 import { can, type AppRole } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { getSessionProfile } from "@/services/auth/session";

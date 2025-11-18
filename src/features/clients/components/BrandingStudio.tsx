@@ -2,10 +2,10 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { fetcher } from "@/lib/swr";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import { useState } from "react";
-import useSWR from "swr";
+// React Query migration: removed SWR
 import AssetCard from "./AssetCard";
 import CanvasPreview from "./CanvasPreview";
 import Uploader from "./Uploader";
@@ -35,8 +35,22 @@ interface BrandingStudioProps {
 }
 
 export default function BrandingStudio({ clientId }: BrandingStudioProps) {
-  const { data, mutate } = useSWR<BrandingItem[]>(`/api/clients/${clientId}/branding`, fetcher);
+  const queryClient = useQueryClient();
+  const brandingQueryKey = ["branding", clientId];
+  const { data } = useQuery<BrandingItem[]>({
+    queryKey: brandingQueryKey,
+    queryFn: async () => {
+      const r = await fetch(`/api/clients/${clientId}/branding`, { credentials: "include" });
+      if (!r.ok) throw new Error("Falha ao carregar branding");
+      return r.json();
+    },
+    staleTime: 30_000,
+  });
   const items = data ?? [];
+  const updateBranding = (updater: (prev: BrandingItem[]) => BrandingItem[]) => {
+    queryClient.setQueryData<BrandingItem[]>(brandingQueryKey, (prev = []) => updater(prev));
+  };
+  const invalidateBranding = () => queryClient.invalidateQueries({ queryKey: brandingQueryKey });
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [query, setQuery] = useState("");
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "name">("newest");
@@ -75,7 +89,7 @@ export default function BrandingStudio({ clientId }: BrandingStudioProps) {
       });
       if (!res.ok) return null;
       const created = await res.json();
-      await mutate();
+      invalidateBranding();
       return created;
     } catch {
       return null;
@@ -109,7 +123,7 @@ export default function BrandingStudio({ clientId }: BrandingStudioProps) {
     try {
       const res = await fetch(`/api/clients/${clientId}/branding?brandingId=${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Failed");
-      await mutate();
+      invalidateBranding();
       setSelected((s) => (s && s.id === id ? null : s));
     } catch {
       // noop
@@ -126,7 +140,7 @@ export default function BrandingStudio({ clientId }: BrandingStudioProps) {
           body: JSON.stringify(form),
         });
         if (res.ok) {
-          await mutate();
+          invalidateBranding();
           setIsModalOpen(false);
           setEditing(null);
         }
@@ -141,7 +155,7 @@ export default function BrandingStudio({ clientId }: BrandingStudioProps) {
           body: JSON.stringify(form),
         });
         if (res.ok) {
-          await mutate();
+          invalidateBranding();
           setIsModalOpen(false);
         }
       } catch {
@@ -170,7 +184,7 @@ export default function BrandingStudio({ clientId }: BrandingStudioProps) {
         body: JSON.stringify(updated),
       });
       if (!res.ok) throw new Error("Failed");
-      await mutate();
+      invalidateBranding();
       setSelected(null);
     } catch {
       // noop
@@ -196,7 +210,7 @@ export default function BrandingStudio({ clientId }: BrandingStudioProps) {
       for (const id of Array.from(selectedIds)) {
         await fetch(`/api/clients/${clientId}/branding?brandingId=${id}`, { method: "DELETE" });
       }
-      await mutate();
+      invalidateBranding();
       clearSelection();
     } catch {
       // noop
@@ -322,7 +336,7 @@ export default function BrandingStudio({ clientId }: BrandingStudioProps) {
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ fileUrl: media.url, thumbUrl: media.thumbUrl ?? undefined, palette: media.colors ?? undefined }),
                           });
-                          await mutate();
+                          invalidateBranding();
                         }
                       }}
                     >

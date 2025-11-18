@@ -1,6 +1,7 @@
 import ErrorBoundary from "@/components/ErrorBoundary";
 import AppLayoutClient from "@/components/layout/AppLayoutClient";
-import SWRProvider from "@/components/providers/SWRProvider";
+import PostHogProvider from "@/components/providers/PostHogProvider";
+import ReactQueryProvider from "@/components/providers/ReactQueryProvider";
 import { UserProvider } from "@/context/UserContext";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
@@ -95,14 +96,12 @@ export default function RootLayout({
       <body
         className={`${inter.className} min-h-screen bg-background text-foreground antialiased transition-colors`}
       >
+        <PostHogProvider />
         <ErrorBoundary>
-          <>
-            {/* Provider de autenticação global + Sidebar (apenas para usuários autenticados) */}
-            <SWRProvider>
-              <UserProvider>
-                <AppLayoutClient>{children}</AppLayoutClient>
-              </UserProvider>
-            </SWRProvider>
+          <ReactQueryProvider>
+            <UserProvider>
+              <AppLayoutClient>{children}</AppLayoutClient>
+            </UserProvider>
             <Toaster
               position="top-right"
               expand={true}
@@ -118,9 +117,13 @@ export default function RootLayout({
                 className: "toast-custom",
               }}
             />
-          </>
+          </ReactQueryProvider>
         </ErrorBoundary>
       </body>
     </html>
   );
 }
+
+// Prefer Node runtime and auto region selection globally
+export const runtime = "nodejs";
+export const preferredRegion = "auto";
