@@ -2,22 +2,23 @@ import DOMPurify from 'dompurify'
 
 // Lazily initialize DOMPurify + JSDOM to avoid loading `jsdom` at module
 // evaluation time (fixes ESM/CommonJS issues with parse5/jsdom on Netlify).
-let purify: ReturnType<typeof DOMPurify> | null = null
-let purifyInitializing: Promise<typeof purify> | null = null
+type PurifyInstance = ReturnType<typeof DOMPurify>
+let purify: PurifyInstance | null = null
+let purifyInitializing: Promise<PurifyInstance> | null = null
 
-async function ensurePurify(): Promise<typeof purify> {
+async function ensurePurify(): Promise<PurifyInstance> {
   if (purify) return purify
   if (purifyInitializing) return purifyInitializing
   purifyInitializing = (async () => {
-    // dynamic import so Node can handle ESM packages correctly
     const jsdom = await import('jsdom')
     const { JSDOM } = jsdom as any
     const window = new JSDOM('').window
     purify = DOMPurify(window)
-    purifyInitializing = null
-    return purify
+    return purify as PurifyInstance
   })()
-  return purifyInitializing
+  const instance = await purifyInitializing
+  purifyInitializing = null
+  return instance
 }
 
 /**
@@ -28,7 +29,6 @@ async function ensurePurify(): Promise<typeof purify> {
 export async function sanitizeHtml(html: string): Promise<string> {
   try {
     const p = await ensurePurify()
-    if (!p) throw new Error('purify_not_initialized')
     return p.sanitize(html, {
       ALLOWED_TAGS: [
         'p',
