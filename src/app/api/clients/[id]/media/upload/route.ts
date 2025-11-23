@@ -1,4 +1,5 @@
 import { can } from '@/lib/permissions'
+import crypto from 'crypto'
 import { prisma } from '@/lib/prisma'
 import {
   checkRateLimit,
@@ -272,7 +273,13 @@ export async function POST(
     })
     return NextResponse.json({ ...media, colors: colors || undefined })
   } catch (e) {
-    const correlationId = crypto.randomUUID()
+    // Garantir que crypto está disponível (importado acima). Gerar ID de fallback se falhar.
+    let correlationId: string
+    try {
+      correlationId = crypto.randomUUID()
+    } catch {
+      correlationId = `cid-${Date.now()}-${Math.random().toString(16).slice(2)}`
+    }
     console.error('[upload:unhandled-error]', { correlationId, error: e })
     // Se requisitado, explodir detalhe do erro para debugging (não em produção sem autorização)
     const url = new URL(req.url)
@@ -291,3 +298,11 @@ export async function POST(
     )
   }
 }
+
+// Força runtime Node.js (sharp, file-type não funcionam em edge runtime)
+export const runtime = 'nodejs'
+
+// Documentação rápida de debug:
+// - Enviar header `x-debug: 1` para incluir mais detalhes em erros controlados.
+// - CorrelationId aparece em cada resposta 500 para cruzar com logs no Netlify.
+// - Para inspecionar credenciais/storage: verificar logs '[storage] Inicializando S3 Client'.
