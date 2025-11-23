@@ -49,6 +49,20 @@ const nextConfig = {
       bodySizeLimit: '1.5gb',
     },
   },
+  // CRÍTICO: Desabilitar CSP do @netlify/plugin-nextjs
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: '', // Remove qualquer CSP
+          },
+        ],
+      },
+    ]
+  },
 }
 
 // Sentry desabilitado - remova este bloco de comentário para reabilitar

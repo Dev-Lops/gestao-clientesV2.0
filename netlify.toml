@@ -7,8 +7,10 @@
   NEXT_PRIVATE_SKIP_VALIDATION = "1"
   PNPM_VERSION = "9"
   SECRETS_SCAN_ENABLED = "false"
-  # Disable Next.js plugin CSP
-  NETLIFY_NEXT_PLUGIN_SKIP = "true"
+
+# Plugin Next.js (necessário)
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
 
 # Headers de segurança básicos (SEM CSP)
 [[headers]]
