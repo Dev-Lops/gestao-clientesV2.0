@@ -6,6 +6,8 @@
   NODE_VERSION = "20"
   NEXT_PRIVATE_SKIP_VALIDATION = "1"
   PNPM_VERSION = "9"
+  # Netlify Secrets Scanning: allow known-safe public keys (e.g., Firebase API key starting with AIza)
+  SECRETS_SCAN_SMART_DETECTION_ENABLED = "true"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
