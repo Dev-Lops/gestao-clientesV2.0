@@ -327,6 +327,14 @@ const EXTRA_DOCUMENT_TYPES = [
   'application/json',
 ]
 
+// Tipos de vídeo que podem vir como application/* em vez de video/*
+const VIDEO_APPLICATION_TYPES = [
+  'application/mp4',
+  'application/x-m4v',
+  'application/x-matroska', // .mkv
+  'application/mxf', // Media Exchange Format
+]
+
 export function isAllowedMimeType(mimeType: string): boolean {
   if (!mimeType) return false
   if (BLOCKED_MIME_PREFIXES.some((p) => mimeType.startsWith(p))) return false
@@ -335,6 +343,7 @@ export function isAllowedMimeType(mimeType: string): boolean {
   if (mimeType.startsWith('audio/')) return true
   if (mimeType.startsWith('text/')) return true
   if (EXTRA_DOCUMENT_TYPES.includes(mimeType)) return true
+  if (VIDEO_APPLICATION_TYPES.includes(mimeType)) return true
   // Permitir binário genérico para alguns formatos não detectados
   if (mimeType === 'application/octet-stream') return true
   // Outros application/* são bloqueados por segurança

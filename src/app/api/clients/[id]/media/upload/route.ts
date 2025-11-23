@@ -177,6 +177,12 @@ export async function POST(
 
     if (!isAllowedMimeType(file.type)) {
       const reason = mimeRejectionReason(file.type)
+      console.log('[upload:mime-rejected]', {
+        correlationId,
+        claimedMime: file.type,
+        fileName: file.name,
+        reason,
+      })
       return NextResponse.json(
         {
           error:
@@ -184,6 +190,7 @@ export async function POST(
               ? 'File type blocked for security'
               : 'Unsupported media type',
           claimedMime: file.type,
+          correlationId,
         },
         { status: 400 }
       )
