@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && npm run copy:headers",
+    "copy:headers": "node -e \"require('fs').cpSync('public/_headers', '.next/_headers', {force: true})\"",
     "start": "next start",
     "lint": "eslint",
     "prisma:generate": "node scripts/prisma-generate.mjs",
