@@ -334,6 +334,8 @@ export async function POST(
 
 // Força runtime Node.js (sharp, file-type não funcionam em edge runtime)
 export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic' // Desabilita cache estático
+export const maxDuration = 300 // 5 minutos (máx Netlify Pro)
 
 // Documentação rápida de debug:
 // - Enviar header `x-debug: 1` para incluir mais detalhes em erros controlados.

@@ -49,6 +49,14 @@ const nextConfig = {
       bodySizeLimit: '1.5gb',
     },
   },
+  // Configuração de API routes para Netlify
+  serverRuntimeConfig: {
+    // Limite de body para API routes (padrão é 4MB)
+    // Netlify respeita isso junto com configuração do plugin
+    bodyParser: {
+      sizeLimit: '1.5gb',
+    },
+  },
 }
 
 // Sentry desabilitado - remova este bloco de comentário para reabilitar

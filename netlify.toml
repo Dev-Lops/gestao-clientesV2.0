@@ -29,6 +29,19 @@
 # Função serverless timeout
 [functions]
   node_bundler = "esbuild"
+  # Timeout padrão estendido para uploads
+  included_files = ["prisma/schema.prisma"]
+
+# Configuração específica para upload de mídia
+[[functions]]
+  # Next.js API routes seguem padrão .netlify/functions/
+  # Mas usamos glob pattern para identificar
+  path = "api/clients/*/media/upload"
+  node_bundler = "esbuild"
+  # Timeout máximo para uploads grandes
+  timeout = 300
+  # Memória extra para sharp/compressão
+  memory = 3008
   
 [functions."api/*"]
   node_bundler = "esbuild"
