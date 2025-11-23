@@ -20,6 +20,27 @@ import { NextResponse } from 'next/server'
 
 const MAX_FILE_SIZE = getMaxUploadSizeBytes()
 
+// Snapshot simplificado de variáveis de storage para debug opcional
+function storageSnapshot() {
+  return {
+    USE_S3: process.env.USE_S3,
+    STORAGE_BUCKET: process.env.STORAGE_BUCKET,
+    STORAGE_ENDPOINT: process.env.STORAGE_ENDPOINT,
+    STORAGE_REGION: process.env.STORAGE_REGION,
+    AWS_S3_BUCKET: process.env.AWS_S3_BUCKET,
+    endpointSource: process.env.STORAGE_ENDPOINT
+      ? 'STORAGE_ENDPOINT'
+      : process.env.AWS_ENDPOINT_URL
+        ? 'AWS_ENDPOINT_URL'
+        : 'none',
+    accessKeyLen: (
+      process.env.STORAGE_ACCESS_KEY_ID ||
+      process.env.AWS_ACCESS_KEY_ID ||
+      ''
+    ).length,
+  }
+}
+
 // POST /api/clients/[id]/media/upload
 export async function POST(
   req: Request,
@@ -209,6 +230,13 @@ export async function POST(
     const fileKey = generateFileKey(clientId, file.name)
 
     // Execução do upload (S3 ou local)
+    const debugStorage = req.headers.get('x-debug-storage') === '1'
+    if (debugStorage) {
+      console.log('[upload:storage-snapshot]', {
+        correlationId,
+        snapshot: storageSnapshot(),
+      })
+    }
     const uploadResult = await uploadFile(fileKey, buffer, file.type)
     if (!uploadResult.success) {
       console.error('[upload:storage-error]', {
@@ -271,7 +299,12 @@ export async function POST(
       size: file.size,
       durationMs: finishedAt - startedAt,
     })
-    return NextResponse.json({ ...media, colors: colors || undefined })
+    return NextResponse.json({
+      ...media,
+      colors: colors || undefined,
+      correlationId,
+      debugStorage: debugStorage ? storageSnapshot() : undefined,
+    })
   } catch (e) {
     // Garantir que crypto está disponível (importado acima). Gerar ID de fallback se falhar.
     let correlationId: string
