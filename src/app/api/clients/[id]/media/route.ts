@@ -1,6 +1,6 @@
 import { can } from '@/lib/permissions'
 import { prisma } from '@/lib/prisma'
-import { deleteFile } from '@/lib/storage'
+import { deleteFile, getFileUrl } from '@/lib/storage'
 import { getSessionProfile } from '@/services/auth/session'
 import { NextRequest, NextResponse } from 'next/server'
 
