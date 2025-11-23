@@ -8,6 +8,7 @@ const s3Domain = process.env.S3_BUCKET
 
 const nextConfig = {
   typedRoutes: false,
+  output: 'standalone', // Para Docker e otimização de produção
   images: {
     // Padrão de domínios remotos mais seguro (Next.js 16+)
     remotePatterns: [

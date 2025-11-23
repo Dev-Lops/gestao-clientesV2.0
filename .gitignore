@@ -29,7 +29,9 @@ yarn-error.log*
 # Local env files
 .env
 .env*.local
+.env.production
 !.env.local.example
+!.env.production.example
 
 # Turbo
 .turbo
