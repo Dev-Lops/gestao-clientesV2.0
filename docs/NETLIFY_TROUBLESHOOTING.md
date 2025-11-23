@@ -11,6 +11,7 @@ Error: No projects matched the filters in "/opt/build/repo"
 O Netlify está usando configurações antigas do **Dashboard UI** em vez do arquivo `netlify.toml`.
 
 **Evidência nos logs:**
+
 ```
 Line 193: command: pnpm --filter gestao-clientes... run build
 Line 194: commandOrigin: ui  ← O comando vem da UI, não do netlify.toml!
@@ -127,6 +128,7 @@ git push origin master
 ### 3. Logs Detalhados
 
 No Netlify Dashboard:
+
 1. Vá em **Deploys**
 2. Click no deploy falhado
 3. Expanda todos os logs
