@@ -1,4 +1,5 @@
 import { logger, type LogContext } from '@/lib/logger'
+import crypto from 'crypto'
 import {
   DeleteObjectCommand,
   GetObjectCommand,
@@ -6,7 +7,7 @@ import {
   S3Client,
 } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
-import crypto from 'crypto'
+// moved crypto import up (deduplicated)
 import fs from 'fs/promises'
 import path from 'path'
 import sharp from 'sharp'
@@ -135,14 +136,33 @@ export async function uploadFile(
     }
 
     if (USE_S3 && s3Client) {
-      await s3Client.send(
-        new PutObjectCommand({
-          Bucket: S3_BUCKET,
-          Key: fileKey,
-          Body: finalBuffer,
-          ContentType: finalMimeType,
-        })
-      )
+      const opId = crypto.randomUUID()
+      const t0 = Date.now()
+      console.log('[storage:put:start]', {
+        opId,
+        fileKey,
+        bucket: S3_BUCKET,
+        mimeType: finalMimeType,
+        size: finalBuffer.length,
+      })
+      try {
+        await s3Client.send(
+          new PutObjectCommand({
+            Bucket: S3_BUCKET,
+            Key: fileKey,
+            Body: finalBuffer,
+            ContentType: finalMimeType,
+          })
+        )
+      } catch (err) {
+        console.error('[storage:put:error]', { opId, fileKey, error: err })
+        return { success: false, error: String(err) }
+      }
+      console.log('[storage:put:done]', {
+        opId,
+        fileKey,
+        durationMs: Date.now() - t0,
+      })
 
       // Generate public URL (R2, S3, etc.)
       let url: string
@@ -165,14 +185,18 @@ export async function uploadFile(
           const ext = path.extname(fileKey)
           const base = fileKey.slice(0, -ext.length)
           const thumbKey = `${base}_thumb.webp`
-          await s3Client.send(
-            new PutObjectCommand({
-              Bucket: S3_BUCKET,
-              Key: thumbKey,
-              Body: thumbBuf,
-              ContentType: 'image/webp',
-            })
-          )
+          try {
+            await s3Client.send(
+              new PutObjectCommand({
+                Bucket: S3_BUCKET,
+                Key: thumbKey,
+                Body: thumbBuf,
+                ContentType: 'image/webp',
+              })
+            )
+          } catch (err) {
+            console.error('[storage:thumb:error]', { fileKey, error: err })
+          }
           if (process.env.AWS_ENDPOINT_URL) {
             thumbUrl = await getFileUrl(thumbKey, 604800)
           } else {
