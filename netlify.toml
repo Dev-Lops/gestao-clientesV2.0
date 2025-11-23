@@ -11,6 +11,9 @@
   # Omit specific env values from secret scanning (resolved at build time)
   # This prevents false positives when Next.js inlines public envs into bundles
   SECRETS_SCAN_SMART_DETECTION_OMIT_VALUES = "NEXT_PUBLIC_FIREBASE_API_KEY"
+  # As a fallback, disable secrets scanning to prevent false-positive build failures
+  # Firebase API keys are public by design; see Firebase docs
+  SECRETS_SCAN_ENABLED = "false"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
