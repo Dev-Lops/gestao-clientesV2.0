@@ -8,7 +8,9 @@ const s3Domain = process.env.S3_BUCKET
 
 const nextConfig = {
   typedRoutes: false,
-  output: 'standalone', // Para Docker e otimização de produção
+  // output: 'standalone' é para Docker, não Netlify
+  // Remover ou usar condicionalmente
+  ...(process.env.DOCKER_BUILD === 'true' && { output: 'standalone' }),
   images: {
     // Padrão de domínios remotos mais seguro (Next.js 16+)
     remotePatterns: [
