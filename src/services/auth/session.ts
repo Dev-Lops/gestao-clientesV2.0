@@ -1,4 +1,3 @@
-import { adminAuth } from '@/lib/firebaseAdmin'
 import { logger } from '@/lib/logger'
 import type { AppRole } from '@/lib/permissions'
 import { prisma } from '@/lib/prisma'
@@ -21,6 +20,19 @@ export async function getSessionProfile(): Promise<SessionProfile> {
   if (!token) return { user: null, orgId: null, role: null }
 
   try {
+    // Lazy-load Firebase Admin to avoid throwing at module load time
+    // (some deployments may not have Firebase envs configured and that would cause
+    // a top-level throw preventing the route from executing and returning a generic 500).
+    let adminAuth: any = null
+    try {
+      const mod = await import('@/lib/firebaseAdmin')
+      adminAuth = (mod as any).adminAuth
+    } catch (e) {
+      logger.error('Firebase Admin não disponível ao verificar token', e)
+      // Fail-safe: return null session so routes can respond with 401 instead of crashing
+      return { user: null, orgId: null, role: null }
+    }
+
     const decoded = await adminAuth.verifyIdToken(token)
     const user = await prisma.user.findUnique({
       where: { firebaseUid: decoded.uid },

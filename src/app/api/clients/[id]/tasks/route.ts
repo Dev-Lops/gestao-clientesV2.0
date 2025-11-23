@@ -49,6 +49,19 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     return NextResponse.json(tasks)
   } catch (error) {
     console.error('Erro ao buscar tarefas:', error)
+    // If debug requested, expose details to caller for faster debugging (only when explicitly asked)
+    const debugRequested =
+      process.env.DEBUG === 'true' ||
+      (typeof process !== 'undefined' &&
+        _request.headers?.get?.('x-debug') === '1')
+
+    if (debugRequested) {
+      return NextResponse.json(
+        { error: 'Erro ao buscar tarefas', details: String(error) },
+        { status: 500 }
+      )
+    }
+
     return NextResponse.json(
       { error: 'Erro ao buscar tarefas' },
       { status: 500 }
@@ -71,7 +84,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const validated = createTaskSchema.parse(body)
 
     // Sanitize user-generated content
-    const sanitized = sanitizeObject(validated, {
+    const sanitized = await sanitizeObject(validated, {
       textFields: ['title', 'description', 'assignee'],
     })
 
@@ -135,7 +148,7 @@ export async function PATCH(request: NextRequest) {
     const validated = updateTaskSchema.parse(body)
 
     // Sanitize user-generated content
-    const sanitized = sanitizeObject(validated, {
+    const sanitized = await sanitizeObject(validated, {
       textFields: ['title', 'description', 'assignee'],
     })
 

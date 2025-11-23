@@ -43,7 +43,15 @@ const serverEnvSchema = z.object({
   AWS_SECRET_ACCESS_KEY: z.string().optional(),
   AWS_REGION: z.string().optional(),
   AWS_S3_BUCKET: z.string().optional(),
-  USE_S3: z.enum(['true', 'false']).optional(),
+  // Cloudflare R2 / S3-compatible vars used in this project (some deployments
+  // use STORAGE_* names instead of AWS_*)
+  STORAGE_ACCESS_KEY_ID: z.string().optional(),
+  STORAGE_SECRET_ACCESS_KEY: z.string().optional(),
+  STORAGE_REGION: z.string().optional(),
+  STORAGE_BUCKET: z.string().optional(),
+  STORAGE_ENDPOINT: z.string().optional(),
+  // Allow flexible USE_S3 representation (string 'true'/'false' or not present)
+  USE_S3: z.string().optional(),
 
   // Email (opcional)
   RESEND_API_KEY: z.string().optional(),
@@ -112,6 +120,12 @@ export function validateServerEnv(): { valid: boolean; errors?: string[] } {
     AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY,
     AWS_REGION: process.env.AWS_REGION,
     AWS_S3_BUCKET: process.env.AWS_S3_BUCKET,
+    // Include STORAGE_* equivalents so validation won't fail when using R2
+    STORAGE_ACCESS_KEY_ID: process.env.STORAGE_ACCESS_KEY_ID,
+    STORAGE_SECRET_ACCESS_KEY: process.env.STORAGE_SECRET_ACCESS_KEY,
+    STORAGE_REGION: process.env.STORAGE_REGION,
+    STORAGE_BUCKET: process.env.STORAGE_BUCKET,
+    STORAGE_ENDPOINT: process.env.STORAGE_ENDPOINT,
     USE_S3: process.env.USE_S3,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     NODE_ENV: process.env.NODE_ENV,
@@ -196,7 +210,12 @@ export function isProduction(): boolean {
  * Utility para verificar se S3 está habilitado
  */
 export function isS3Enabled(): boolean {
-  return process.env.USE_S3 === 'true'
+  return (
+    process.env.USE_S3 === 'true' ||
+    process.env.USE_S3 === '1' ||
+    !!process.env.STORAGE_ACCESS_KEY_ID ||
+    !!process.env.AWS_ACCESS_KEY_ID
+  )
 }
 
 // Export types

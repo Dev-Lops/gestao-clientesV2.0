@@ -52,7 +52,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const body = await req.json()
 
     // Sanitize user-generated content
-    const sanitized = sanitizeObject(body, {
+    const sanitized = await sanitizeObject(body, {
       textFields: ['title', 'description'],
       urlFields: ['fileUrl', 'thumbUrl'],
       htmlFields: ['content'],
@@ -103,7 +103,7 @@ export async function PATCH(req: NextRequest) {
     const body = await req.json()
 
     // Sanitize user-generated content
-    const sanitized = sanitizeObject(body, {
+    const sanitized = await sanitizeObject(body, {
       textFields: ['title', 'description'],
       urlFields: ['fileUrl', 'thumbUrl'],
       htmlFields: ['content'],

@@ -75,7 +75,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // validação + sanitização
     const validated = createStrategySchema.parse({ ...body, clientId })
 
-    const sanitized = sanitizeObject(validated, {
+    const sanitized = await sanitizeObject(validated, {
       textFields: ['title', 'description', 'type', 'content'],
     })
 
@@ -123,7 +123,7 @@ export async function PATCH(request: NextRequest) {
 
     const body = await request.json()
     const validated = updateStrategySchema.parse(body)
-    const sanitized = sanitizeObject(validated, {
+    const sanitized = await sanitizeObject(validated, {
       textFields: ['title', 'description', 'type', 'content'],
     })
 

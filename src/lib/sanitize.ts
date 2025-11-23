@@ -1,42 +1,69 @@
 import DOMPurify from 'dompurify'
-import { JSDOM } from 'jsdom'
 
-// Cria uma instância do DOMPurify para uso server-side
-const window = new JSDOM('').window
-const purify = DOMPurify(window)
+// Lazily initialize DOMPurify + JSDOM to avoid loading `jsdom` at module
+// evaluation time (fixes ESM/CommonJS issues with parse5/jsdom on Netlify).
+let purify: ReturnType<typeof DOMPurify> | null = null
+let purifyInitializing: Promise<typeof purify> | null = null
+
+async function ensurePurify(): Promise<typeof purify> {
+  if (purify) return purify
+  if (purifyInitializing) return purifyInitializing
+  purifyInitializing = (async () => {
+    // dynamic import so Node can handle ESM packages correctly
+    const jsdom = await import('jsdom')
+    const { JSDOM } = jsdom as any
+    const window = new JSDOM('').window
+    purify = DOMPurify(window)
+    purifyInitializing = null
+    return purify
+  })()
+  return purifyInitializing
+}
 
 /**
  * Sanitiza HTML removendo scripts maliciosos e tags perigosas
  * @param html - String HTML para sanitizar
  * @returns HTML sanitizado
  */
-export function sanitizeHtml(html: string): string {
-  return purify.sanitize(html, {
-    ALLOWED_TAGS: [
-      'p',
-      'br',
-      'strong',
-      'em',
-      'u',
-      'ul',
-      'ol',
-      'li',
-      'a',
-      'h1',
-      'h2',
-      'h3',
-      'h4',
-      'h5',
-      'h6',
-      'blockquote',
-      'code',
-      'pre',
-      'span',
-      'div',
-    ],
-    ALLOWED_ATTR: ['href', 'target', 'rel', 'class'],
-    ALLOW_DATA_ATTR: false,
-  })
+export async function sanitizeHtml(html: string): Promise<string> {
+  try {
+    const p = await ensurePurify()
+    if (!p) throw new Error('purify_not_initialized')
+    return p.sanitize(html, {
+      ALLOWED_TAGS: [
+        'p',
+        'br',
+        'strong',
+        'em',
+        'u',
+        'ul',
+        'ol',
+        'li',
+        'a',
+        'h1',
+        'h2',
+        'h3',
+        'h4',
+        'h5',
+        'h6',
+        'blockquote',
+        'code',
+        'pre',
+        'span',
+        'div',
+      ],
+      ALLOWED_ATTR: ['href', 'target', 'rel', 'class'],
+      ALLOW_DATA_ATTR: false,
+    })
+  } catch (err) {
+    // If DOMPurify/jsdom cannot be initialized (e.g. ESM/CJS conflict), fall
+    // back to a conservative HTML-stripping sanitizer to avoid crashing the
+    // server. This keeps the app available while preventing script injection.
+    return html
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+      .replace(/<[^>]+>/g, '')
+      .trim()
+  }
 }
 
 /**
@@ -101,14 +128,14 @@ export function sanitizeUrl(url: string): string {
  * @param options - Opções de sanitização
  * @returns Objeto sanitizado
  */
-export function sanitizeObject<T extends Record<string, unknown>>(
+export async function sanitizeObject<T extends Record<string, unknown>>(
   obj: T,
   options: {
     htmlFields?: string[]
     textFields?: string[]
     urlFields?: string[]
   } = {}
-): T {
+): Promise<T> {
   const { htmlFields = [], textFields = [], urlFields = [] } = options
   const sanitized = { ...obj }
 
@@ -128,7 +155,12 @@ export function sanitizeObject<T extends Record<string, unknown>>(
 
     if (typeof value === 'string') {
       if (htmlFields.includes(key)) {
-        sanitized[key] = sanitizeHtml(value) as T[Extract<keyof T, string>]
+        // sanitizeHtml is async
+        // eslint-disable-next-line no-await-in-loop
+        sanitized[key] = (await sanitizeHtml(value)) as T[Extract<
+          keyof T,
+          string
+        >]
       } else if (urlFields.includes(key)) {
         sanitized[key] = sanitizeUrl(value) as T[Extract<keyof T, string>]
       } else if (textFields.includes(key)) {
@@ -143,10 +175,12 @@ export function sanitizeObject<T extends Record<string, unknown>>(
       const isPlainObject =
         Object.prototype.toString.call(value) === '[object Object]'
       if (isPlainObject) {
-        sanitized[key] = sanitizeObject(
+        // recursive sanitizeObject is async
+        // eslint-disable-next-line no-await-in-loop
+        sanitized[key] = (await sanitizeObject(
           value as Record<string, unknown>,
           options
-        ) as T[Extract<keyof T, string>]
+        )) as T[Extract<keyof T, string>]
       } else {
         sanitized[key] = value as T[Extract<keyof T, string>]
       }
