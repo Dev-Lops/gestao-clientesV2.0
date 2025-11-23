@@ -51,6 +51,9 @@ export async function POST(
     }
 
     const formData = await req.formData()
+    // Logging básico para diagnóstico (não inclui conteúdo do arquivo)
+    const claimedMime = (formData.get('file') as File | null)?.type || 'unknown'
+    const claimedSize = (formData.get('file') as File | null)?.size || 0
     const file = formData.get('file') as File | null
     const title = (formData.get('title') as string) || ''
     const description = (formData.get('description') as string) || ''
@@ -106,7 +109,7 @@ export async function POST(
 
     if (!isAllowedMimeType(file.type)) {
       return NextResponse.json(
-        { error: 'File type not allowed' },
+        { error: 'File type not allowed', claimedMime: file.type },
         { status: 400 }
       )
     }
@@ -128,7 +131,7 @@ export async function POST(
     if (detectedType && !isAllowedMimeType(detectedType.mime)) {
       return NextResponse.json(
         {
-          error: `Tipo de arquivo não permitido. Detectado: ${detectedType.mime}`,
+          error: 'File type not allowed (magic bytes)',
           detectedMime: detectedType.mime,
           claimedMime: file.type,
         },

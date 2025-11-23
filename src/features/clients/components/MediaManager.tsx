@@ -368,10 +368,14 @@ export function MediaManager({ clientId }: MediaManagerProps) {
           });
 
           xhr.addEventListener("load", () => {
+            let json: any = null;
+            try { json = JSON.parse(xhr.responseText || '{}'); } catch { }
             if (xhr.status >= 200 && xhr.status < 300) {
-              resolve(JSON.parse(xhr.responseText));
+              resolve(json);
             } else {
-              reject(new Error("Upload falhou"));
+              const serverMsg = json?.error || json?.details || `Upload falhou (status ${xhr.status})`;
+              const mimeInfo = json?.detectedMime ? ` | detected=${json.detectedMime} claimed=${json.claimedMime}` : '';
+              reject(new Error(serverMsg + mimeInfo));
             }
           });
 
@@ -390,10 +394,8 @@ export function MediaManager({ clientId }: MediaManagerProps) {
       setIsUploadModalOpen(false);
       resetUploadForm();
     } catch (err: unknown) {
-      const error = err as { message?: string; response?: { data?: { error?: string; details?: string } } };
-      const errorMsg = error.response?.data?.error || error.message || "Erro no upload";
-      const details = error.response?.data?.details;
-      toast.error(details ? `${errorMsg}: ${details}` : errorMsg);
+      const error = err as Error;
+      toast.error(error.message || "Erro no upload");
     } finally {
       setUploading(false);
     }
