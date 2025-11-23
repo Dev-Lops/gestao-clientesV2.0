@@ -96,6 +96,18 @@ export async function POST(req: Request) {
       skipOrgCreation: skipOrgCreation || false,
     })
 
+    // Busca o role do usuário após onboarding para setar no cookie
+    const { role } = await getSessionProfile()
+    if (role) {
+      cookieStore.set('role', role, {
+        httpOnly: false, // Permite leitura client-side para UI condicional
+        secure: isProduction,
+        sameSite: 'lax',
+        path: '/',
+        expires,
+      })
+    }
+
     console.log('[Session API] ✅ Sessão criada com sucesso')
     return NextResponse.json({ ok: true })
   } catch (err) {

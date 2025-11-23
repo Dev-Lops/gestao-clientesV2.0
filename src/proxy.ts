@@ -1,6 +1,14 @@
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 
+// Lê role do cookie para controle de acesso básico no middleware
+function getRole(req: NextRequest): string | null {
+  const role = req.cookies.get('role')?.value
+  if (!role) return null
+  if (['OWNER', 'STAFF', 'CLIENT'].includes(role)) return role
+  return null
+}
+
 export async function proxy(req: NextRequest) {
   const token = req.cookies.get('auth')?.value
 
@@ -75,9 +83,22 @@ export async function proxy(req: NextRequest) {
     return NextResponse.redirect(new URL('/', req.url))
   }
 
-  // Nota: Validação de roles removida do middleware para permitir navegação client-side.
-  // As páginas individuais fazem validação server-side via getSessionProfile().
-  // Isso evita problemas de sincronização de cookies e permite SPA navigation funcionar corretamente.
+  // Controle de acesso baseado em role (validação adicional nas páginas via getSessionProfile)
+  const role = getRole(req)
+
+  // Bloqueia CLIENT de acessar áreas administrativas
+  if (pathname.startsWith('/dashboard') && role === 'CLIENT') {
+    return NextResponse.redirect(new URL('/clients', req.url))
+  }
+
+  // Apenas OWNER pode acessar admin e billing
+  if (
+    (pathname.startsWith('/admin') || pathname.startsWith('/billing')) &&
+    role &&
+    role !== 'OWNER'
+  ) {
+    return NextResponse.redirect(new URL('/', req.url))
+  }
 
   return response
 }
