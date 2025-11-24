@@ -92,7 +92,30 @@ function LoginPageInner() {
         errorMessage = "Erro de conexão. Verifique sua internet.";
       }
 
+      // Special handling for invite mismatch
+      if (err.message && err.message.startsWith('INVITE_MISMATCH:')) {
+        const invitedEmail = err.message.split(':')[1] || ''
+        setError(
+          `Você entrou com outro e-mail. O convite foi enviado para: ${invitedEmail}. Saia e entre com esse e-mail para aceitar o convite.`
+        );
+        setIsLogging(false);
+        return
+      }
+
       setError(errorMessage);
+      setIsLogging(false);
+    }
+  };
+
+  const { logout } = useUser();
+
+  const handleSignOutForInvite = async () => {
+    setIsLogging(true);
+    try {
+      await logout();
+    } catch (e) {
+      console.error('Erro ao deslogar para trocar de conta', e);
+    } finally {
       setIsLogging(false);
     }
   };
@@ -307,6 +330,16 @@ function LoginPageInner() {
                   <p className="text-sm text-red-600 dark:text-red-400 text-center font-medium">
                     {error}
                   </p>
+                  {error.includes('convite') && (
+                    <div className="mt-3 text-center">
+                      <button
+                        onClick={handleSignOutForInvite}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border rounded-md text-sm"
+                      >
+                        Sair e entrar com o e-mail do convite
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 

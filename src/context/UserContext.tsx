@@ -70,7 +70,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken, skipOrgCreation: inviteToken ? true : false }),
+        body: JSON.stringify({ idToken, skipOrgCreation: inviteToken ? true : false, inviteToken: inviteToken || undefined }),
         credentials: 'include',
       });
 
@@ -90,6 +90,24 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       }
       if (DEBUG_AUTH) logger.debug('UserContext: sessão OK');
 
+      // Parse session response body (server may have accepted invite and returned nextPath/inviteStatus)
+      let sessionJson: any = null
+      try {
+        sessionJson = await response.clone().json().catch(() => null)
+      } catch { }
+
+      // If server indicated an invite mismatch, surface as explicit error so UI can handle it
+      try {
+        const inviteStatus = sessionJson?.inviteStatus
+        if (inviteStatus && inviteStatus.status === 'mismatch') {
+          // Provide the invited email in the error message so UI can show it
+          throw new Error(`INVITE_MISMATCH:${inviteStatus.email || ''}`)
+        }
+      } catch (e) {
+        // Re-throw to be caught by outer try/catch
+        throw e
+      }
+
       // Session cookie should be set now; fetch profile using server session
       try {
         const enrichedUser = await enrichUserWithProfile(firebaseUser);
@@ -98,19 +116,23 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         if (DEBUG_AUTH) logger.debug('UserContext: falha ao obter profile após criar sessão', err as LogContext);
       }
 
-      let nextPath: string | null = null;
-      try {
-        const inv = await fetch("/api/invites/for-me", { credentials: 'include' });
-        if (inv.ok) {
-          const data = await inv.json();
-          const invite = Array.isArray(data?.data) ? data.data[0] : undefined;
-          if (invite) {
-            if (DEBUG_AUTH) logger.debug('UserContext: convite pendente, redirecionando para aceitar');
-            const r = await fetch("/api/invites/accept", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token: invite.token }), credentials: 'include' });
-            if (r.ok) { const j = await r.json(); nextPath = j.nextPath || null; }
+      let nextPath: string | null = sessionJson?.nextPath || null;
+
+      // If server didn't accept invite during session creation, fallback to client-side check
+      if (!nextPath) {
+        try {
+          const inv = await fetch("/api/invites/for-me", { credentials: 'include' });
+          if (inv.ok) {
+            const data = await inv.json();
+            const invite = Array.isArray(data?.data) ? data.data[0] : undefined;
+            if (invite) {
+              if (DEBUG_AUTH) logger.debug('UserContext: convite pendente, redirecionando para aceitar');
+              const r = await fetch("/api/invites/accept", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token: invite.token }), credentials: 'include' });
+              if (r.ok) { const j = await r.json(); nextPath = j.nextPath || null; }
+            }
           }
-        }
-      } catch { }
+        } catch { }
+      }
 
       if (!nextPath) {
         try {
