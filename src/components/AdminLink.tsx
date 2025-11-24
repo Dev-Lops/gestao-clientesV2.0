@@ -12,7 +12,7 @@ export function AdminLink() {
   useEffect(() => {
     async function checkRole() {
       try {
-        const res = await fetch("/api/session");
+        const res = await fetch("/api/session", { credentials: 'include' });
         if (res.ok) {
           const data = await res.json();
           setIsOwner(data.role === "OWNER");

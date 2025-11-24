@@ -121,7 +121,7 @@ export function SidebarV3({ isOpen, onClose }: SidebarV3Props) {
     .join("");
 
   useEffect(() => {
-    fetch("/api/sidebar-stats").then(async (res) => {
+    fetch("/api/sidebar-stats", { credentials: 'include' }).then(async (res) => {
       if (res.ok) {
         const data = await res.json();
         if (data?.orgName) setOrgName(data.orgName);

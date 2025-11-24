@@ -56,6 +56,7 @@ export function ProfileForm({
           name: name?.trim() || null,
           image: image?.trim() || null,
         }),
+        credentials: 'include'
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -104,6 +105,7 @@ export function ProfileForm({
       const uploadPromise = fetch("/api/profile/avatar", {
         method: "POST",
         body: formData,
+        credentials: 'include'
       });
 
       // Simular progresso enquanto upload acontece
@@ -143,6 +145,7 @@ export function ProfileForm({
           body: JSON.stringify({
             image: result.url,
           }),
+          credentials: 'include'
         });
 
         if (saveRes.ok) {

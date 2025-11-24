@@ -22,7 +22,7 @@ export default function ClientDeletePage({ params }: ClientDeletePageProps) {
 
   useEffect(() => {
     // Buscar role do usuário
-    fetch("/api/session").then(async (res) => {
+    fetch("/api/session", { credentials: 'include' }).then(async (res) => {
       if (res.ok) {
         const data = await res.json();
         setUserRole(data.role);

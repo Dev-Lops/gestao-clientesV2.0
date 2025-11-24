@@ -19,7 +19,7 @@ export default function AppShell({ children }: AppShellProps) {
     let intervalId: number | null = null;
     const beat = async () => {
       try {
-        await fetch("/api/activity/heartbeat", { method: "POST" });
+        await fetch("/api/activity/heartbeat", { method: "POST", credentials: 'include' });
       } catch { }
     };
     if (user) {
