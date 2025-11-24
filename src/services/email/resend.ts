@@ -32,9 +32,16 @@ function getSafeFromEmail(): string {
 }
 
 const fromEmail = getSafeFromEmail();
+// Resolve application base URL in order of preference:
+// 1. NEXT_PUBLIC_APP_URL (client-safe override)
+// 2. APP_BASE_URL (explicit server config)
+// 3. Netlify `URL` (production site URL)
+// 4. Vercel `VERCEL_URL` (preview/production)
+// 5. fallback to localhost for local dev
 const appBaseUrl =
-  process.env.APP_BASE_URL ||
   process.env.NEXT_PUBLIC_APP_URL ||
+  process.env.APP_BASE_URL ||
+  (process.env.URL ? process.env.URL : null) ||
   (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
   "http://localhost:3000";
 
