@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import { Suspense, useState } from "react";
 import { toast } from "sonner";
+import { z } from "zod";
 
 // 🔹 Mapas de papéis
 type Role = "OWNER" | "STAFF" | "CLIENT";
@@ -335,6 +336,36 @@ function MembersAdminPage() {
     responsiveClass: string;
     idSuffix: string;
   }) {
+    const [emailError, setEmailError] = useState<string | null>(null);
+
+    function onInviteSubmit(e: React.FormEvent<HTMLFormElement>) {
+      const form = e.currentTarget as HTMLFormElement;
+
+      // Native HTML5 validation first
+      if (!form.checkValidity()) {
+        e.preventDefault();
+        form.reportValidity();
+        return;
+      }
+
+      // Client-side schema validation (defense in depth)
+      const fd = new FormData(form);
+      const rawEmail = String(fd.get("email") || "").toLowerCase().trim();
+      const emailSchema = z.string().email({ message: "Email inválido" });
+      try {
+        emailSchema.parse(rawEmail);
+        setEmailError(null);
+        // allow submission to continue
+      } catch (err) {
+        e.preventDefault();
+        if (err instanceof z.ZodError) {
+          setEmailError(err.issues?.[0]?.message || "Email inválido");
+        } else {
+          setEmailError("Email inválido");
+        }
+        return;
+      }
+    }
     return (
       <Card className={`rounded-xl border border-border bg-card shadow-sm overflow-hidden ${responsiveClass}`}>
         <div className="border-b border-border/50 px-5 py-3 bg-linear-to-r from-indigo-50 via-purple-50 to-pink-50 dark:from-indigo-950/30 dark:via-purple-950/30 dark:to-pink-950/30">
@@ -348,7 +379,7 @@ function MembersAdminPage() {
           </div>
         </div>
 
-        <form action={handleInvite} className="p-5">
+        <form action={handleInvite} className="p-5" onSubmit={onInviteSubmit}>
           <input type="hidden" name="allow_resend_existing" value="true" />
           <div className="space-y-4">
             <div className="space-y-2">
@@ -368,7 +399,14 @@ function MembersAdminPage() {
                 inputMode="email"
                 pattern="[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}"
                 className="h-11 border-border bg-background focus:ring-2 focus:ring-indigo-500"
+                isInvalid={!!emailError}
+                error={emailError ?? undefined}
               />
+              {emailError && (
+                <p id={`invite-email-${idSuffix}-error`} className="text-sm text-red-600 mt-1">
+                  {emailError}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
