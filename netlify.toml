@@ -21,10 +21,7 @@
   to = "/api/health"
   status = 200
 
-[[redirects]]
-  from = "/admin"
-  to = "/dashboard"
-  status = 301
+## REMOVED redirect from /admin to /dashboard to allow direct admin access
 
 # Configuração de funções serverless
 [functions]

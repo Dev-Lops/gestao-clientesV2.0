@@ -47,7 +47,7 @@ export async function proxy(req: NextRequest) {
       'camera=(), microphone=(), geolocation=()'
     )
 
-    // Content Security Policy - Completo para Google OAuth + Firebase + Sentry
+    // Content Security Policy - Completo para Google OAuth + Firebase + Sentry + R2 Media
     const cspDirectives = [
       "default-src 'self'",
       "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://accounts.google.com https://apis.google.com https://*.googletagmanager.com https://www.gstatic.com",
@@ -57,6 +57,7 @@ export async function proxy(req: NextRequest) {
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com",
       "font-src 'self' data: https://fonts.gstatic.com https://www.gstatic.com",
       "img-src 'self' data: https: blob:",
+      "media-src 'self' https://*.r2.cloudflarestorage.com blob: data:",
       "frame-src 'self' https://accounts.google.com https://*.firebaseapp.com",
       "form-action 'self' https://accounts.google.com",
       "frame-ancestors 'self'",
