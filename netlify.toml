@@ -4,34 +4,17 @@
 
 [build.environment]
   NODE_VERSION = "20"
-  NEXT_PRIVATE_SKIP_VALIDATION = "1"
   PNPM_VERSION = "9"
-  SECRETS_SCAN_ENABLED = "false"
 
-# Plugin Next.js (necessário)
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
+# Headers definidos em public/_headers
 
-# NOTA: Headers agora são definidos em public/_headers
-# para melhor controle do CSP e evitar conflitos
-
-# Redirects
+# Redirects básicos
 [[redirects]]
   from = "/health"
   to = "/api/health"
   status = 200
 
-## REMOVED redirect from /admin to /dashboard to allow direct admin access
-
-# Configuração de funções serverless
-[functions]
-  node_bundler = "esbuild"
-  included_files = ["prisma/schema.prisma"]
-
-# Configuração específica para funções de upload (usa pattern matching do Netlify)
-# O plugin @netlify/plugin-nextjs mapeia automaticamente Next.js API routes
-# Estas configurações sobrescrevem defaults para rotas que contêm "upload"
-[functions."**/*upload*"]
-  node_bundler = "esbuild"
-  timeout = 300
-  memory_size = 3008
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

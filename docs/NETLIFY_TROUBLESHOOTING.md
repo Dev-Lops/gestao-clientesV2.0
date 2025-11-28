@@ -1,6 +1,44 @@
-# 🚨 Troubleshooting: Netlify Build Error
+# 🚨 Troubleshooting: Netlify Build Errors
 
-## Problema Atual
+## ❌ Erro 1: "Failed retrieving extensions for site"
+
+### Sintoma
+
+```
+Failed retrieving extensions for site 607b1bc1-0405-4b03-9612-c49889bad40b:
+fetch failed. Double-check your login status with 'netlify status'
+Failed during stage 'Reading and parsing configuration files'
+```
+
+### Causa
+
+O Netlify está tentando buscar extensões/plugins de um site antigo que pode não existir mais ou ter problemas de permissão. O plugin `@netlify/plugin-nextjs` estava causando este erro.
+
+### ✅ Solução
+
+**1. Plugin removido do `netlify.toml`**
+
+- ✅ Já foi removido o plugin problemático
+- Next.js 16 funciona nativamente no Netlify sem plugins
+
+**2. Criar novo site no Netlify (se necessário):**
+
+- Delete o site antigo no Dashboard
+- Crie um novo site conectando ao repositório GitHub
+- Selecione branch `master`
+- O Netlify detectará automaticamente o `netlify.toml`
+
+**3. Re-autenticar CLI (se usando deploy via CLI):**
+
+```bash
+netlify logout
+netlify login
+netlify link
+```
+
+---
+
+## ❌ Erro 2: "No projects matched the filters"
 
 ```
 Error: No projects matched the filters in "/opt/build/repo"
