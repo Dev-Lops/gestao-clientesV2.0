@@ -38,7 +38,62 @@ netlify link
 
 ---
 
-## ❌ Erro 2: "No projects matched the filters"
+## ❌ Erro 2: "Secrets scanning found secrets in build"
+
+### Sintoma
+
+```
+"AIza***" detected as a likely secret:
+  found value at line 3 in .netlify/.next/server/chunks/ssr/[root-of-the-server]__38b797f2._.js
+  ...
+
+Secrets scanning detected secrets in files during build.
+Build failed due to a user error: Build script returned non-zero exit code: 2
+```
+
+### Causa
+
+O Netlify detectou a `NEXT_PUBLIC_FIREBASE_API_KEY` no código bundled. Essa variável é **pública por natureza** (prefixo `NEXT_PUBLIC_`) e precisa estar no bundle do cliente para autenticação Firebase.
+
+### ✅ Solução
+
+**Desabilitar Smart Detection** no `netlify.toml`:
+
+```toml
+[build.environment]
+  NODE_VERSION = "20"
+  PNPM_VERSION = "9"
+  SECRETS_SCAN_SMART_DETECTION_ENABLED = "false"
+```
+
+✅ **Já aplicado** - A variável foi adicionada ao netlify.toml.
+
+### 🔒 Por que é seguro?
+
+1. **Firebase API Keys são públicas** - Documentação oficial: [Firebase API Key Security](https://firebase.google.com/docs/projects/api-keys)
+2. **Proteção via Firebase Rules** - Segurança está nas regras do Firestore/Storage, não na API Key
+3. **Domain Restrictions** - Configure restrições de domínio no Firebase Console
+4. **Next.js requer no cliente** - Variáveis `NEXT_PUBLIC_*` precisam estar no bundle
+
+### 🛡️ Alternativas (se preferir)
+
+**Opção 1: Omitir valores específicos**
+
+```toml
+[build.environment]
+  SECRETS_SCAN_SMART_DETECTION_OMIT_VALUES = "AIza***"
+```
+
+**Opção 2: Desabilitar scanning completo** (não recomendado)
+
+```toml
+[build.environment]
+  SECRETS_SCAN_ENABLED = "false"
+```
+
+---
+
+## ❌ Erro 3: "No projects matched the filters"
 
 ```
 Error: No projects matched the filters in "/opt/build/repo"

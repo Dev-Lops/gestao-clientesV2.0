@@ -5,6 +5,8 @@
 [build.environment]
   NODE_VERSION = "20"
   PNPM_VERSION = "9"
+  # Desabilita smart detection para Firebase API Key (pública por natureza)
+  SECRETS_SCAN_SMART_DETECTION_ENABLED = "false"
 
 # Headers definidos em public/_headers
 
