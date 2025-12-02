@@ -272,13 +272,19 @@ export class PaymentService {
     if (installment.status === 'CONFIRMED')
       throw new Error('Parcela já foi confirmada')
 
-    // Atualiza status da parcela
+    // Atualiza status da parcela E do cliente
     const updated = await prisma.installment.update({
       where: { id: installmentId },
       data: { status: 'CONFIRMED', paidAt: new Date() },
     })
 
-    // Verifica se já existe fatura vinculada (usa externalId ou notes)
+    // Atualiza status de pagamento do cliente
+    await prisma.client.update({
+      where: { id: installment.clientId },
+      data: { paymentStatus: 'CONFIRMED' },
+    })
+
+    // Verifica se já existe fatura vinculada (usa externalId)
     const existingInvoice = await prisma.invoice.findFirst({
       where: {
         orgId,
@@ -287,6 +293,7 @@ export class PaymentService {
       },
     })
 
+    // Se já existe fatura, não cria nova
     if (!existingInvoice) {
       // Cria fatura específica da parcela (já como PAID)
       const number = `INV-PAR-${updated.number}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
@@ -332,17 +339,19 @@ export class PaymentService {
       // Finance entry já feito abaixo
     }
 
-    // Cria entrada financeira (evita duplicar se já houver mesma descrição e valor)
-    const existingFinance = await prisma.finance.findFirst({
+    // Cria entrada financeira SOMENTE se não existe invoice
+    // (evita duplicação: invoice já cria finance via markInvoicePaid)
+    // Agora usa validação por fatura ao invés de descrição
+    const hasInvoice = await prisma.invoice.findFirst({
       where: {
         orgId,
         clientId: updated.clientId,
-        type: 'income',
-        amount: updated.amount,
-        description: { contains: `Parcela ${updated.number}` },
+        externalId: installment.id,
       },
     })
-    if (!existingFinance) {
+
+    if (!hasInvoice) {
+      // Só cria finance se não houver fatura (fallback para sistemas antigos)
       await prisma.finance.create({
         data: {
           orgId,

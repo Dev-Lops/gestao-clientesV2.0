@@ -50,18 +50,37 @@ export default async function BillingHomePage({ searchParams }: PageProps) {
 
   // Clients list no longer needed here (typeahead will fetch)
 
-  // Finance monthly summary (income/expense/net) for completeness
+  // Finance monthly summary - USA PAYMENT.PAIDAT para receitas (mais confiável)
   const startMonth = new Date(now.getFullYear(), now.getMonth(), 1)
   const endMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59)
-  const financeRows = await prisma.finance.findMany({ where: { orgId, date: { gte: startMonth, lte: endMonth } } })
-  const incomeMonth = financeRows.filter(f => f.type === 'income').reduce((s, r) => s + r.amount, 0)
-  const expenseMonth = financeRows.filter(f => f.type === 'expense').reduce((s, r) => s + r.amount, 0)
+
+  // Receitas: Usa Payment.paidAt (fonte da verdade para "quando foi pago")
+  const paymentsMonth = await prisma.payment.findMany({
+    where: { orgId, paidAt: { gte: startMonth, lte: endMonth } }
+  })
+  const incomeMonth = paymentsMonth.reduce((s, p) => s + p.amount, 0)
+
+  // Despesas: Usa Finance.date (lançamentos manuais)
+  const expensesMonth = await prisma.finance.findMany({
+    where: { orgId, type: 'expense', date: { gte: startMonth, lte: endMonth } }
+  })
+  const expenseMonth = expensesMonth.reduce((s, r) => s + r.amount, 0)
   const netMonth = incomeMonth - expenseMonth
 
-  // Saldo total histórico (tudo que já entrou e saiu desde o início)
-  const allFinance = await prisma.finance.findMany({ where: { orgId }, select: { type: true, amount: true } })
-  const totalIncome = allFinance.filter(f => f.type === 'income').reduce((s, r) => s + r.amount, 0)
-  const totalExpense = allFinance.filter(f => f.type === 'expense').reduce((s, r) => s + r.amount, 0)
+  // Saldo total histórico
+  // Receitas: Usa Payment (evita duplicação com lançamentos manuais)
+  const allPayments = await prisma.payment.findMany({
+    where: { orgId },
+    select: { amount: true }
+  })
+  const totalIncome = allPayments.reduce((s, p) => s + p.amount, 0)
+
+  // Despesas: Usa Finance (lançamentos manuais de despesas)
+  const allExpenses = await prisma.finance.findMany({
+    where: { orgId, type: 'expense' },
+    select: { amount: true }
+  })
+  const totalExpense = allExpenses.reduce((s, r) => s + r.amount, 0)
   const totalNet = totalIncome - totalExpense
 
   return (
