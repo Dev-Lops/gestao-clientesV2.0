@@ -1,5 +1,33 @@
 import DOMPurify from 'dompurify'
 
+/**
+ * Sanitiza HTML para evitar XSS. No cliente usa DOMPurify completo.
+ * No servidor aplica remoção básica de <script> e atributos inline on*.
+ */
+export function sanitizeHtmlBasic(input: string): string {
+  if (!input) return ''
+  if (typeof window !== 'undefined' && DOMPurify?.sanitize) {
+    return DOMPurify.sanitize(input, { USE_PROFILES: { html: true } })
+  }
+  // Fallback server-side simplificado
+  return input
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/on[a-z]+="[^"]*"/gi, '')
+    .replace(/javascript:/gi, '')
+}
+
+/** Sanitiza texto plano garantindo remoção de caracteres de controle. */
+export function sanitizePlainText(input: string): string {
+  return (input || '').replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '').trim()
+}
+
+/** Limita tamanho para evitar payloads excessivos antes de sanitizar. */
+export function safeInput(input: string, max = 5000): string {
+  return sanitizePlainText(input.slice(0, max))
+}
+
+export const Sanitizer = { sanitizeHtmlBasic, sanitizePlainText, safeInput }
+
 // Lazily initialize DOMPurify + JSDOM to avoid loading `jsdom` at module
 // evaluation time (fixes ESM/CommonJS issues with parse5/jsdom on Netlify).
 type PurifyInstance = ReturnType<typeof DOMPurify>

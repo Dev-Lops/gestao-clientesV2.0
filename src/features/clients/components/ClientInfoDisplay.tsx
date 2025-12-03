@@ -17,9 +17,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { CLIENT_PLAN_LABELS, CLIENT_PLANS, SOCIAL_CHANNEL_LABELS, SOCIAL_CHANNELS } from "@/lib/prisma-enums";
 import { formatDateInput, parseDateInput, toLocalISOString } from "@/lib/utils";
 import { ClientStatus } from "@/types/enums";
-import { AppClient } from "@/types/tables";
 import {
   BadgeCheck,
   Calendar,
@@ -37,11 +37,6 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-
-interface ClientInfoDisplayProps {
-  client: AppClient;
-  canEdit: boolean;
-}
 
 export function ClientInfoDisplay({ client, canEdit }: ClientInfoDisplayProps) {
   const [isEditing, setIsEditing] = useState(false);
@@ -384,26 +379,40 @@ export function ClientInfoDisplay({ client, canEdit }: ClientInfoDisplayProps) {
 
                         <div className="space-y-2">
                           <Label htmlFor="plan">Plano</Label>
-                          <Input
-                            id="plan"
+                          <Select
                             value={formData.plan}
-                            onChange={(e) =>
-                              setFormData({ ...formData, plan: e.target.value })
+                            onValueChange={(value) =>
+                              setFormData({ ...formData, plan: value })
                             }
-                            placeholder="Plano do cliente"
-                          />
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione um plano" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {CLIENT_PLANS.map(plan => (
+                                <SelectItem key={plan} value={plan}>{CLIENT_PLAN_LABELS[plan]}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
 
                         <div className="space-y-2">
                           <Label htmlFor="mainChannel">Canal Principal</Label>
-                          <Input
-                            id="mainChannel"
+                          <Select
                             value={formData.mainChannel}
-                            onChange={(e) =>
-                              setFormData({ ...formData, mainChannel: e.target.value })
+                            onValueChange={(value) =>
+                              setFormData({ ...formData, mainChannel: value })
                             }
-                            placeholder="Instagram, WhatsApp..."
-                          />
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione um canal" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {SOCIAL_CHANNELS.map(channel => (
+                                <SelectItem key={channel} value={channel}>{SOCIAL_CHANNEL_LABELS[channel]}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                       </div>
                     </div>
@@ -682,11 +691,11 @@ export function ClientInfoDisplay({ client, canEdit }: ClientInfoDisplayProps) {
               </div>
               <div className="flex flex-col gap-1">
                 <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Plano</p>
-                <p className="text-sm text-slate-900 dark:text-white">{client.plan || "Não definido"}</p>
+                <p className="text-sm text-slate-900 dark:text-white">{client.plan ? CLIENT_PLAN_LABELS[client.plan] : "Não definido"}</p>
               </div>
               <div className="flex flex-col gap-1">
                 <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Canal Principal</p>
-                <p className="text-sm text-slate-900 dark:text-white">{client.main_channel || "Não definido"}</p>
+                <p className="text-sm text-slate-900 dark:text-white">{client.main_channel ? SOCIAL_CHANNEL_LABELS[client.main_channel] : "Não definido"}</p>
               </div>
             </div>
           </div>

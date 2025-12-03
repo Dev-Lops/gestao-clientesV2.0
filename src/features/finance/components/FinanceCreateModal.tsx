@@ -13,29 +13,10 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ClientTypeahead } from '@/features/clients/components/ClientTypeahead'
+import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '@/lib/prisma-enums'
 import { Calendar, DollarSign, FileText, Plus, Tag, TrendingDown, TrendingUp, User } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
-
-const INCOME_CATEGORIES = [
-  'Mensalidade',
-  'Serviço Avulso',
-  'Consultoria',
-  'Venda de Produto',
-  'Comissão',
-  'Outros Recebimentos'
-]
-
-const EXPENSE_CATEGORIES = [
-  'Fornecedor',
-  'Salário',
-  'Aluguel',
-  'Publicidade',
-  'Software/Ferramentas',
-  'Impostos',
-  'Manutenção',
-  'Outras Despesas'
-]
 
 export function FinanceCreateModal() {
   const [open, setOpen] = useState(false)

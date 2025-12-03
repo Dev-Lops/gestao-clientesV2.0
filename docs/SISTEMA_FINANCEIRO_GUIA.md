@@ -1,3 +1,49 @@
+# Sistema Financeiro – Guia
+
+Este guia documenta os fluxos de lançamento, reconciliação e backfill, além de APIs e rotinas agendadas.
+
+## Fluxos Principais
+
+- Lançamentos de Receita: `POST /api/finance` (type `income`) associa à fatura do mês do cliente; cria fatura se inexistente.
+- Lançamentos de Despesa: `POST /api/finance` (type `expense`) contabilizados no resumo mensal.
+- Despesas Fixas: CRUD em `/api/finance/fixed-expenses`; enum `ExpenseCycle` (`MONTHLY`, `ANNUAL`).
+
+## Reconciliação
+
+- Endpoint: `POST /api/finance/reconcile`.
+- Verifica inconsistências: faturas `PAID` sem pagamentos, receitas sem `invoiceId`, múltiplas receitas por fatura.
+- Parâmetro opcional: `?notify=true` para registrar `Notification` por inconsistência.
+
+## Resumo Mensal
+
+- Endpoint: `GET /api/finance/summary?month=YYYY-MM`.
+- Receita bruta: soma de `Payment.amount` com `paidAt` no mês.
+- Despesas variáveis: soma de `Finance.amount` com `type='expense'` no mês.
+- Despesas fixas mensais: soma de `FixedExpense` ativos `cycle='MONTHLY'`.
+- Lucro líquido: `grossRevenue - (variableExpenses + fixedMonthly)`.
+
+## Projeção Próximo Mês
+
+- Endpoint: `GET /api/finance/projection`.
+- Estima receita: `Client.contractValue` ativos + parcelas `Installment` com `dueDate` no próximo mês.
+- Subtrai despesas fixas mensais.
+
+## Rotinas Agendadas (Netlify)
+
+- `finance_reconcile_daily`: diário às 02:00 UTC – chama `/api/finance/reconcile?notify=true`.
+- `finance_summary_daily`: diário às 02:10 UTC – chama `/api/finance/summary` do mês corrente.
+- `finance_projection_monthly`: mensal (dia 25) às 02:20 UTC – chama `/api/finance/projection`.
+
+## Permissões
+
+- Recomendado restringir `POST` em finanças e despesas fixas a `OWNER|STAFF`.
+- `GET` de resumo/projeção: `OWNER|STAFF`; clientes não devem ter acesso a dados agregados da organização.
+
+## Backfill
+
+- Para dados legados: executar reconciliação manual e revisar relatórios.
+- Se necessário, rodar scripts de ajuste criando faturas por mês e associando receitas.
+
 # 📘 Guia do Sistema Financeiro - Gestão de Clientes
 
 **Última Atualização:** 02/12/2025

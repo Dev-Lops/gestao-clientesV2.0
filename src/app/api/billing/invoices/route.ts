@@ -20,6 +20,38 @@ export async function POST(req: Request) {
       )
     }
 
+    // Validação para evitar duplicidade de fatura por cliente/período
+    // Considera período como mês/ano do dueDate
+    const due = new Date(dueDate)
+    const periodKey = `${due.getFullYear()}-${String(due.getMonth() + 1).padStart(2, '0')}`
+    const existing = await prisma.invoice.findFirst({
+      where: {
+        orgId,
+        clientId,
+        dueDate: {
+          gte: new Date(due.getFullYear(), due.getMonth(), 1),
+          lte: new Date(
+            due.getFullYear(),
+            due.getMonth() + 1,
+            0,
+            23,
+            59,
+            59,
+            999
+          ),
+        },
+      },
+    })
+    if (existing) {
+      return NextResponse.json(
+        {
+          error: 'Já existe uma fatura para este cliente neste período.',
+          invoiceId: existing.id,
+        },
+        { status: 409 }
+      )
+    }
+
     // Cria a fatura
     const invoice = await prisma.invoice.create({
       data: {

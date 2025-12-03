@@ -3,6 +3,7 @@ import AppLayoutClient from "@/components/layout/AppLayoutClient";
 import PostHogProvider from "@/components/providers/PostHogProvider";
 import ReactQueryProvider from "@/components/providers/ReactQueryProvider";
 import { UserProvider } from "@/context/UserContext";
+import { getNonce } from "@/lib/nonce";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Toaster } from "sonner";
@@ -86,16 +87,26 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const nonce = await getNonce()
+
   return (
     <html lang="pt-BR">
       <body
         className={`${inter.className} min-h-screen bg-background text-foreground antialiased transition-colors`}
       >
+        {nonce && (
+          <script
+            nonce={nonce}
+            dangerouslySetInnerHTML={{
+              __html: `window.__CSP_NONCE__ = "${nonce}";`,
+            }}
+          />
+        )}
         <PostHogProvider />
         <ErrorBoundary>
           <ReactQueryProvider>

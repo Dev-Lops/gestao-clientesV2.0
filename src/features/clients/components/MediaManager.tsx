@@ -338,24 +338,94 @@ export function MediaManager({ clientId }: MediaManagerProps) {
         // Try presigned flow first
         const tryPresigned = async (): Promise<MediaItem | null> => {
           try {
-            console.log('[MediaManager] Tentando fluxo presigned para:', file.name);
-            const req = await fetch(`/api/clients/${clientId}/media/upload-url`, {
+            // Se o arquivo for grande, usa multipart upload
+            const multipartMb = Number(process.env.NEXT_PUBLIC_MULTIPART_THRESHOLD_MB || '100')
+            if (file.size > multipartMb * 1024 * 1024) {
+              console.log('[MediaManager] Usando fluxo multipart para arquivo grande:', file.name)
+              const init = await fetch('/api/uploads/multipart/initiate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ clientId, filename: file.name, mimeType: file.type }),
+              })
+              if (!init.ok) return null
+              const { uploadId, originalKey } = await init.json()
+
+              const partSize = 8 * 1024 * 1024
+              const totalParts = Math.max(1, Math.ceil(file.size / partSize))
+              let uploaded = 0
+              const parts: Array<{ partNumber: number; ETag: string }> = []
+
+              for (let partNumber = 1; partNumber <= totalParts; partNumber++) {
+                const start = (partNumber - 1) * partSize
+                const end = Math.min(file.size, start + partSize)
+                const blob = file.slice(start, end)
+                const sign = await fetch('/api/uploads/multipart/sign-part', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ originalKey, uploadId, partNumber, mimeType: file.type }),
+                })
+                if (!sign.ok) return null
+                const { url } = await sign.json()
+                const xhr = new XMLHttpRequest()
+                const etag: string = await new Promise((resolve, reject) => {
+                  xhr.upload.onprogress = (e) => {
+                    if (e.lengthComputable) {
+                      uploaded += e.loaded
+                      setUploadProgress((prev) => {
+                        const updated = [...prev]
+                        const idx = updated.findIndex((p) => p.fileName === file.name)
+                        const pct = Math.min(100, Math.round((uploaded / file.size) * 100))
+                        const rec = { fileName: file.name, progress: pct, total: 100 }
+                        if (idx >= 0) updated[idx] = rec
+                        else updated.push(rec)
+                        return updated
+                      })
+                    }
+                  }
+                  xhr.onerror = () => reject(new Error('Falha no upload da parte'))
+                  xhr.onload = () => {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                      resolve(xhr.getResponseHeader('ETag') || '')
+                    } else reject(new Error(`Parte falhou: ${xhr.status}`))
+                  }
+                  xhr.open('PUT', url)
+                  if (file.type) xhr.setRequestHeader('Content-Type', file.type)
+                  xhr.send(blob)
+                })
+                parts.push({ partNumber, ETag: etag })
+              }
+
+              const complete = await fetch('/api/uploads/multipart/complete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orgId: session?.orgId, clientId, originalKey, uploadId, parts, title: uploadForm.files.length === 1 ? uploadForm.title || file.name : file.name, description: uploadForm.description, mimeType: file.type, size: file.size }),
+              })
+              if (!complete.ok) return null
+              const saved = await complete.json()
+              return {
+                id: saved.media.id,
+                type: saved.media.type,
+                title: saved.media.title,
+                url: saved.downloadUrl,
+                thumbUrl: saved.media.thumbUrl,
+                description: saved.media.description,
+                fileKey: saved.media.fileKey,
+                mimeType: saved.media.mimeType,
+                fileSize: saved.media.fileSize,
+                tags: saved.media.tags,
+                createdAt: saved.media.createdAt,
+              } as unknown as MediaItem
+            }
+
+            console.log('[MediaManager] Tentando fluxo presigned (novo) para:', file.name);
+            const presign = await fetch(`/api/uploads/presign`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ name: file.name, mime: file.type }),
+              body: JSON.stringify({ clientId, filename: file.name, mimeType: file.type, size: file.size }),
             });
-            if (!req.ok) {
-              console.log('[MediaManager] Presigned não disponível, usando fallback');
-              // If server doesn't support presigned or returns error, fallback
-              return null;
-            }
-            const body = await req.json();
-            const presignedUrl: string | undefined = body?.url;
-            const fileKey: string | undefined = body?.fileKey;
-            if (!presignedUrl || !fileKey) {
-              console.log('[MediaManager] Presigned retornou dados inválidos, usando fallback');
-              return null;
-            }
+            if (!presign.ok) return null;
+            const { uploadUrl: presignedUrl, originalKey } = await presign.json();
+            if (!presignedUrl || !originalKey) return null;
 
             console.log('[MediaManager] Iniciando upload via PUT para presigned URL...');
             // Upload via PUT to presigned URL with progress tracking
@@ -398,28 +468,24 @@ export function MediaManager({ clientId }: MediaManagerProps) {
               return null;
             }
 
-            console.log('[MediaManager] Upload para presigned URL completo, registrando no banco...', {
-              fileKey,
-              fileName: file.name,
-            });
-
-            // Register the uploaded file in our DB com timeout e retry
+            console.log('[MediaManager] Upload para presigned URL completo, finalizando (novo fluxo)...');
+            // Finalize (gera otimizada/thumbnail e registra)
             const registerWithTimeout = async (retryCount = 0): Promise<Response> => {
               const controller = new AbortController();
               const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
 
               try {
-                const reg = await fetch(`/api/clients/${clientId}/media/register`, {
+                const reg = await fetch(`/api/uploads/finalize`, {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
-                    fileKey,
+                    orgId: session?.orgId,
+                    clientId,
+                    originalKey,
+                    mimeType: file.type,
+                    size: file.size,
                     title: uploadForm.files.length === 1 ? uploadForm.title || file.name : file.name,
                     description: uploadForm.description,
-                    folderId: currentFolderId,
-                    tags: uploadForm.tags,
-                    fileSize: file.size,
-                    mimeType: file.type,
                   }),
                   signal: controller.signal,
                 });
@@ -445,8 +511,21 @@ export function MediaManager({ clientId }: MediaManagerProps) {
               throw new Error(err?.error || err?.details || "Falha ao registrar arquivo");
             }
             const saved = await reg.json();
-            console.log('[MediaManager] Arquivo registrado com sucesso:', saved.id);
-            return saved as MediaItem;
+            console.log('[MediaManager] Arquivo registrado com sucesso (novo fluxo):', saved.media?.id);
+            // Ajustar forma esperada pelo grid
+            return {
+              id: saved.media.id,
+              type: saved.media.type,
+              title: saved.media.title,
+              url: saved.optimizedUrl || saved.downloadUrl,
+              thumbUrl: saved.thumbUrl,
+              description: saved.media.description,
+              fileKey: saved.media.fileKey,
+              mimeType: saved.media.mimeType,
+              fileSize: saved.media.fileSize,
+              tags: saved.media.tags,
+              createdAt: saved.media.createdAt,
+            } as unknown as MediaItem;
           } catch (err) {
             // Log error and signal fallback to server upload
             console.log('[MediaManager] Erro no fluxo presigned, usando fallback:', err);

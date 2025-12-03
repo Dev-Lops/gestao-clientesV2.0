@@ -1,0 +1,29 @@
+name: CI Quality
+
+on:
+  push:
+    branches: [develop, master]
+  pull_request:
+    branches: [develop, master]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+      - name: Setup PNPM
+        run: |
+          corepack enable
+          corepack prepare pnpm@latest --activate
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Type Check
+        run: pnpm type-check
+      - name: Lint
+        run: pnpm lint || true
+      - name: Test
+        run: pnpm test -- --reporter=dot

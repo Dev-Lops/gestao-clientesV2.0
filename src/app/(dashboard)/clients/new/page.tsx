@@ -60,8 +60,8 @@ export default function NewClientPage() {
     email: "",
     phone: "",
     status: "new",
-    plan: "",
-    mainChannel: "",
+    plan: "GESTAO",
+    mainChannel: "INSTAGRAM",
     contractStart: "",
     contractEnd: "",
     paymentDay: "",
@@ -327,16 +327,11 @@ export default function NewClientPage() {
                               </SelectTrigger>
                             </div>
                             <SelectContent>
-                              <SelectItem value="GESTAO">Gestão</SelectItem>
-                              <SelectItem value="ESTRUTURA">Estrutura</SelectItem>
-                              <SelectItem value="FREELANCER">
-                                Freelancer
-                              </SelectItem>
-                              <SelectItem value="PARCERIA">Parceria</SelectItem>
-                              <SelectItem value="CONSULTORIA">
-                                Consultoria
-                              </SelectItem>
-                              <SelectItem value="OUTRO">Outro</SelectItem>
+                              {CLIENT_PLANS.map((plan) => (
+                                <SelectItem key={plan} value={plan}>
+                                  {CLIENT_PLAN_LABELS[plan]}
+                                </SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                         </FormField>
@@ -359,13 +354,11 @@ export default function NewClientPage() {
                             </SelectTrigger>
                           </div>
                           <SelectContent>
-                            <SelectItem value="INSTAGRAM">Instagram</SelectItem>
-                            <SelectItem value="FACEBOOK">Facebook</SelectItem>
-                            <SelectItem value="TIKTOK">TikTok</SelectItem>
-                            <SelectItem value="YOUTUBE">YouTube</SelectItem>
-                            <SelectItem value="LINKEDIN">LinkedIn</SelectItem>
-                            <SelectItem value="TWITTER">Twitter</SelectItem>
-                            <SelectItem value="OUTRO">Outro</SelectItem>
+                            {SOCIAL_CHANNELS.map((channel) => (
+                              <SelectItem key={channel} value={channel}>
+                                {SOCIAL_CHANNEL_LABELS[channel]}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </FormField>
@@ -657,6 +650,6 @@ export default function NewClientPage() {
           </PageLayout>
         </PageContainer>
       </AppShell>
-    </ProtectedRoute>
+    </ProtectedRoute >
   );
 }

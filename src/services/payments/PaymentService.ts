@@ -10,6 +10,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { BillingService } from '@/services/billing/BillingService'
+import { PaymentOrchestrator } from '@/services/payments/PaymentOrchestrator'
 import { Client, Installment, PaymentStatus } from '@prisma/client'
 
 export type PaymentMode = 'monthly' | 'installment'
@@ -293,16 +294,19 @@ export class PaymentService {
       },
     })
 
-    // Se já existe fatura, não cria nova
-    if (!existingInvoice) {
-      // Cria fatura específica da parcela (já como PAID)
-      const number = `INV-PAR-${updated.number}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
-      await prisma.invoice.create({
+    // Se já existe fatura, não cria nova. Caso contrário, cria e marca como paga via orchestrator
+    let invoiceId = existingInvoice?.id
+    if (!invoiceId) {
+      const number = `INV-PAR-${updated.number}-${Math.random()
+        .toString(36)
+        .slice(2, 8)
+        .toUpperCase()}`
+      const created = await prisma.invoice.create({
         data: {
           orgId,
           clientId: updated.clientId,
           number,
-          status: 'PAID',
+          status: 'OPEN',
           issueDate: new Date(),
           dueDate: updated.dueDate,
           subtotal: updated.amount,
@@ -312,6 +316,7 @@ export class PaymentService {
           currency: 'BRL',
           externalId: installment.id,
           notes: `Parcela ${updated.number}/${installment.client.installmentCount || 0}`,
+          installmentId: updated.id,
           items: {
             create: [
               {
@@ -322,48 +327,22 @@ export class PaymentService {
               },
             ],
           },
-          payments: {
-            create: [
-              {
-                orgId,
-                clientId: updated.clientId,
-                amount: updated.amount,
-                method: 'manual',
-                status: 'PAID',
-                paidAt: new Date(),
-              },
-            ],
-          },
         },
       })
-      // Finance entry já feito abaixo
+      invoiceId = created.id
     }
 
-    // Cria entrada financeira SOMENTE se não existe invoice
-    // (evita duplicação: invoice já cria finance via markInvoicePaid)
-    // Agora usa validação por fatura ao invés de descrição
-    const hasInvoice = await prisma.invoice.findFirst({
-      where: {
-        orgId,
-        clientId: updated.clientId,
-        externalId: installment.id,
-      },
+    // Marca paga via orquestrador, que também cria Payment + Finance vinculada à fatura
+    await PaymentOrchestrator.recordInvoicePayment({
+      orgId,
+      clientId: updated.clientId,
+      invoiceId: invoiceId!,
+      amount: updated.amount,
+      method: 'manual',
+      category: 'Parcelas',
+      description: `Pagamento parcela ${updated.number}`,
+      paidAt: new Date(),
     })
-
-    if (!hasInvoice) {
-      // Só cria finance se não houver fatura (fallback para sistemas antigos)
-      await prisma.finance.create({
-        data: {
-          orgId,
-          clientId: updated.clientId,
-          type: 'income',
-          amount: updated.amount,
-          description: `Parcela ${updated.number} - ${installment.client.name}`,
-          category: 'Parcelas',
-          date: new Date(),
-        },
-      })
-    }
   }
 
   /**

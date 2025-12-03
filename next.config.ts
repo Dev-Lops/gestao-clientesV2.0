@@ -48,27 +48,31 @@ const nextConfig = {
       {
         source: '/:path*',
         headers: [
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           {
-            key: 'Content-Security-Policy',
+            key: 'Permissions-Policy',
             value:
-              "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://accounts.google.com https://apis.google.com https://*.googletagmanager.com https://www.gstatic.com; script-src-elem 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com https://*.googletagmanager.com https://www.gstatic.com; worker-src 'self' blob:; connect-src 'self' https://*.googleapis.com https://apis.google.com https://*.firebaseio.com https://*.cloudfunctions.net wss://*.firebaseio.com https://*.ingest.us.sentry.io https://*.ingest.sentry.io https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://*.google.com https://www.googleapis.com https://*.r2.cloudflarestorage.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com; img-src 'self' data: https: blob:; media-src 'self' https://*.r2.cloudflarestorage.com blob: data:; font-src 'self' data: https://fonts.gstatic.com https://www.gstatic.com; frame-src 'self' https://accounts.google.com https://*.firebaseapp.com; form-action 'self' https://accounts.google.com; frame-ancestors 'self'",
+              'accelerometer=(), camera=(), geolocation=(), microphone=(), payment=(), usb=()',
           },
+          // HSTS apenas em produção com HTTPS
+          ...(process.env.NODE_ENV === 'production'
+            ? [
+                {
+                  key: 'Strict-Transport-Security',
+                  value: 'max-age=31536000; includeSubDomains; preload',
+                },
+              ]
+            : []),
         ],
       },
     ]
   },
-  // Suporte para uploads grandes (até 1.5GB)
+  // Reduzir corpo máximo: incentivar uploads diretos (presigned). Sem aumento global.
   experimental: {
     serverActions: {
-      bodySizeLimit: '1.5gb',
-    },
-  },
-  // Configuração de API routes para Netlify
-  serverRuntimeConfig: {
-    // Limite de body para API routes (padrão é 4MB)
-    // Netlify respeita isso junto com configuração do plugin
-    bodyParser: {
-      sizeLimit: '1.5gb',
+      bodySizeLimit: '10mb',
     },
   },
 }

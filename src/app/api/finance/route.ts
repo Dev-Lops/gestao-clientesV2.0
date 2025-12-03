@@ -88,15 +88,82 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Garantir vínculo com fatura para receitas (income)
+    let invoiceId: string | null = null
+    const parsedAmount =
+      typeof amount === 'string' ? parseFloat(amount) : amount
+    const entryDate = date ? new Date(date) : new Date()
+
+    if (type === 'income' && clientId) {
+      // tenta achar fatura do mês correspondente
+      const periodStart = new Date(
+        entryDate.getFullYear(),
+        entryDate.getMonth(),
+        1
+      )
+      const periodEnd = new Date(
+        entryDate.getFullYear(),
+        entryDate.getMonth() + 1,
+        0,
+        23,
+        59,
+        59,
+        999
+      )
+      const existingInvoice = await prisma.invoice.findFirst({
+        where: {
+          orgId,
+          clientId,
+          dueDate: { gte: periodStart, lte: periodEnd },
+          status: { in: ['OPEN', 'OVERDUE'] },
+        },
+      })
+
+      if (existingInvoice) {
+        invoiceId = existingInvoice.id
+      } else {
+        // cria fatura simples para vincular a receita
+        const number = `INV-${entryDate.getFullYear()}${String(entryDate.getMonth() + 1).padStart(2, '0')}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
+        const created = await prisma.invoice.create({
+          data: {
+            orgId,
+            clientId,
+            number,
+            status: 'OPEN',
+            issueDate: entryDate,
+            dueDate: periodEnd,
+            subtotal: parsedAmount,
+            discount: 0,
+            tax: 0,
+            total: parsedAmount,
+            currency: 'BRL',
+            notes: `Criada automaticamente por lançamento de receita`,
+            items: {
+              create: [
+                {
+                  description: description ?? 'Receita',
+                  quantity: 1,
+                  unitAmount: parsedAmount,
+                  total: parsedAmount,
+                },
+              ],
+            },
+          },
+        })
+        invoiceId = created.id
+      }
+    }
+
     const finance = await prisma.finance.create({
       data: {
         orgId,
         clientId: clientId ?? null,
         type,
-        amount: typeof amount === 'string' ? parseFloat(amount) : amount,
+        amount: parsedAmount,
         description,
         category,
-        date: date ? new Date(date) : new Date(),
+        date: entryDate,
+        invoiceId,
       },
       include: {
         client: {

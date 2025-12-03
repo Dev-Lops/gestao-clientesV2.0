@@ -7,17 +7,27 @@ export function Pagination({
   page,
   total,
   pageSize,
-  buildHref,
+  baseHref = "/",
   className,
 }: {
   page: number;
   total: number;
   pageSize: number;
-  buildHref: (nextPage: number) => string;
+  baseHref?: string;
   className?: string;
 }) {
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   if (totalPages <= 1) return null;
+
+  const buildHref = (nextPage: number) => {
+    // Se o baseHref já termina com '=' (padrão financePage=), apenas adicionar o número
+    if (baseHref.endsWith('=')) {
+      return `${baseHref}${nextPage}`;
+    }
+    // Caso contrário, usar o padrão antigo
+    const separator = baseHref.includes("?") ? "&" : "?";
+    return `${baseHref}${separator}page=${nextPage}`;
+  };
 
   return (
     <div className={className ?? "flex items-center justify-between gap-3 text-xs"}>

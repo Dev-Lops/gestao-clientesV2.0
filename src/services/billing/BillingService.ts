@@ -1,10 +1,17 @@
 import { prisma } from '@/lib/prisma'
+import { PaymentOrchestrator } from '@/services/payments/PaymentOrchestrator'
 import { Prisma } from '@prisma/client'
 
 export type InvoiceStatusFilter = 'DRAFT' | 'OPEN' | 'PAID' | 'VOID' | 'OVERDUE'
 export interface InvoiceListFilters {
   status?: InvoiceStatusFilter
   q?: string
+  issueFrom?: string
+  issueTo?: string
+  dueFrom?: string
+  dueTo?: string
+  minAmount?: number
+  maxAmount?: number
   page?: number
   pageSize?: number
 }
@@ -63,7 +70,18 @@ export class BillingService {
     orgId: string,
     filters: InvoiceListFilters = {}
   ) {
-    const { status, q, page = 1, pageSize = 20 } = filters
+    const {
+      status,
+      q,
+      issueFrom,
+      issueTo,
+      dueFrom,
+      dueTo,
+      minAmount,
+      maxAmount,
+      page = 1,
+      pageSize = 20,
+    } = filters
     const where: Prisma.InvoiceWhereInput = { orgId }
     if (status) where.status = status
     if (q && q.trim()) {
@@ -72,6 +90,24 @@ export class BillingService {
         { notes: { contains: q, mode: 'insensitive' } },
         { client: { name: { contains: q, mode: 'insensitive' } } },
       ]
+    }
+    if (issueFrom || issueTo) {
+      where.issueDate = {
+        gte: issueFrom ? new Date(issueFrom) : undefined,
+        lte: issueTo ? new Date(issueTo) : undefined,
+      }
+    }
+    if (dueFrom || dueTo) {
+      where.dueDate = {
+        gte: dueFrom ? new Date(dueFrom) : undefined,
+        lte: dueTo ? new Date(dueTo) : undefined,
+      }
+    }
+    if (minAmount !== undefined || maxAmount !== undefined) {
+      where.total = {
+        gte: minAmount,
+        lte: maxAmount,
+      }
     }
     const skip = (Math.max(1, page) - 1) * Math.max(1, pageSize)
     const take = Math.max(1, pageSize)
@@ -102,43 +138,49 @@ export class BillingService {
     const dueDay = Math.min(Math.max(client.paymentDay || 5, 1), 28)
     const dueDate = new Date(now.getFullYear(), now.getMonth(), dueDay)
 
-    const existing = await prisma.invoice.findFirst({
-      where: { clientId, orgId, notes: { contains: `period:${periodKey}` } },
-    })
-    if (existing) return existing
+    // Evita condição de corrida com verificação + criação dentro de transação.
+    return prisma.$transaction(async (tx) => {
+      const existing = await tx.invoice.findFirst({
+        where: { clientId, orgId, notes: { contains: `period:${periodKey}` } },
+      })
+      if (existing) return existing
 
-    const number = `INV-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
+      const number = `INV-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}-${Math.random()
+        .toString(36)
+        .slice(2, 8)
+        .toUpperCase()}`
 
-    const subtotal = client.contractValue
-    const discount = 0
-    const tax = 0
-    const total = subtotal - discount + tax
+      const subtotal = client.contractValue
+      const discount = 0
+      const tax = 0
+      const total = subtotal - discount + tax
 
-    return prisma.invoice.create({
-      data: {
-        orgId,
-        clientId,
-        number,
-        status: 'OPEN',
-        issueDate: now,
-        dueDate,
-        subtotal,
-        discount,
-        tax,
-        total,
-        currency: 'BRL',
-        notes: `Mensalidade ${now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })} | period:${periodKey}`,
-        items: {
-          create: [
-            {
-              description: 'Mensalidade',
-              quantity: 1,
-              unitAmount: subtotal,
-              total,
-            },
-          ],
+      return tx.invoice.create({
+        data: {
+          orgId,
+          clientId,
+          number,
+          status: 'OPEN',
+          issueDate: now,
+          dueDate,
+          subtotal,
+          discount,
+          tax,
+          total,
+          currency: 'BRL',
+          notes: `Mensalidade ${now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })} | period:${periodKey}`,
+          items: {
+            create: [
+              {
+                description: 'Mensalidade',
+                quantity: 1,
+                unitAmount: subtotal,
+                total,
+              },
+            ],
+          },
         },
-      },
+      })
     })
   }
 
@@ -157,39 +199,16 @@ export class BillingService {
 
     const paidAmount = amount ?? invoice.total
 
-    const [updatedInvoice] = await prisma.$transaction([
-      prisma.invoice.update({
-        where: { id: invoiceId },
-        data: { status: 'PAID' },
-      }),
-      prisma.payment.create({
-        data: {
-          orgId,
-          clientId: invoice.clientId,
-          invoiceId: invoice.id,
-          amount: paidAmount,
-          method,
-          status: 'PAID',
-          paidAt: new Date(),
-          provider: 'manual',
-        },
-      }),
-      prisma.finance.create({
-        data: {
-          orgId,
-          clientId: invoice.clientId,
-          type: 'income',
-          amount: paidAmount,
-          description: `Pagamento fatura ${invoice.number}`,
-          category: 'Mensalidade',
-          date: new Date(),
-        },
-      }),
-      prisma.client.update({
-        where: { id: invoice.clientId },
-        data: { paymentStatus: 'CONFIRMED' },
-      }),
-    ])
+    const updatedInvoice = await PaymentOrchestrator.recordInvoicePayment({
+      orgId,
+      clientId: invoice.clientId,
+      invoiceId: invoice.id,
+      amount: paidAmount,
+      method,
+      category: 'Mensalidade',
+      description: `Pagamento fatura ${invoice.number}`,
+      paidAt: new Date(),
+    })
 
     return updatedInvoice
   }
@@ -287,6 +306,11 @@ export class BillingService {
     orgId: string,
     options?: { sendNotifications?: boolean; sendWhatsAppFull?: boolean }
   ) {
+    // Atualiza parcelas atrasadas antes de gerar faturas
+    try {
+      const { PaymentService } = await import('../payments/PaymentService')
+      await PaymentService.updateLateInstallments(orgId)
+    } catch {}
     const clients = await prisma.client.findMany({
       where: {
         orgId,
@@ -337,6 +361,14 @@ export class BillingService {
     const overdue = await prisma.invoice.updateMany({
       where: { orgId, status: 'OPEN', dueDate: { lt: now } },
       data: { status: 'OVERDUE' },
+    })
+    // Atualiza paymentStatus dos clientes com faturas vencidas
+    await prisma.client.updateMany({
+      where: {
+        orgId,
+        invoices: { some: { status: 'OVERDUE' } },
+      },
+      data: { paymentStatus: 'OVERDUE' },
     })
     // Notificações: vencendo em 3 dias e vencidas
     const soon = new Date(now)

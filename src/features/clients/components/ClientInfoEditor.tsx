@@ -49,9 +49,23 @@ export function ClientInfoEditor({ client, canEdit }: ClientInfoEditorProps) {
     email: client.email || "",
     phone: client.phone || "",
     status: client.status || "new",
-    plan: client.plan || "",
-    main_channel: client.main_channel || "",
+    plan: client.plan || "GESTAO",
+    main_channel: client.main_channel || "INSTAGRAM",
   });
+  const PLAN_OPTIONS = [
+    { value: "starter", label: "Starter" },
+    { value: "pro", label: "Pro" },
+    { value: "premium", label: "Premium" },
+    { value: "enterprise", label: "Enterprise" },
+  ];
+
+  const CHANNEL_OPTIONS = [
+    { value: "instagram", label: "Instagram" },
+    { value: "tiktok", label: "TikTok" },
+    { value: "youtube", label: "YouTube" },
+    { value: "facebook", label: "Facebook" },
+    { value: "whatsapp", label: "WhatsApp" },
+  ];
   const [display, setDisplay] = useState({
     phone: formatPhoneBR(client.phone || ""),
   });
@@ -256,41 +270,43 @@ export function ClientInfoEditor({ client, canEdit }: ClientInfoEditorProps) {
               </div>
 
               <div className="space-y-2">
-                <Label
-                  htmlFor="plan"
-                  className="text-sm font-medium text-slate-700"
-                >
+                <Label htmlFor="plan" className="text-sm font-medium text-slate-700">
                   Plano
                 </Label>
-                <Input
-                  id="plan"
+                <Select
                   value={formData.plan}
-                  onChange={(e) =>
-                    setFormData({ ...formData, plan: e.target.value })
-                  }
-                  placeholder="Ex: Starter, Pro, Premium"
+                  onValueChange={(v) => setFormData({ ...formData, plan: v })}
                   disabled={loading}
-                  className="border-slate-300 focus:border-blue-500 focus:ring-blue-500"
-                />
+                >
+                  <SelectTrigger className="border-slate-300 focus:border-blue-500 focus:ring-blue-500">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PLAN_OPTIONS.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
-                <Label
-                  htmlFor="main_channel"
-                  className="text-sm font-medium text-slate-700"
-                >
+                <Label htmlFor="main_channel" className="text-sm font-medium text-slate-700">
                   Canal Principal
                 </Label>
-                <Input
-                  id="main_channel"
+                <Select
                   value={formData.main_channel}
-                  onChange={(e) =>
-                    setFormData({ ...formData, main_channel: e.target.value })
-                  }
-                  placeholder="Ex: Instagram, TikTok, YouTube"
+                  onValueChange={(v) => setFormData({ ...formData, main_channel: v })}
                   disabled={loading}
-                  className="border-slate-300 focus:border-blue-500 focus:ring-blue-500"
-                />
+                >
+                  <SelectTrigger className="border-slate-300 focus:border-blue-500 focus:ring-blue-500">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CHANNEL_OPTIONS.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -350,14 +366,14 @@ export function ClientInfoEditor({ client, canEdit }: ClientInfoEditorProps) {
               <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">
                 Plano
               </p>
-              <p className="text-base text-slate-700">{client.plan || "—"}</p>
+              <p className="text-base text-slate-700">{client.plan ? CLIENT_PLAN_LABELS[client.plan] : "—"}</p>
             </div>
             <div className="space-y-1">
               <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">
                 Canal Principal
               </p>
               <p className="text-base text-slate-700">
-                {client.main_channel || "—"}
+                {client.main_channel ? SOCIAL_CHANNEL_LABELS[client.main_channel] : "—"}
               </p>
             </div>
             <div className="space-y-1">

@@ -50,6 +50,7 @@ model Org {
   tasks           Task[]
   dashboardEvents DashboardEvent[]
   dashboardNotes  DashboardNote[]
+  fixedExpenses   FixedExpense[]
 }
 
 model Member {
@@ -90,6 +91,8 @@ model Client {
   instagramUsername       String?
   instagramAccessToken    String?
   instagramTokenExpiresAt DateTime?
+  cpf                     String?        @unique
+  cnpj                    String?        @unique
   brandings               Branding[]
   clientUser              User?          @relation(fields: [clientUserId], references: [id])
   org                     Org            @relation(fields: [orgId], references: [id])
@@ -108,6 +111,12 @@ model Client {
   @@index([orgId, status])
   @@index([orgId, createdAt])
   @@index([email])
+  @@index([cpf])
+  @@index([cnpj])
+  // Novos índices para filtros frequentes
+  @@index([orgId, plan])
+  @@index([orgId, mainChannel])
+  @@index([orgId, paymentStatus])
 }
 
 model Task {
@@ -127,6 +136,9 @@ model Task {
 
   @@index([clientId, status])
   @@index([orgId, dueDate])
+  // Índices adicionais para dashboards e filtros
+  @@index([orgId, status, dueDate])
+  @@index([assignee, status])
 }
 
 model Media {
@@ -198,6 +210,30 @@ model Strategy {
   client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
 }
 
+// Ciclo de despesas fixas
+enum ExpenseCycle {
+  MONTHLY
+  ANNUAL
+}
+
+model FixedExpense {
+  id         String       @id @default(cuid())
+  orgId      String
+  name       String
+  amount     Float
+  category   String?
+  cycle      ExpenseCycle @default(MONTHLY)
+  dayOfMonth Int?
+  active     Boolean      @default(true)
+  notes      String?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  org        Org          @relation(fields: [orgId], references: [id])
+
+  @@index([orgId, active])
+  @@index([orgId, cycle])
+}
+
 model Branding {
   id          String   @id @default(cuid())
   title       String
@@ -221,14 +257,21 @@ model Finance {
   category    String?
   date        DateTime @default(now())
   clientId    String?
+  invoiceId   String?
+  metadata    Json?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   orgId       String
   client      Client?  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  invoice     Invoice? @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
   org         Org      @relation(fields: [orgId], references: [id])
 
   @@index([orgId, date])
   @@index([clientId, date])
+  @@index([invoiceId])
+  @@index([orgId, type, date])
+  // Índice adicional para relatórios por categoria
+  @@index([orgId, category])
 }
 
 model Meeting {
@@ -258,6 +301,7 @@ model Installment {
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
   client    Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  invoice   Invoice?      @relation("InvoiceInstallment")
 
   @@index([clientId, dueDate])
 }
@@ -301,18 +345,24 @@ model Invoice {
   currency       String        @default("BRL")
   notes          String?
   externalId     String?
+  installmentId  String?       @unique
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   client         Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
   org            Org           @relation(fields: [orgId], references: [id])
   subscription   Subscription? @relation(fields: [subscriptionId], references: [id])
+  installment    Installment?  @relation("InvoiceInstallment", fields: [installmentId], references: [id])
   items          InvoiceItem[]
   payments       Payment[]
+  finances       Finance[]
 
   @@index([orgId, clientId, status])
   @@index([orgId, dueDate])
   @@index([clientId, status])
   @@index([subscriptionId])
+  @@index([orgId, status, updatedAt])
+  // Histórico do cliente por vencimento
+  @@index([clientId, dueDate])
 }
 
 model InvoiceItem {
@@ -336,11 +386,16 @@ model Payment {
   paidAt            DateTime?
   provider          String?
   providerPaymentId String?
+  description       String?
+  metadata          Json?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
   client            Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
   invoice           Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
   org               Org       @relation(fields: [orgId], references: [id])
+
+  @@index([orgId, paidAt])
+  @@index([clientId, paidAt])
 }
 
 model WebhookEvent {

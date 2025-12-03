@@ -11,6 +11,7 @@ import { can } from "@/lib/permissions";
 import { getSessionProfile } from "@/services/auth/session";
 import { BillingService, type InvoiceStatusFilter } from "@/services/billing/BillingService";
 import { getClientById } from "@/services/repositories/clients";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@radix-ui/react-select";
 import {
   Calendar,
   CreditCard,
@@ -114,7 +115,8 @@ export default async function BillingPage({ params, searchParams }: BillingPageP
   }
 
   const sp = (await searchParams) || {};
-  const status = (sp.status?.toString().toUpperCase() as InvoiceStatusFilter) || undefined;
+  const statusParam = sp.status?.toString().toUpperCase();
+  const status = (statusParam && statusParam !== "ALL" ? statusParam as InvoiceStatusFilter : undefined);
   const page = Math.max(1, Number(sp.page || '1') || 1);
   const q = sp.q?.toString()?.trim() || undefined;
   const pageSize = 20;
@@ -261,21 +263,21 @@ export default async function BillingPage({ params, searchParams }: BillingPageP
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                   {/* Filtros */}
                   <form method="get" className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                    <div className="relative">
-                      <Filter className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                      <select
-                        aria-label="Status da fatura"
-                        name="status"
-                        defaultValue={status || ''}
-                        className="h-10 pl-9 pr-3 text-sm font-medium border-2 border-slate-200 dark:border-slate-700 rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all w-full sm:w-auto hover:border-blue-300"
-                      >
-                        <option value="">Todas</option>
-                        <option value="OPEN">Em aberto</option>
-                        <option value="OVERDUE">Vencidas</option>
-                        <option value="PAID">Pagas</option>
-                        <option value="DRAFT">Rascunho</option>
-                        <option value="VOID">Canceladas</option>
-                      </select>
+                    <div className="relative w-full sm:w-auto">
+                      <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 z-10 pointer-events-none" />
+                      <Select name="status" defaultValue={status || "ALL"}>
+                        <SelectTrigger className="h-10 pl-9 pr-3 text-sm font-medium w-full sm:w-auto">
+                          <SelectValue placeholder="Todas" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ALL">Todas</SelectItem>
+                          <SelectItem value="OPEN">Em aberto</SelectItem>
+                          <SelectItem value="OVERDUE">Vencidas</SelectItem>
+                          <SelectItem value="PAID">Pagas</SelectItem>
+                          <SelectItem value="DRAFT">Rascunho</SelectItem>
+                          <SelectItem value="VOID">Canceladas</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     <div className="relative">

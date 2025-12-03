@@ -5,6 +5,7 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { CLIENT_PLAN_LABELS } from "@/lib/prisma-enums";
 import { getSessionProfile } from "@/services/auth/session";
 import { getClientById, listClientsByOrg } from "@/services/repositories/clients";
 import { CLIENT_STATUS_LABELS } from "@/types/enums";
@@ -100,7 +101,7 @@ export default async function ClientLayout({
                   {CLIENT_STATUS_LABELS[client.status as keyof typeof CLIENT_STATUS_LABELS]}
                 </Badge>
                 {client.plan && (
-                  <Badge variant="secondary" className="font-semibold">{client.plan}</Badge>
+                  <Badge variant="secondary" className="font-semibold">{CLIENT_PLAN_LABELS[client.plan as keyof typeof CLIENT_PLAN_LABELS]}</Badge>
                 )}
                 <div className="hidden sm:flex items-center gap-1 ml-2">
                   {prevClient ? (

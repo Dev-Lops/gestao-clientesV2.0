@@ -8,6 +8,14 @@
   # Desabilita smart detection para Firebase API Key (pública por natureza)
   SECRETS_SCAN_SMART_DETECTION_ENABLED = "false"
 
+[scheduled.functions]
+  # Daily reconciliation at 02:00 UTC
+  finance_reconcile_daily = { schedule = "0 2 * * *" }
+  # Daily summary cache at 02:10 UTC
+  finance_summary_daily = { schedule = "10 2 * * *" }
+  # Monthly projection on the 25th at 02:20 UTC
+  finance_projection_monthly = { schedule = "20 2 25 * *" }
+
 # Headers definidos em public/_headers
 
 # Redirects básicos

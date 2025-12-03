@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { KpiCard, KpiGrid } from "@/components/ui/kpi-card";
 import { can } from "@/lib/permissions";
+import { CLIENT_PLAN_LABELS, SOCIAL_CHANNEL_LABELS } from "@/lib/prisma-enums";
 import { formatDate } from "@/lib/utils";
 import { getSessionProfile } from "@/services/auth/session";
 import { listClientsByOrg } from "@/services/repositories/clients";
@@ -301,7 +302,7 @@ export default async function ClientsPage({ searchParams }: PageProps) {
                           </Badge>
                         </div>
                         <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-                          {client.plan ?? "—"} • {client.main_channel ?? "—"}
+                          {client.plan ? CLIENT_PLAN_LABELS[client.plan] : "—"} • {client.main_channel ? SOCIAL_CHANNEL_LABELS[client.main_channel] : "—"}
                         </p>
                         <p className="text-xs text-slate-500 dark:text-slate-500">
                           Criado em{" "}
