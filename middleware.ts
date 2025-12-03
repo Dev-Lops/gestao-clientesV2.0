@@ -19,4 +19,4 @@ export const config = {
   ],
 }
 
-export default middleware
+// Do not export default; Next.js expects a named export `middleware`
