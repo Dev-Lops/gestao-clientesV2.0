@@ -48,7 +48,7 @@
     "firebase-admin": "^13.6.0",
     "framer-motion": "^12.23.24",
     "lucide-react": "^0.553.0",
-    "next": "16.0.1",
+    "next": "16.0.7",
     "next-firebase-auth-edge": "^1.11.1",
     "next-themes": "^0.4.6",
     "posthog-js": "^1.295.0",
