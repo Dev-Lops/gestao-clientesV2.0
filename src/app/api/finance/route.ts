@@ -1,11 +1,14 @@
 import { can, type AppRole } from '@/lib/permissions'
 import { prisma } from '@/lib/prisma'
+import { applySecurityHeaders, guardAccess } from '@/proxy'
 import { getSessionProfile } from '@/services/auth/session'
 import { NextRequest, NextResponse } from 'next/server'
 
 // GET /api/finance - List all finance records for the organization
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const guard = guardAccess(req)
+    if (guard) return guard
     const { orgId, role } = await getSessionProfile()
 
     if (!orgId || !role) {
@@ -40,19 +43,23 @@ export async function GET() {
       orderBy: { date: 'desc' },
     })
 
-    return NextResponse.json(finances)
+    const res = NextResponse.json(finances)
+    return applySecurityHeaders(req, res)
   } catch (error) {
     console.error('Error fetching finances:', error)
-    return NextResponse.json(
+    const res = NextResponse.json(
       { error: 'Erro ao buscar finanças' },
       { status: 500 }
     )
+    return applySecurityHeaders(req, res)
   }
 }
 
 // POST /api/finance - Create finance record
 export async function POST(req: NextRequest) {
   try {
+    const guard = guardAccess(req)
+    if (guard) return guard
     const { orgId, role } = await getSessionProfile()
 
     if (!orgId || !role) {
@@ -175,19 +182,23 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    return NextResponse.json(finance, { status: 201 })
+    const res = NextResponse.json(finance, { status: 201 })
+    return applySecurityHeaders(req, res)
   } catch (error) {
     console.error('Error creating finance:', error)
-    return NextResponse.json(
+    const res = NextResponse.json(
       { error: 'Erro ao criar finanças' },
       { status: 500 }
     )
+    return applySecurityHeaders(req, res)
   }
 }
 
 // PATCH /api/finance?id=<financeId> - Update finance record
 export async function PATCH(req: NextRequest) {
   try {
+    const guard = guardAccess(req)
+    if (guard) return guard
     const { searchParams } = new URL(req.url)
     const financeId = searchParams.get('id')
 
@@ -266,19 +277,23 @@ export async function PATCH(req: NextRequest) {
       },
     })
 
-    return NextResponse.json(finance)
+    const res = NextResponse.json(finance)
+    return applySecurityHeaders(req, res)
   } catch (error) {
     console.error('Error updating finance:', error)
-    return NextResponse.json(
+    const res = NextResponse.json(
       { error: 'Erro ao atualizar finanças' },
       { status: 500 }
     )
+    return applySecurityHeaders(req, res)
   }
 }
 
 // DELETE /api/finance?id=<financeId> - Delete finance record
 export async function DELETE(req: NextRequest) {
   try {
+    const guard = guardAccess(req)
+    if (guard) return guard
     const { searchParams } = new URL(req.url)
     const financeId = searchParams.get('id')
 
@@ -321,12 +336,14 @@ export async function DELETE(req: NextRequest) {
       where: { id: financeId },
     })
 
-    return NextResponse.json({ success: true })
+    const res = NextResponse.json({ success: true })
+    return applySecurityHeaders(req, res)
   } catch (error) {
     console.error('Error deleting finance:', error)
-    return NextResponse.json(
+    const res = NextResponse.json(
       { error: 'Erro ao deletar finanças' },
       { status: 500 }
     )
+    return applySecurityHeaders(req, res)
   }
 }

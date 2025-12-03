@@ -1,10 +1,13 @@
 import { can } from '@/lib/permissions'
 import { prisma } from '@/lib/prisma'
+import { applySecurityHeaders, guardAccess } from '@/proxy'
 import { getSessionProfile } from '@/services/auth/session'
 import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
   try {
+    const guard = guardAccess(req as any)
+    if (guard) return guard
     const { orgId, role } = await getSessionProfile()
     if (!orgId || !role)
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -82,13 +85,15 @@ export async function POST(req: Request) {
       include: { items: true },
     })
 
-    return NextResponse.json(invoice)
+    const res = NextResponse.json(invoice)
+    return applySecurityHeaders(req as any, res)
   } catch (err) {
     console.error('POST /api/billing/invoices error:', err)
     const message = err instanceof Error ? err.message : 'Internal Server Error'
-    return NextResponse.json(
+    const res = NextResponse.json(
       { error: message, details: String(err) },
       { status: 500 }
     )
+    return applySecurityHeaders(req as any, res)
   }
 }

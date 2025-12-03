@@ -1,4 +1,5 @@
 import { generateFileKey } from '@/lib/storage'
+import { applySecurityHeaders, guardAccess } from '@/proxy'
 import { CreateMultipartUploadCommand, S3Client } from '@aws-sdk/client-s3'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -26,6 +27,8 @@ if (USE_S3 && S3_BUCKET && accessKeyId && secretAccessKey) {
 
 export async function POST(req: NextRequest) {
   try {
+    const guard = guardAccess(req)
+    if (guard) return guard
     if (!s3)
       return NextResponse.json({ error: 'S3 não configurado' }, { status: 500 })
     const { clientId, filename, mimeType } = await req.json()
@@ -46,8 +49,10 @@ export async function POST(req: NextRequest) {
     })
     const out = await s3.send(cmd)
     if (!out.UploadId) throw new Error('Falha ao iniciar multipart upload')
-    return NextResponse.json({ uploadId: out.UploadId, originalKey: key })
+    const res = NextResponse.json({ uploadId: out.UploadId, originalKey: key })
+    return applySecurityHeaders(req, res)
   } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 })
+    const res = NextResponse.json({ error: String(err) }, { status: 500 })
+    return applySecurityHeaders(req, res)
   }
 }

@@ -1,7 +1,8 @@
 import { prisma } from '@/lib/prisma'
+import { applySecurityHeaders, guardAccess } from '@/proxy'
 import { NextResponse } from 'next/server'
 
-export async function GET() {
+export async function GET(req: Request) {
   // Basic reconciliation summary:
   // - count of PAID invoices without linked finance
   // - count of finance incomes without invoiceId
@@ -53,5 +54,8 @@ export async function GET() {
     },
   }
 
-  return NextResponse.json(summary)
+  const guard = guardAccess(req as any)
+  if (guard) return guard
+  const res = NextResponse.json(summary)
+  return applySecurityHeaders(req as any, res)
 }

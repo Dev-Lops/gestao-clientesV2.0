@@ -1,3 +1,4 @@
+import { applySecurityHeaders, guardAccess } from '@/proxy'
 import { S3Client, UploadPartCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { NextRequest, NextResponse } from 'next/server'
@@ -26,6 +27,8 @@ if (USE_S3 && S3_BUCKET && accessKeyId && secretAccessKey) {
 
 export async function POST(req: NextRequest) {
   try {
+    const guard = guardAccess(req)
+    if (guard) return guard
     if (!s3)
       return NextResponse.json({ error: 'S3 não configurado' }, { status: 500 })
     const { originalKey, uploadId, partNumber, mimeType } = await req.json()
@@ -41,8 +44,10 @@ export async function POST(req: NextRequest) {
       PartNumber: Number(partNumber),
     })
     const url = await getSignedUrl(s3, cmd, { expiresIn: 900 })
-    return NextResponse.json({ url })
+    const res = NextResponse.json({ url })
+    return applySecurityHeaders(req, res)
   } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 })
+    const res = NextResponse.json({ error: String(err) }, { status: 500 })
+    return applySecurityHeaders(req, res)
   }
 }

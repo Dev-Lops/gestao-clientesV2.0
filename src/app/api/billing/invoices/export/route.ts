@@ -1,5 +1,6 @@
 import { can, type AppRole } from '@/lib/permissions'
 import { prisma } from '@/lib/prisma'
+import { applySecurityHeaders, guardAccess } from '@/proxy'
 import { getSessionProfile } from '@/services/auth/session'
 import { Prisma } from '@prisma/client'
 import { NextResponse } from 'next/server'
@@ -14,6 +15,8 @@ function toCsvValue(val: unknown) {
 }
 
 export async function GET(req: Request) {
+  const guard = guardAccess(req as any)
+  if (guard) return guard
   const { orgId, role } = await getSessionProfile()
   if (!orgId || !role)
     return new NextResponse('Não autenticado', { status: 401 })
@@ -68,11 +71,12 @@ export async function GET(req: Request) {
   }
   const csv = lines.join('\n')
   const filename = `invoices-${new Date().toISOString().slice(0, 10)}.csv`
-  return new NextResponse(csv, {
+  const res = new NextResponse(csv, {
     status: 200,
     headers: {
       'Content-Type': 'text/csv; charset=utf-8',
       'Content-Disposition': `attachment; filename=${filename}`,
     },
   })
+  return applySecurityHeaders(req as any, res)
 }

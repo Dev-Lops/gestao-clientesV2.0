@@ -1,5 +1,6 @@
 import { createMedia } from '@/lib/repositories/mediaRepository'
 import { getFileUrl } from '@/lib/storage'
+import { applySecurityHeaders, guardAccess } from '@/proxy'
 import { CompleteMultipartUploadCommand, S3Client } from '@aws-sdk/client-s3'
 import { NextRequest, NextResponse } from 'next/server'
 import path from 'node:path'
@@ -28,6 +29,8 @@ if (USE_S3 && S3_BUCKET && accessKeyId && secretAccessKey) {
 
 export async function POST(req: NextRequest) {
   try {
+    const guard = guardAccess(req)
+    if (guard) return guard
     if (!s3)
       return NextResponse.json({ error: 'S3 não configurado' }, { status: 500 })
     const {
@@ -93,12 +96,14 @@ export async function POST(req: NextRequest) {
       tags: [],
     })
 
-    return NextResponse.json({
+    const res = NextResponse.json({
       success: true,
       media,
       downloadUrl: originalDownloadUrl,
     })
+    return applySecurityHeaders(req, res)
   } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 })
+    const res = NextResponse.json({ error: String(err) }, { status: 500 })
+    return applySecurityHeaders(req, res)
   }
 }

@@ -1,11 +1,14 @@
+import { applySecurityHeaders, guardAccess } from '@/proxy'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 /**
  * Remove o cookie de sessão ao fazer logout.
  */
-export async function POST() {
+export async function POST(req: Request) {
   try {
+    const guard = guardAccess(req as any)
+    if (guard) return guard
     const cookieStore = await cookies()
 
     // Remove o cookie de autenticação com as mesmas opções de quando foi criado
@@ -26,9 +29,12 @@ export async function POST() {
       path: '/',
     })
 
-    return NextResponse.json({ ok: true })
+    return applySecurityHeaders(req as any, NextResponse.json({ ok: true }))
   } catch (err) {
     console.error('Erro ao fazer logout', err)
-    return NextResponse.json({ error: 'Logout failed' }, { status: 500 })
+    return applySecurityHeaders(
+      req as any,
+      NextResponse.json({ error: 'Logout failed' }, { status: 500 })
+    )
   }
 }

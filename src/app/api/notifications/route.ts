@@ -1,10 +1,13 @@
 import { adminAuth } from '@/lib/firebaseAdmin'
 import { prisma } from '@/lib/prisma'
+import { applySecurityHeaders, guardAccess } from '@/proxy'
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(req: NextRequest) {
   try {
+    const guard = guardAccess(req)
+    if (guard) return guard
     const cookieStore = await cookies()
     const token = cookieStore.get('auth')?.value
 
@@ -103,18 +106,20 @@ export async function GET(req: NextRequest) {
         },
       })) + dynamicNotifications.filter((n) => n.unread).length
 
-    return NextResponse.json({
+    const res = NextResponse.json({
       notifications: allNotifications.slice(0, limit),
       total: persistedTotal + dynamicNotifications.length,
       unreadCount,
       hasMore: offset + limit < persistedTotal + dynamicNotifications.length,
     })
+    return applySecurityHeaders(req, res)
   } catch (error) {
     console.error('Erro ao buscar notificações:', error)
-    return NextResponse.json(
+    const res = NextResponse.json(
       { error: 'Failed to fetch notifications' },
       { status: 500 }
     )
+    return applySecurityHeaders(req, res)
   }
 }
 
@@ -258,6 +263,8 @@ function getTimeAgo(date: Date): string {
 
 export async function POST(req: NextRequest) {
   try {
+    const guard = guardAccess(req)
+    if (guard) return guard
     const cookieStore = await cookies()
     const token = cookieStore.get('auth')?.value
     if (!token) {
@@ -302,7 +309,7 @@ export async function POST(req: NextRequest) {
         },
       })
 
-      return NextResponse.json({ ok: true })
+      return applySecurityHeaders(req, NextResponse.json({ ok: true }))
     }
 
     // Marcar várias como lidas
@@ -324,7 +331,7 @@ export async function POST(req: NextRequest) {
         },
       })
 
-      return NextResponse.json({ ok: true })
+      return applySecurityHeaders(req, NextResponse.json({ ok: true }))
     }
 
     // Marcar todas como lidas
@@ -340,7 +347,7 @@ export async function POST(req: NextRequest) {
         },
       })
 
-      return NextResponse.json({ ok: true })
+      return applySecurityHeaders(req, NextResponse.json({ ok: true }))
     }
 
     // Deletar notificação
@@ -356,12 +363,19 @@ export async function POST(req: NextRequest) {
         },
       })
 
-      return NextResponse.json({ ok: true })
+      return applySecurityHeaders(req, NextResponse.json({ ok: true }))
     }
 
-    return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
+    return applySecurityHeaders(
+      req,
+      NextResponse.json({ error: 'Invalid action' }, { status: 400 })
+    )
   } catch (error) {
     console.error('Erro ao processar notificação:', error)
-    return NextResponse.json({ error: 'Failed to process' }, { status: 500 })
+    const res = NextResponse.json(
+      { error: 'Failed to process' },
+      { status: 500 }
+    )
+    return applySecurityHeaders(req, res)
   }
 }

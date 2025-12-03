@@ -1,5 +1,6 @@
 import { createMedia } from '@/lib/repositories/mediaRepository'
 import { getFileUrl } from '@/lib/storage'
+import { applySecurityHeaders, guardAccess } from '@/proxy'
 import {
   GetObjectCommand,
   PutObjectCommand,
@@ -55,6 +56,8 @@ async function getObjectBuffer(key: string): Promise<Buffer> {
 
 export async function POST(req: NextRequest) {
   try {
+    const guard = guardAccess(req)
+    if (guard) return guard
     const body = await req.json()
     const { orgId, clientId, originalKey, mimeType, size, title, description } =
       body || {}
@@ -132,14 +135,16 @@ export async function POST(req: NextRequest) {
       tags: [],
     })
 
-    return NextResponse.json({
+    const res = NextResponse.json({
       success: true,
       media,
       downloadUrl: originalDownloadUrl,
       optimizedUrl: optimizedUrl || null,
       thumbUrl: thumbUrl || null,
     })
+    return applySecurityHeaders(req, res)
   } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 })
+    const res = NextResponse.json({ error: String(err) }, { status: 500 })
+    return applySecurityHeaders(req, res)
   }
 }

@@ -115,3 +115,89 @@ export async function proxy(req: NextRequest) {
 }
 
 // Middleware config is defined in root-level middleware.ts
+
+// Helpers reutilizáveis para rotas sem middleware (Netlify)
+export function applySecurityHeaders(req: NextRequest, res?: NextResponse) {
+  const response = res ?? NextResponse.next()
+
+  const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
+  response.headers.set('x-nonce', nonce)
+
+  if (process.env.NODE_ENV === 'production') {
+    const appUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL
+    if (appUrl) {
+      response.headers.set('Access-Control-Allow-Origin', appUrl)
+      response.headers.set(
+        'Access-Control-Allow-Methods',
+        'GET, POST, PUT, PATCH, DELETE, OPTIONS'
+      )
+      response.headers.set(
+        'Access-Control-Allow-Headers',
+        'Content-Type, Authorization'
+      )
+    }
+
+    response.headers.set('X-Content-Type-Options', 'nosniff')
+    response.headers.set('X-Frame-Options', 'SAMEORIGIN')
+    response.headers.set('X-XSS-Protection', '1; mode=block')
+    response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+    response.headers.set(
+      'Permissions-Policy',
+      'camera=(), microphone=(), geolocation=()'
+    )
+
+    const cspDirectives = [
+      "default-src 'self'",
+      `script-src 'self' 'nonce-${nonce}' https://accounts.google.com https://apis.google.com https://*.googletagmanager.com https://www.gstatic.com https://us.i.posthog.com`,
+      `script-src-elem 'self' 'nonce-${nonce}' https://accounts.google.com https://apis.google.com https://*.googletagmanager.com https://www.gstatic.com https://us.i.posthog.com`,
+      "worker-src 'self' blob:",
+      "connect-src 'self' https://*.googleapis.com https://apis.google.com https://*.firebaseio.com https://*.cloudfunctions.net wss://*.firebaseio.com https://*.ingest.us.sentry.io https://*.ingest.sentry.io https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://*.google.com https://www.googleapis.com https://*.r2.cloudflarestorage.com https://us.i.posthog.com https://*.posthog.com",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com",
+      "font-src 'self' data: https://fonts.gstatic.com https://www.gstatic.com",
+      "img-src 'self' data: https: blob:",
+      "media-src 'self' https://*.r2.cloudflarestorage.com blob: data:",
+      "frame-src 'self' https://accounts.google.com https://*.firebaseapp.com",
+      "form-action 'self' https://accounts.google.com",
+      "frame-ancestors 'self'",
+    ]
+    response.headers.set('Content-Security-Policy', cspDirectives.join('; '))
+  }
+
+  return response
+}
+
+export function guardAccess(req: NextRequest) {
+  const token = req.cookies.get('auth')?.value
+  const pathname = req.nextUrl.pathname
+  const isLoginRoute = pathname.startsWith('/login')
+  const isAuthCallback = pathname.startsWith('/auth/callback')
+  const isInviteValidation =
+    pathname.startsWith('/api/invites/accept') && req.method === 'GET'
+
+  if (isAuthCallback) return null
+
+  if (!token) {
+    if (isInviteValidation || isLoginRoute) return null
+    return NextResponse.redirect(new URL('/login', req.url))
+  }
+
+  if (isLoginRoute) {
+    return NextResponse.redirect(new URL('/', req.url))
+  }
+
+  const role = getRole(req)
+
+  if (pathname.startsWith('/dashboard') && role === 'CLIENT') {
+    return NextResponse.redirect(new URL('/clients', req.url))
+  }
+
+  if (
+    (pathname.startsWith('/admin') || pathname.startsWith('/billing')) &&
+    role &&
+    role !== 'OWNER'
+  ) {
+    return NextResponse.redirect(new URL('/', req.url))
+  }
+
+  return null
+}

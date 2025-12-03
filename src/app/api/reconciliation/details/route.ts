@@ -1,7 +1,8 @@
 import { prisma } from '@/lib/prisma'
+import { applySecurityHeaders, guardAccess } from '@/proxy'
 import { NextResponse } from 'next/server'
 
-export async function GET() {
+export async function GET(req: Request) {
   // Detailed reconciliation listing for manual review
   // Expensive queries kept simple; consider pagination if dataset grows
   const invoicesPaidWithoutLinks = await prisma.invoice.findMany({
@@ -40,9 +41,12 @@ export async function GET() {
     (i) => i.finances.length > 1
   )
 
-  return NextResponse.json({
+  const guard = guardAccess(req as any)
+  if (guard) return guard
+  const res = NextResponse.json({
     invoicesPaidWithoutLinks,
     orphanFinances,
     multiFinanceInvoices,
   })
+  return applySecurityHeaders(req as any, res)
 }

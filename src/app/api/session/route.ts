@@ -6,31 +6,41 @@ import {
   getIdentifier,
   rateLimitExceeded,
 } from '@/lib/ratelimit'
+import { applySecurityHeaders, guardAccess } from '@/proxy'
 import { handleUserOnboarding } from '@/services/auth/onboarding'
 import { getSessionProfile } from '@/services/auth/session'
 import { FieldValue, getFirestore } from 'firebase-admin/firestore'
 import { cookies } from 'next/headers'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
 // GET: return session info
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const guard = guardAccess(req as any)
+    if (guard) return guard
     const { user, orgId, role } = await getSessionProfile()
     if (!user || !orgId)
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
-    return NextResponse.json({
+      return applySecurityHeaders(
+        req as any,
+        NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+      )
+    const res = NextResponse.json({
       user: { id: user.id, email: user.email, name: user.name },
       orgId,
       role,
     })
+    return applySecurityHeaders(req as any, res)
   } catch (err) {
     console.error('[Session API] GET error', err)
-    return NextResponse.json({ error: 'Session error' }, { status: 500 })
+    return applySecurityHeaders(
+      req as any,
+      NextResponse.json({ error: 'Session error' }, { status: 500 })
+    )
   }
 }
 
 // POST: create session from Firebase idToken, optionally accept inviteToken atomically
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const identifier = getIdentifier(req)
     const rateLimitResult = await checkRateLimit(identifier, authRatelimit)
@@ -182,7 +192,7 @@ export async function POST(req: Request) {
 
     const resp: any = { ok: true, nextPath }
     if (inviteStatus) resp.inviteStatus = inviteStatus
-    return NextResponse.json(resp)
+    return applySecurityHeaders(req, NextResponse.json(resp))
   } catch (err) {
     console.error('[Session API] POST error', err)
     try {
@@ -197,22 +207,28 @@ export async function POST(req: Request) {
           const payload = JSON.parse(
             Buffer.from(parts[1], 'base64').toString('utf8')
           )
-          return NextResponse.json(
-            {
-              error: 'Invalid token',
-              details: {
-                uid: payload.user_id,
-                aud: payload.aud,
-                iss: payload.iss,
-                iat: payload.iat,
-                exp: payload.exp,
+          return applySecurityHeaders(
+            req,
+            NextResponse.json(
+              {
+                error: 'Invalid token',
+                details: {
+                  uid: payload.user_id,
+                  aud: payload.aud,
+                  iss: payload.iss,
+                  iat: payload.iat,
+                  exp: payload.exp,
+                },
               },
-            },
-            { status: 401 }
+              { status: 401 }
+            )
           )
         }
       }
     } catch {}
-    return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+    return applySecurityHeaders(
+      req,
+      NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+    )
   }
 }

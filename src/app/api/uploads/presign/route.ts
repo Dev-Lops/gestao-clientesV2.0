@@ -3,10 +3,13 @@ import {
   generateFileKey,
   isAllowedMimeType,
 } from '@/lib/storage'
+import { applySecurityHeaders, guardAccess } from '@/proxy'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(req: NextRequest) {
   try {
+    const guard = guardAccess(req)
+    if (guard) return guard
     const { clientId, filename, mimeType, size } = await req.json()
     if (!clientId || !filename || !mimeType) {
       return NextResponse.json(
@@ -42,13 +45,15 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    return NextResponse.json({
+    const res = NextResponse.json({
       originalKey,
       uploadUrl,
       // dica para front renderizar preview após finalize
       willGenerateOptimized: mimeType.startsWith('image/'),
     })
+    return applySecurityHeaders(req, res)
   } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 })
+    const res = NextResponse.json({ error: String(err) }, { status: 500 })
+    return applySecurityHeaders(req, res)
   }
 }

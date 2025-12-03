@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { createClientSchema } from '@/lib/validations'
+import { applySecurityHeaders, guardAccess } from '@/proxy'
 import { getSessionProfile } from '@/services/auth/session'
 import { createClient } from '@/services/repositories/clients'
 import { ClientStatus } from '@/types/enums'
@@ -9,6 +10,8 @@ import { ZodError } from 'zod'
 
 export async function POST(req: NextRequest) {
   try {
+    const guard = guardAccess(req)
+    if (guard) return guard
     const { user, orgId, role } = await getSessionProfile()
 
     if (!user || !orgId) {
@@ -111,24 +114,29 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json(client, { status: 201 })
+    const res = NextResponse.json(client, { status: 201 })
+    return applySecurityHeaders(req, res)
   } catch (error) {
     if (error instanceof ZodError) {
-      return NextResponse.json(
+      const res = NextResponse.json(
         { error: 'Dados inválidos', details: error.issues },
         { status: 400 }
       )
+      return applySecurityHeaders(req, res)
     }
     console.error('Erro ao criar cliente:', error)
-    return NextResponse.json(
+    const res = NextResponse.json(
       { error: 'Erro ao criar cliente' },
       { status: 500 }
     )
+    return applySecurityHeaders(req, res)
   }
 }
 
 export async function GET(req: NextRequest) {
   try {
+    const guard = guardAccess(req)
+    if (guard) return guard
     const { user, orgId, role } = await getSessionProfile()
     if (!user || !orgId) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
@@ -140,8 +148,11 @@ export async function GET(req: NextRequest) {
       const client = await prisma.client.findFirst({
         where: { orgId, clientUserId: user.id },
       })
-      if (!client) return NextResponse.json({ data: [] })
-      return NextResponse.json({
+      if (!client) {
+        const resEmpty = NextResponse.json({ data: [] })
+        return applySecurityHeaders(req, resEmpty)
+      }
+      const resClient = NextResponse.json({
         data: [
           {
             id: client.id,
@@ -150,6 +161,7 @@ export async function GET(req: NextRequest) {
           },
         ],
       })
+      return applySecurityHeaders(req, resClient)
     }
 
     // OWNER / STAFF: retorno otimizado com select
@@ -165,7 +177,8 @@ export async function GET(req: NextRequest) {
         orderBy: { createdAt: 'desc' },
         take: 200,
       })
-      return NextResponse.json({ data: clients })
+      const resLite = NextResponse.json({ data: clients })
+      return applySecurityHeaders(req, resLite)
     }
 
     // Select apenas campos necessários para listagem completa
@@ -191,9 +204,11 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: 'desc' },
       take: 200,
     })
-    return NextResponse.json({ data: clients })
+    const resAll = NextResponse.json({ data: clients })
+    return applySecurityHeaders(req, resAll)
   } catch (e) {
     console.error('Erro ao listar clientes', e)
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+    const resErr = NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+    return applySecurityHeaders(req, resErr)
   }
 }

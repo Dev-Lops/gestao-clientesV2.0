@@ -1,9 +1,12 @@
 import { can, type AppRole } from '@/lib/permissions'
+import { applySecurityHeaders, guardAccess } from '@/proxy'
 import { getSessionProfile } from '@/services/auth/session'
 import { BillingBackfillService } from '@/services/billing/BillingBackfillService'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(req: NextRequest) {
+  const guard = guardAccess(req)
+  if (guard) return guard
   const { orgId, role } = await getSessionProfile()
   if (!orgId || !role)
     return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
@@ -19,10 +22,21 @@ export async function POST(req: NextRequest) {
   const dryRun = !!body?.dryRun
 
   try {
-    const res = await BillingBackfillService.backfill(orgId, modeParam, dryRun)
-    return NextResponse.json({ success: true, mode: modeParam, dryRun, ...res })
+    const resData = await BillingBackfillService.backfill(
+      orgId,
+      modeParam,
+      dryRun
+    )
+    const res = NextResponse.json({
+      success: true,
+      mode: modeParam,
+      dryRun,
+      ...resData,
+    })
+    return applySecurityHeaders(req, res)
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Erro ao executar backfill'
-    return NextResponse.json({ error: msg }, { status: 500 })
+    const res = NextResponse.json({ error: msg }, { status: 500 })
+    return applySecurityHeaders(req, res)
   }
 }

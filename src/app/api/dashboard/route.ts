@@ -1,5 +1,6 @@
 import { adminAuth } from '@/lib/firebaseAdmin'
 import { prisma } from '@/lib/prisma'
+import { applySecurityHeaders, guardAccess } from '@/proxy'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
@@ -37,6 +38,8 @@ function computeUrgency(t: {
 
 export async function GET(req: Request) {
   try {
+    const guard = guardAccess(req as any)
+    if (guard) return guard
     const cookieStore = await cookies()
     const token = cookieStore.get('auth')?.value
 
@@ -412,7 +415,7 @@ export async function GET(req: Request) {
       })
     }
 
-    return NextResponse.json({
+    const res = NextResponse.json({
       clients,
       tasks,
       metrics: {
@@ -432,11 +435,13 @@ export async function GET(req: Request) {
       events: dashboardEvents,
       user: { id: user.id, name: user.name, email: user.email },
     })
+    return applySecurityHeaders(req as any, res)
   } catch (error) {
     console.error('Erro ao buscar dados do dashboard:', error)
-    return NextResponse.json(
+    const res = NextResponse.json(
       { error: 'Failed to fetch dashboard data' },
       { status: 500 }
     )
+    return applySecurityHeaders(req as any, res)
   }
 }

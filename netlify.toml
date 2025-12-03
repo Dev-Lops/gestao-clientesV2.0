@@ -7,6 +7,8 @@
   PNPM_VERSION = "9"
   # Desabilita smart detection para Firebase API Key (pública por natureza)
   SECRETS_SCAN_SMART_DETECTION_ENABLED = "false"
+  # Disable Next.js middleware on Netlify to avoid build-time nft checks
+  NETLIFY_DISABLE_MIDDLEWARE = "true"
 
 [scheduled.functions]
   # Daily reconciliation at 02:00 UTC
