@@ -4,9 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build && npm run copy:headers && npm run netlify:workaround",
+    "prebuild": "node scripts/prebuild-middleware-nft.mjs",
+    "build": "pnpm run prebuild && pnpm run build:next && pnpm run copy:headers && pnpm run postbuild",
+    "build:next": "next build",
     "copy:headers": "node -e \"require('fs').cpSync('public/_headers', '.next/_headers', {force: true})\"",
-    "netlify:workaround": "node scripts/netlify-middleware-workaround.mjs",
+    "postbuild": "node scripts/netlify-middleware-workaround.mjs",
     "start": "next start",
     "lint": "eslint",
     "prisma:generate": "node scripts/prisma-generate.mjs",

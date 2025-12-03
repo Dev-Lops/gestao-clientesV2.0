@@ -12,20 +12,36 @@ Error: ENOENT: no such file or directory, open '/opt/build/repo/.next/server/mid
 
 ## Solução Implementada
 
-Criamos um script pós-build (`scripts/netlify-middleware-workaround.mjs`) que:
+Criamos uma solução em duas etapas para contornar a limitação do plugin Netlify:
+
+### 1. Pre-Build Script (`scripts/prebuild-middleware-nft.mjs`)
+
+Executa **antes** do `next build` e cria um placeholder vazio do arquivo `.next/server/middleware.js.nft.json`. Isso evita erros ENOENT durante a compilação do Next.js.
+
+### 2. Post-Build Script (`scripts/netlify-middleware-workaround.mjs`)
+
+Executa **após** o `next build` e:
 
 1. Lê o `middleware-manifest.json` gerado pelo Next.js 16
 2. Extrai as referências aos edge chunks
-3. Gera um arquivo `middleware.js.nft.json` válido com os paths corretos
+3. **Substitui** o placeholder com um arquivo NFT válido contendo os paths corretos
 4. Valida que todos os arquivos referenciados existem
 
 ### Arquivos Modificados
 
-- **package.json**: Adicionado `@netlify/plugin-nextjs` como devDependency e script de workaround no build
-- **scripts/netlify-middleware-workaround.mjs**: Script que gera o arquivo NFT
+- **package.json**:
+  - Adicionado `@netlify/plugin-nextjs` como devDependency
+  - Scripts `prebuild` e `postbuild` adicionados ao fluxo de build
+  - Build agora: `prebuild → next build → copy:headers → postbuild`
+- **scripts/prebuild-middleware-nft.mjs**: Cria placeholder antes do build
+- **scripts/netlify-middleware-workaround.mjs**: Gera arquivo NFT final após build
 - **netlify.toml**: Plugin já configurado
 
 ### Como Funciona
+
+1. **Pre-Build**: Cria `.next/server/middleware.js.nft.json` vazio para evitar ENOENT
+2. **Next Build**: Compila normalmente com Turbopack, gerando edge chunks
+3. **Post-Build**: Substitui o placeholder com conteúdo real extraído do manifest
 
 O arquivo NFT (Node File Trace) gerado contém:
 
