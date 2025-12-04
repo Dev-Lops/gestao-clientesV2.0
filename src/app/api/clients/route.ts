@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma'
-import { createClientSchema } from '@/lib/validations'
+import { createClientSchema, clientListQuerySchema } from '@/lib/validations'
 import { applySecurityHeaders, guardAccess } from '@/proxy'
 import { getSessionProfile } from '@/services/auth/session'
 import { createClient } from '@/services/repositories/clients'
@@ -164,10 +164,27 @@ export async function GET(req: NextRequest) {
       return applySecurityHeaders(req, resClient)
     }
 
-    // OWNER / STAFF: retorno otimizado com select
-    const lite = req.nextUrl.searchParams.get('lite') === '1'
+    const query = clientListQuerySchema.safeParse({
+      lite: req.nextUrl.searchParams.get('lite') ?? undefined,
+      limit: req.nextUrl.searchParams.get('limit') ?? undefined,
+      cursor: req.nextUrl.searchParams.get('cursor') ?? undefined,
+    })
 
-    if (lite) {
+    if (!query.success) {
+      const resBadRequest = NextResponse.json(
+        { error: 'Parâmetros inválidos', details: query.error.format() },
+        { status: 400 }
+      )
+      return applySecurityHeaders(req, resBadRequest)
+    }
+
+    const { lite, limit, cursor } = query.data
+    const take = Math.min(limit ?? 50, 200)
+
+    // OWNER / STAFF: retorno otimizado com select
+    const liteMode = lite === '1'
+
+    if (liteMode) {
       const clients = await prisma.client.findMany({
         where: { orgId },
         select: {
@@ -175,9 +192,9 @@ export async function GET(req: NextRequest) {
           name: true,
         },
         orderBy: { createdAt: 'desc' },
-        take: 200,
+        take,
       })
-      const resLite = NextResponse.json({ data: clients })
+      const resLite = NextResponse.json({ data: clients, meta: { limit: take } })
       return applySecurityHeaders(req, resLite)
     }
 
@@ -201,10 +218,30 @@ export async function GET(req: NextRequest) {
         createdAt: true,
         updatedAt: true,
       },
-      orderBy: { createdAt: 'desc' },
-      take: 200,
+      orderBy: [
+        { createdAt: 'desc' },
+        { id: 'desc' },
+      ],
+      take: take + 1,
+      ...(cursor
+        ? {
+            cursor: { id: cursor },
+            skip: 1,
+          }
+        : {}),
     })
-    const resAll = NextResponse.json({ data: clients })
+    const hasNextPage = clients.length > take
+    const data = clients.slice(0, take)
+    const nextCursor = hasNextPage ? data[data.length - 1]?.id ?? null : null
+
+    const resAll = NextResponse.json({
+      data,
+      meta: {
+        limit: take,
+        nextCursor,
+        hasNextPage,
+      },
+    })
     return applySecurityHeaders(req, resAll)
   } catch (e) {
     console.error('Erro ao listar clientes', e)
