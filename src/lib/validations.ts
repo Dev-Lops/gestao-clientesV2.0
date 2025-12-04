@@ -112,6 +112,12 @@ export const createClientSchema = z.object({
   installmentPaymentDays: z.array(z.number().int().min(1).max(31)).optional(),
 })
 
+export const clientListQuerySchema = z.object({
+  lite: z.enum(['1']).optional(),
+  limit: z.coerce.number().int().min(1).max(200).optional(),
+  cursor: z.string().cuid().optional(),
+})
+
 /**
  * Meeting schemas
  */

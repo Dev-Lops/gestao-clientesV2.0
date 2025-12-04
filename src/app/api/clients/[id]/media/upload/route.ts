@@ -1,4 +1,4 @@
-import { can } from '@/lib/permissions'
+import { AppRole, can } from '@/lib/permissions'
 import { prisma } from '@/lib/prisma'
 import {
   checkRateLimit,
@@ -44,7 +44,7 @@ function storageSnapshot() {
 
 // POST /api/clients/[id]/media/upload
 export async function POST(
-  _request: NextRequest | Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -64,7 +64,15 @@ export async function POST(
     const debugFlag = req.headers.get('x-debug') === '1'
     let user: { id: string; email: string; name: string | null } | null = null
     let orgId: string | null = null
-    let role: string | null = null
+    let role: AppRole | null = null
+    const normalizeRole = (value: string | null): AppRole | null => {
+      if (!value) return null
+      const upper = value.toUpperCase()
+      return ['OWNER', 'STAFF', 'CLIENT'].includes(upper)
+        ? (upper as AppRole)
+        : null
+    }
+
     if (debugFlag) {
       const hOrg = req.headers.get('x-debug-org-id')
       const hRole = req.headers.get('x-debug-role')
@@ -73,7 +81,7 @@ export async function POST(
         req.headers.get('x-debug-user-email') || 'debug@example.com'
       const hUserName = req.headers.get('x-debug-user-name') || 'Debug User'
       orgId = hOrg || null
-      role = hRole || null
+      role = normalizeRole(hRole)
       user = { id: hUserId, email: hUserEmail, name: hUserName }
     } else {
       const session = await getSessionProfile()
