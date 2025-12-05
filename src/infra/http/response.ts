@@ -71,6 +71,19 @@ export class ApiResponseHandler {
   /**
    * Erro de validação (400)
    */
+  static badRequest(message: string, details?: unknown): NextResponse {
+    const body: ApiError = {
+      error: 'Bad Request',
+      message,
+      details,
+      code: 'BAD_REQUEST',
+    }
+    return NextResponse.json(body, { status: 400 })
+  }
+
+  /**
+   * Erro de validação (400) - Alias para compatibilidade
+   */
   static validationError(message: string, details?: unknown): NextResponse {
     const body: ApiError = {
       error: 'Validation Error',
@@ -183,7 +196,14 @@ export class ApiResponseHandler {
   /**
    * Erro customizado genérico
    */
-  static error(
+  static error(error: unknown, context?: string, status = 500): NextResponse {
+    return this.internalError(error, context, true)
+  }
+
+  /**
+   * Erro com status customizado
+   */
+  static errorWithStatus(
     status: number,
     error: string,
     message?: string,

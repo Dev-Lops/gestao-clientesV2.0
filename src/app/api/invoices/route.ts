@@ -1,21 +1,30 @@
+import { authenticateRequest } from '@/infra/http/auth-middleware'
+import { ApiResponseHandler } from '@/infra/http/response'
 import { cacheInvalidation } from '@/lib/cache'
 import { getEmailNotificationService } from '@/lib/email-notifications'
 import { prisma } from '@/lib/prisma'
 import { invoiceListQuerySchema } from '@/lib/validations'
-import { getSessionProfile } from '@/services/auth/session'
 import { InvoiceService } from '@/services/financial'
 import { InvoiceStatus } from '@prisma/client'
 import * as Sentry from '@sentry/nextjs'
-import { NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
-    const profile = await getSessionProfile()
-    if (!profile || profile.role !== 'OWNER' || !profile.orgId) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    // ✨ Autenticação centralizada
+    const authResult = await authenticateRequest(request, {
+      allowedRoles: ['OWNER'],
+      rateLimit: true,
+      requireOrg: true,
+    })
+
+    if ('error' in authResult) {
+      return authResult.error
     }
 
+    const { orgId } = authResult.context
     const { searchParams } = new URL(request.url)
+
     const parsed = invoiceListQuerySchema.safeParse({
       clientId: searchParams.get('clientId') ?? undefined,
       status: searchParams.get('status') ?? undefined,
@@ -25,16 +34,17 @@ export async function GET(request: Request) {
       page: searchParams.get('page') ?? undefined,
       limit: searchParams.get('limit') ?? undefined,
     })
+
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: 'Parâmetros inválidos', details: parsed.error.format() },
-        { status: 400 }
+      return ApiResponseHandler.badRequest(
+        'Parâmetros inválidos',
+        parsed.error.format()
       )
     }
 
     const q = parsed.data
     const filters = {
-      orgId: profile.orgId,
+      orgId,
       clientId: q.clientId || undefined,
       status: q.status as InvoiceStatus | undefined,
       dateFrom: q.dateFrom || undefined,
@@ -49,50 +59,44 @@ export async function GET(request: Request) {
 
     const result = await InvoiceService.list(filters, pagination)
 
-    return NextResponse.json({
-      data: result.invoices,
-      meta: {
-        page: result.pagination.page,
-        limit: result.pagination.limit,
-        totalPages: result.pagination.totalPages,
-        total: result.pagination.total,
+    return ApiResponseHandler.success(
+      {
+        invoices: result.invoices,
+        meta: {
+          page: result.pagination.page,
+          limit: result.pagination.limit,
+          totalPages: result.pagination.totalPages,
+          total: result.pagination.total,
+        },
       },
-    })
+      'Faturas listadas'
+    )
   } catch (error) {
-    Sentry.addBreadcrumb({
-      category: 'api',
-      message: 'invoices:list',
-      level: 'error',
-    })
     Sentry.captureException(error)
     console.error('Error listing invoices:', error)
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : 'Erro ao listar faturas',
-      },
-      { status: 500 }
-    )
+    return ApiResponseHandler.error(error, 'Erro ao listar faturas')
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const profile = await getSessionProfile()
-    if (
-      !profile ||
-      profile.role !== 'OWNER' ||
-      !profile.orgId ||
-      !profile.user?.id
-    ) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    // ✨ Autenticação centralizada
+    const authResult = await authenticateRequest(request, {
+      allowedRoles: ['OWNER'],
+      rateLimit: true,
+      requireOrg: true,
+    })
+
+    if ('error' in authResult) {
+      return authResult.error
     }
 
+    const { orgId, user } = authResult.context
     const body = await request.json()
 
     const invoice = await InvoiceService.create({
       clientId: body.clientId,
-      orgId: profile.orgId,
+      orgId,
       dueDate: new Date(body.dueDate),
       items: body.items,
       discount: body.discount,
@@ -100,11 +104,11 @@ export async function POST(request: Request) {
       notes: body.notes,
       internalNotes: body.internalNotes,
       installmentId: body.installmentId,
-      createdBy: profile.user.id,
+      createdBy: user.id,
     })
 
     // Invalidate cache after invoice creation
-    cacheInvalidation.invoices(profile.orgId)
+    cacheInvalidation.invoices(orgId)
 
     // Send email notification (async, don't await)
     try {
@@ -143,20 +147,10 @@ export async function POST(request: Request) {
       // Don't fail the request if email fails
     }
 
-    return NextResponse.json(invoice, { status: 201 })
+    return ApiResponseHandler.created(invoice, 'Fatura criada com sucesso')
   } catch (error) {
-    Sentry.addBreadcrumb({
-      category: 'api',
-      message: 'invoices:create',
-      level: 'error',
-    })
     Sentry.captureException(error)
     console.error('Error creating invoice:', error)
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : 'Erro ao criar fatura',
-      },
-      { status: 400 }
-    )
+    return ApiResponseHandler.error(error, 'Erro ao criar fatura')
   }
 }

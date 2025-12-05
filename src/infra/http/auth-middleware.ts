@@ -11,6 +11,10 @@ import { ApiResponseHandler } from './response'
 
 export interface AuthContext {
   userId: string
+  user: {
+    id: string
+    email?: string
+  }
   orgId: string
   role: Role
   email?: string
@@ -79,6 +83,10 @@ export async function authenticateRequest(
   return {
     context: {
       userId: profile.user.id,
+      user: {
+        id: profile.user.id,
+        email: profile.user.email ?? undefined,
+      },
       orgId: profile.orgId!,
       role: profile.role!,
       email: profile.user.email ?? undefined,

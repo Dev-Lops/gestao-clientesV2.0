@@ -2,54 +2,43 @@ import {
   clientListQuerySchema,
   createClientSchema,
 } from '@/domain/clients/validators'
+import { authenticateRequest } from '@/infra/http/auth-middleware'
+import { ApiResponseHandler } from '@/infra/http/response'
 import { prisma } from '@/lib/prisma'
-import { apiRatelimit, checkRateLimit, getIdentifier } from '@/lib/ratelimit'
-import { applySecurityHeaders, guardAccess } from '@/proxy'
-import { getSessionProfile } from '@/services/auth/session'
+import { applySecurityHeaders } from '@/proxy'
 import { ClientBillingService } from '@/services/billing/ClientBillingService'
 import { createClient } from '@/services/repositories/clients'
 import { ClientStatus } from '@/types/enums'
 import type { ClientPlan, SocialChannel } from '@prisma/client'
 import * as Sentry from '@sentry/nextjs'
 import { NextRequest, NextResponse } from 'next/server'
-import { ZodError } from 'zod'
 
 export async function POST(req: NextRequest) {
   try {
-    // Rate limiting para criação de clientes
-    const id = getIdentifier(req as unknown as Request)
-    const rl = await checkRateLimit(id, apiRatelimit)
-    if (!rl.success) {
-      const res429 = NextResponse.json(
-        {
-          error: 'Too many requests',
-          message: 'Rate limit exceeded. Please try again later.',
-          resetAt: rl.reset.toISOString(),
-        },
-        { status: 429 }
-      )
-      return applySecurityHeaders(req, res429)
-    }
-    const guard = guardAccess(req)
-    if (guard) return guard
-    const { user, orgId, role } = await getSessionProfile()
+    // ✨ Autenticação centralizada com middleware
+    const authResult = await authenticateRequest(req, {
+      allowedRoles: ['OWNER'],
+      rateLimit: true,
+      requireOrg: true,
+    })
 
-    if (!user || !orgId) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    if ('error' in authResult) {
+      return authResult.error
     }
 
-    // Only OWNER can create clients
-    if (role !== 'OWNER') {
-      return NextResponse.json(
-        { error: 'Sem permissão para criar clientes' },
-        { status: 403 }
-      )
-    }
-
+    const { orgId } = authResult.context
     const body = await req.json()
 
     // Validate request body with Zod
-    const validated = createClientSchema.parse(body)
+    const validationResult = createClientSchema.safeParse(body)
+    if (!validationResult.success) {
+      return ApiResponseHandler.badRequest(
+        'Dados inválidos',
+        validationResult.error.issues
+      )
+    }
+
+    const validated = validationResult.data
 
     const client = await createClient({
       name: validated.name,
@@ -92,71 +81,37 @@ export async function POST(req: NextRequest) {
     const res = NextResponse.json(client, { status: 201 })
     return applySecurityHeaders(req, res)
   } catch (error) {
-    if (error instanceof ZodError) {
-      const res = NextResponse.json(
-        { error: 'Dados inválidos', details: error.issues },
-        { status: 400 }
-      )
-      return applySecurityHeaders(req, res)
-    }
-    Sentry.addBreadcrumb({
-      category: 'api',
-      message: 'clients:create',
-      level: 'error',
-    })
     Sentry.captureException(error)
     console.error('Erro ao criar cliente:', error)
-    const res = NextResponse.json(
-      { error: 'Erro ao criar cliente' },
-      { status: 500 }
-    )
-    return applySecurityHeaders(req, res)
+    return ApiResponseHandler.error(error, 'Erro ao criar cliente')
   }
 }
 
 export async function GET(req: NextRequest) {
   try {
-    // Rate limiting para listagem de clientes
-    const id = getIdentifier(req as unknown as Request)
-    const rl = await checkRateLimit(id, apiRatelimit)
-    if (!rl.success) {
-      const res429 = NextResponse.json(
-        {
-          error: 'Too many requests',
-          message: 'Rate limit exceeded. Please try again later.',
-          resetAt: rl.reset.toISOString(),
-        },
-        { status: 429 }
-      )
-      return applySecurityHeaders(req, res429)
-    }
-    const guard = guardAccess(req)
-    if (guard) return guard
-    const { user, orgId, role } = await getSessionProfile()
-    if (!user || !orgId) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    // ✨ Autenticação centralizada
+    const authResult = await authenticateRequest(req, {
+      rateLimit: true,
+      requireOrg: true,
+    })
+
+    if ('error' in authResult) {
+      return authResult.error
     }
 
-    // CLIENT só vê seu próprio registro (derivado de clientUserId)
+    const { user, orgId, role } = authResult.context
+
+    // CLIENT só vê seu próprio registro
     if (role === 'CLIENT') {
-      // Busca o Client vinculado
       const client = await prisma.client.findFirst({
         where: { orgId, clientUserId: user.id },
       })
       if (!client) {
-        const resEmpty = NextResponse.json({ data: [] })
-        return applySecurityHeaders(req, resEmpty)
+        return ApiResponseHandler.success([], 'Nenhum cliente associado')
       }
-      const resClient = NextResponse.json({
-        data: [
-          {
-            id: client.id,
-            name: client.name,
-            email: client.email,
-          },
-        ],
-      })
-      return applySecurityHeaders(req, resClient)
+      return ApiResponseHandler.success([
+        { id: client.id, name: client.name, email: client.email },
+      ])
     }
 
     const query = clientListQuerySchema.safeParse({
@@ -166,11 +121,10 @@ export async function GET(req: NextRequest) {
     })
 
     if (!query.success) {
-      const resBadRequest = NextResponse.json(
-        { error: 'Parâmetros inválidos', details: query.error.format() },
-        { status: 400 }
+      return ApiResponseHandler.badRequest(
+        'Parâmetros inválidos',
+        query.error.flatten()
       )
-      return applySecurityHeaders(req, resBadRequest)
     }
 
     const { lite, limit, cursor } = query.data
@@ -189,11 +143,7 @@ export async function GET(req: NextRequest) {
         orderBy: { createdAt: 'desc' },
         take,
       })
-      const resLite = NextResponse.json({
-        data: clients,
-        meta: { limit: take },
-      })
-      return applySecurityHeaders(req, resLite)
+      return ApiResponseHandler.success(clients, 'Clientes listados')
     }
 
     // Select apenas campos necessários para listagem completa
@@ -229,7 +179,7 @@ export async function GET(req: NextRequest) {
     const data = clients.slice(0, take)
     const nextCursor = hasNextPage ? (data[data.length - 1]?.id ?? null) : null
 
-    const resAll = NextResponse.json({
+    return ApiResponseHandler.success({
       data,
       meta: {
         limit: take,
@@ -237,16 +187,9 @@ export async function GET(req: NextRequest) {
         hasNextPage,
       },
     })
-    return applySecurityHeaders(req, resAll)
   } catch (e) {
-    Sentry.addBreadcrumb({
-      category: 'api',
-      message: 'clients:list',
-      level: 'error',
-    })
     Sentry.captureException(e)
     console.error('Erro ao listar clientes', e)
-    const resErr = NextResponse.json({ error: 'Erro interno' }, { status: 500 })
-    return applySecurityHeaders(req, resErr)
+    return ApiResponseHandler.error(e, 'Erro ao listar clientes')
   }
 }
