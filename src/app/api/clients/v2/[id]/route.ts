@@ -5,10 +5,11 @@ import { NextRequest, NextResponse } from 'next/server'
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   return NextResponse.json(
-    { error: 'Endpoint ainda não implementado' },
+    { error: `Endpoint ainda não implementado para o cliente ${id}` },
     { status: 501 }
   )
 }
@@ -18,10 +19,11 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   return NextResponse.json(
-    { error: 'Endpoint ainda não implementado' },
+    { error: `Endpoint ainda não implementado para o cliente ${id}` },
     { status: 501 }
   )
 }
@@ -31,10 +33,11 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   return NextResponse.json(
-    { error: 'Endpoint ainda não implementado' },
+    { error: `Endpoint ainda não implementado para o cliente ${id}` },
     { status: 501 }
   )
 }
