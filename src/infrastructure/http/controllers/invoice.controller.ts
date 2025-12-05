@@ -1,5 +1,5 @@
 import { InvoiceStatus } from '@/domain/invoice/value-objects/invoice-status.vo'
-import { authenticateRequest } from '@/infra/http/auth-middleware'
+import { authenticateRequest } from '@/infrastructure/http/middlewares/auth.middleware'
 import { PrismaInvoiceRepository } from '@/infrastructure/database/repositories/prisma-invoice.repository'
 import { prisma } from '@/lib/prisma'
 import { CancelInvoiceUseCase } from '@/use-cases/invoice/cancel-invoice.use-case'

@@ -18,7 +18,7 @@
     "paths": {
       "@/*": ["./src/*"],
       "@/core/*": ["./src/core/*"],
-      "@/domain/*": ["./src/core/domain/*"],
+      "@/domain/*": ["./src/core/domain/*", "./src/domain/*"],
       "@/use-cases/*": ["./src/core/use-cases/*"],
       "@/ports/*": ["./src/core/ports/*"],
       "@/infrastructure/*": ["./src/infrastructure/*"],

@@ -1,64 +1,65 @@
-import { Client } from '@/core/domain/client/entities/client.entity'
-import { ClientStatus } from '@/core/domain/client/value-objects/client-status.vo'
-import { IClientRepository } from '@/core/ports/repositories/client.repository.interface'
-import { z } from 'zod'
+import type {
+  ClientAggregate,
+  LiteClientAggregate,
+} from '@/core/domain/client/entities/client.entity'
+import type { ClientRepository } from '@/core/ports/repositories/client.repository'
+import type { ClientListQuery } from '@/shared/schemas/client.schema'
 
-/**
- * Input Schema para listar clientes
- */
-export const ListClientsInputSchema = z.object({
-  orgId: z.string().uuid(),
-  page: z.number().int().positive().optional().default(1),
-  limit: z.number().int().positive().max(200).optional().default(50),
-  status: z.array(z.nativeEnum(ClientStatus)).optional(),
-  search: z.string().optional(),
-})
-
-export type ListClientsInput = z.infer<typeof ListClientsInputSchema>
-
-/**
- * Output do use case
- */
-export interface ListClientsOutput {
-  clients: Client[]
-  total: number
-  page: number
-  limit: number
-  totalPages: number
+interface ListClientsInput extends ClientListQuery {
+  orgId: string
+  role: string
+  userId: string
 }
 
-/**
- * Use Case: Listar Clientes
- * Responsável por listar clientes com filtros e paginação
- */
+interface ListClientsResult {
+  data: (ClientAggregate | LiteClientAggregate)[]
+  meta: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+    hasNextPage: boolean
+    hasPreviousPage: boolean
+    nextCursor: string | null
+  }
+}
+
+interface ClientOnlyResult {
+  client: LiteClientAggregate | null
+}
+
 export class ListClientsUseCase {
-  constructor(private readonly clientRepository: IClientRepository) {}
+  constructor(private readonly repository: ClientRepository) {}
 
-  async execute(input: ListClientsInput): Promise<ListClientsOutput> {
-    // 1. Validar input
-    const validated = ListClientsInputSchema.parse(input)
+  async execute(input: ListClientsInput): Promise<ListClientsResult | ClientOnlyResult> {
+    const take = Math.min(input.limit ?? 50, 200)
 
-    // 2. Buscar clientes
-    const { clients, total } = await this.clientRepository.findByOrgId(
-      validated.orgId,
-      {
-        page: validated.page,
-        limit: validated.limit,
-        status: validated.status?.map((s) => s.toString()),
-        search: validated.search,
-      }
-    )
+    if (input.role === 'CLIENT') {
+      const client = await this.repository.findClientForUser({
+        orgId: input.orgId,
+        userId: input.userId,
+      })
+      return { client }
+    }
 
-    // 3. Calcular total de páginas
-    const totalPages = Math.ceil(total / validated.limit)
+    const { data, hasNextPage, nextCursor } = await this.repository.list({
+      orgId: input.orgId,
+      take,
+      cursor: input.cursor ?? undefined,
+      lite: input.lite === '1',
+    })
 
-    // 4. Retornar resultado
     return {
-      clients,
-      total,
-      page: validated.page,
-      limit: validated.limit,
-      totalPages,
+      data,
+      meta: {
+        page: 1,
+        limit: take,
+        total: data.length,
+        totalPages: 1,
+        hasNextPage,
+        hasPreviousPage: Boolean(input.cursor),
+        nextCursor,
+      },
     }
   }
 }
