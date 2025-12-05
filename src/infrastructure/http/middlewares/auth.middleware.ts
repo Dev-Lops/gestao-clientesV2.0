@@ -7,7 +7,7 @@ import { apiRatelimit, checkRateLimit, getIdentifier } from '@/lib/ratelimit'
 import { getSessionProfile } from '@/services/auth/session'
 import { Role } from '@prisma/client'
 import { NextRequest, NextResponse } from 'next/server'
-import { ApiResponseHandler } from './response'
+import { ApiResponseHandler } from '../response'
 
 export interface AuthContext {
   userId: string

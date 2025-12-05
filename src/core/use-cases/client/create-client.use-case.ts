@@ -1,80 +1,50 @@
-import { Client } from '@/core/domain/client/entities/client.entity'
-import { ClientStatus } from '@/core/domain/client/value-objects/client-status.vo'
-import { CNPJ } from '@/core/domain/client/value-objects/cnpj.vo'
-import { Email } from '@/core/domain/client/value-objects/email.vo'
-import { IClientRepository } from '@/core/ports/repositories/client.repository.interface'
-import { z } from 'zod'
+import type { ClientAggregate } from '@/core/domain/client/entities/client.entity'
+import type { ClientRepository } from '@/core/ports/repositories/client.repository'
+import type { ClientBillingPort } from '@/core/ports/services/billing.service'
+import type { CreateClientInput } from '@/shared/schemas/client.schema'
+import { CLIENT_STATUS, type ClientStatus } from '@/types/enums'
+import type { ClientPlan, SocialChannel } from '@prisma/client'
 
-/**
- * Input Schema para criar cliente
- */
-export const CreateClientInputSchema = z.object({
-  name: z.string().min(1, 'Nome obrigatório'),
-  email: z.string().email('Email inválido'),
-  phone: z.string().optional().nullable(),
-  cnpj: z.string().optional().nullable(),
-  cpf: z.string().optional().nullable(),
-  orgId: z.string().uuid('OrgId inválido'),
-})
-
-export type CreateClientInput = z.infer<typeof CreateClientInputSchema>
-
-/**
- * Output do use case
- */
-export interface CreateClientOutput {
-  clientId: string
-}
-
-/**
- * Use Case: Criar Cliente
- * Responsável por criar um novo cliente no sistema
- */
 export class CreateClientUseCase {
-  constructor(private readonly clientRepository: IClientRepository) {}
+  constructor(
+    private readonly repository: ClientRepository,
+    private readonly billingService: ClientBillingPort
+  ) {}
 
-  async execute(input: CreateClientInput): Promise<CreateClientOutput> {
-    // 1. Validar input
-    const validatedInput = CreateClientInputSchema.parse(input)
-
-    // 2. Verificar duplicidade de email
-    const existingEmail = await this.clientRepository.findByEmail(
-      validatedInput.email,
-      validatedInput.orgId
-    )
-    if (existingEmail) {
-      throw new Error('Já existe um cliente com este email')
+  async execute(
+    input: CreateClientInput & {
+      orgId: string
     }
-
-    // 3. Verificar duplicidade de CNPJ (se fornecido)
-    if (validatedInput.cnpj) {
-      const existingCNPJ = await this.clientRepository.findByCNPJ(
-        validatedInput.cnpj,
-        validatedInput.orgId
-      )
-      if (existingCNPJ) {
-        throw new Error('Já existe um cliente com este CNPJ')
-      }
-    }
-
-    // 4. Criar entidade Cliente
-    const client = Client.create({
-      id: crypto.randomUUID(),
-      name: validatedInput.name,
-      email: new Email(validatedInput.email),
-      phone: validatedInput.phone,
-      cnpj: validatedInput.cnpj ? new CNPJ(validatedInput.cnpj) : null,
-      cpf: validatedInput.cpf,
-      status: ClientStatus.ACTIVE,
-      orgId: validatedInput.orgId,
+  ): Promise<ClientAggregate> {
+    const client = await this.repository.create({
+      orgId: input.orgId,
+      name: input.name,
+      email: input.email,
+      phone: input.phone,
+      status: (input.status as ClientStatus | undefined) ?? CLIENT_STATUS.NEW,
+      plan: (input.plan as ClientPlan | undefined) ?? null,
+      mainChannel: (input.mainChannel as SocialChannel | undefined) ?? null,
+      contractStart: input.contractStart ? new Date(input.contractStart) : null,
+      contractEnd: input.contractEnd ? new Date(input.contractEnd) : null,
+      paymentDay: input.paymentDay ?? null,
+      contractValue: input.contractValue ?? null,
+      isInstallment: input.isInstallment ?? false,
+      installmentCount: input.installmentCount ?? null,
+      installmentValue: input.installmentValue ?? null,
+      installmentPaymentDays: input.installmentPaymentDays ?? null,
     })
 
-    // 5. Persistir
-    await this.clientRepository.save(client)
-
-    // 6. Retornar resultado
-    return {
+    await this.billingService.generateInstallments({
       clientId: client.id,
-    }
+      isInstallment: input.isInstallment,
+      installmentCount: input.installmentCount ?? null,
+      contractValue: input.contractValue ?? null,
+      contractStart: input.contractStart ? new Date(input.contractStart) : null,
+      paymentDay: input.paymentDay ?? null,
+      installmentValue: input.installmentValue ?? null,
+      installmentPaymentDays: input.installmentPaymentDays ?? null,
+    })
+
+    return client
   }
 }

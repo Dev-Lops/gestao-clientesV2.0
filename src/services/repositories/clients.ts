@@ -100,7 +100,7 @@ export async function createClient(
   const client = await prisma.client.create({
     data: {
       name: data.name,
-      email: data.email,
+      email: data.email ?? '',
       phone: data.phone,
       status: data.status || 'new',
       plan: data.plan,

@@ -1,5 +1,5 @@
-import { authenticateRequest } from '@/infra/http/auth-middleware'
-import { ApiResponseHandler } from '@/infra/http/response'
+import { authenticateRequest } from '@/infrastructure/http/middlewares/auth.middleware'
+import { ApiResponseHandler } from '@/infrastructure/http/response'
 import { ReportingService } from '@/services/financial'
 import * as Sentry from '@sentry/nextjs'
 import { NextRequest } from 'next/server'
