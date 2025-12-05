@@ -1,12 +1,14 @@
 packages:
   - .
 onlyBuiltDependencies:
+  - '@apollo/protobufjs'
   - '@firebase/util'
   - '@prisma/client'
   - '@prisma/engines'
   - '@sentry/cli'
   - core-js
   - esbuild
+  - msgpackr-extract
   - prisma
   - protobufjs
   - sharp
