@@ -2,13 +2,13 @@
  * Teste Unitário - Transaction Entity
  */
 
-import { Money } from '@/domain/invoice/value-objects/money.vo'
-import { Transaction } from '@/domain/transaction/entities/transaction.entity'
 import {
   TransactionStatus,
   TransactionSubtype,
   TransactionType,
 } from '@/domain/transaction/value-objects/transaction-type.vo'
+import { Money } from '@/domain/invoice/value-objects/money.vo'
+import { Transaction } from '@/domain/transaction/entities/transaction.entity'
 import { describe, expect, it } from 'vitest'
 
 describe('Transaction Entity', () => {

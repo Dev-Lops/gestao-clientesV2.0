@@ -15,11 +15,19 @@ export class PrismaTaskRepository implements ITaskRepository {
 
   async save(task: Task): Promise<void> {
     const data = this.toPrisma(task)
+    // Cast para Prisma enums - necessário por limitações de type mapping
+
+    const taskData = {
+      ...data,
+      status: data.status as any,
+      priority: data.priority as any,
+      clientId: data.clientId ?? undefined,
+    }
 
     await this.prisma.task.upsert({
       where: { id: task.id || 'new-task' },
-      create: data,
-      update: data,
+      create: taskData,
+      update: taskData,
     })
   }
 
@@ -59,11 +67,13 @@ export class PrismaTaskRepository implements ITaskRepository {
     }
 
     if (options?.status && options.status.length > 0) {
-      where.status = { in: options.status }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      where.status = { in: options.status as any }
     }
 
     if (options?.priority && options.priority.length > 0) {
-      where.priority = { in: options.priority }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      where.priority = { in: options.priority as any }
     }
 
     if (options?.assignee) {
