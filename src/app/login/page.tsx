@@ -416,7 +416,7 @@ export default function LoginPage() {
       }
     >
       <LoginPageInner />
-      <AuthDebug />
+      {process.env.NODE_ENV === 'development' && <AuthDebug />}
     </Suspense>
   );
 }
