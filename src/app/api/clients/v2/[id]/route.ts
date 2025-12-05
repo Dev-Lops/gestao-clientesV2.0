@@ -1,16 +1,17 @@
-import { ClientController } from '@/infrastructure/http/controllers/client.controller'
-import { NextRequest } from 'next/server'
-
-const controller = new ClientController()
+import { NextRequest, NextResponse } from 'next/server'
 
 /**
  * GET /api/clients/v2/:id - Buscar cliente específico
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  return controller.get(request, params.id)
+  const { id } = await params
+  return NextResponse.json(
+    { error: `Endpoint ainda não implementado para o cliente ${id}` },
+    { status: 501 }
+  )
 }
 
 /**
@@ -18,9 +19,13 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  return controller.update(request, params.id)
+  const { id } = await params
+  return NextResponse.json(
+    { error: `Endpoint ainda não implementado para o cliente ${id}` },
+    { status: 501 }
+  )
 }
 
 /**
@@ -28,7 +33,11 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  return controller.delete(request, params.id)
+  const { id } = await params
+  return NextResponse.json(
+    { error: `Endpoint ainda não implementado para o cliente ${id}` },
+    { status: 501 }
+  )
 }

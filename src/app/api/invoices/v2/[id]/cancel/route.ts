@@ -8,7 +8,8 @@ const controller = new InvoiceController()
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  return controller.cancel(request, params.id)
+  const { id } = await context.params
+  return controller.cancel(request, id)
 }

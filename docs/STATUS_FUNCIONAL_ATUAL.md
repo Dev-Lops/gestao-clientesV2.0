@@ -206,17 +206,17 @@ Module not found: Can't resolve '@/components/AuthDebug'
 #### 2. **Inconsistência nos Path Aliases** ⚠️
 
 **Problema**: Path aliases apontam para estrutura nova (`src/presentation/`) mas arquivos ainda estão na estrutura antiga (`src/components/`)
+**Status**: Ajustado com migração dos componentes base para `src/presentation/components/`.
 
 **Path Aliases Configurados**:
 
 ```json
 "@/components": ["src/presentation/components"]
-"@/ui": ["src/presentation/ui"]
 ```
 
 **Realidade dos Arquivos**:
 
-- Arquivos reais: `src/components/`
+- Arquivos reais: `src/presentation/components/`
 - Aliases apontam para: `src/presentation/components/`
 
 **Impacto**:
