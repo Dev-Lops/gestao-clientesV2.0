@@ -58,7 +58,7 @@ export async function PATCH(
       where: { id: clientId },
       data: {
         name: validated.name,
-        email: validated.email ?? null,
+        email: validated.email ?? undefined,
         phone: validated.phone ?? null,
         status: validated.status as ClientStatus | undefined,
         plan: validated.plan ? (validated.plan as ClientPlan) : null,
