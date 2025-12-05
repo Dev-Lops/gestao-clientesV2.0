@@ -1,14 +1,54 @@
+import { CreateClientUseCase } from '@/core/use-cases/client/create-client.use-case'
+import { ListClientsUseCase } from '@/core/use-cases/client/list-clients.use-case'
 import { ApiResponseHandler } from '@/infra/http/response'
-import { prisma } from '@/lib/prisma'
-import { CreateClientInput, clientListQuerySchema, createClientSchema } from '@/shared/schemas/client.schema'
-import { ClientBillingService } from '@/services/billing/ClientBillingService'
-import { createClient } from '@/services/repositories/clients'
-import { CLIENT_STATUS, type ClientStatus } from '@/types/enums'
+import { PrismaClientRepository } from '@/infrastructure/database/repositories/prisma-client.repository'
+import { ClientBillingServiceAdapter } from '@/infrastructure/services/billing/client-billing.service'
+import {
+  type CreateClientInput,
+  clientListQuerySchema,
+  createClientSchema,
+} from '@/shared/schemas/client.schema'
 
 interface AuthContext {
   orgId: string
   role: string
   userId: string
+}
+
+const clientRepository = new PrismaClientRepository()
+const billingService = new ClientBillingServiceAdapter()
+const createClientUseCase = new CreateClientUseCase(clientRepository, billingService)
+const listClientsUseCase = new ListClientsUseCase(clientRepository)
+
+function mapClientResponse(client: any) {
+  if (!('status' in client)) {
+    return {
+      id: client.id,
+      name: client.name,
+      email: client.email ?? null,
+    }
+  }
+
+  return {
+    id: client.id,
+    name: client.name,
+    email: client.email ?? null,
+    phone: client.phone ?? null,
+    status: client.status,
+    plan: client.plan,
+    mainChannel: client.mainChannel,
+    paymentStatus: client.paymentStatus ?? null,
+    contractStart: client.contractStart,
+    contractEnd: client.contractEnd,
+    contractValue: client.contractValue,
+    paymentDay: client.paymentDay,
+    isInstallment: client.isInstallment,
+    installmentCount: client.installmentCount,
+    installmentValue: client.installmentValue,
+    installmentPaymentDays: client.installmentPaymentDays,
+    createdAt: client.createdAt,
+    updatedAt: client.updatedAt,
+  }
 }
 
 export async function createClientController(body: unknown, orgId: string) {
@@ -21,40 +61,9 @@ export async function createClientController(body: unknown, orgId: string) {
   }
 
   const validated: CreateClientInput = validationResult.data
-  const client = await createClient({
-    name: validated.name,
-    email: validated.email,
-    phone: validated.phone,
-    status: (validated.status as ClientStatus) || CLIENT_STATUS.NEW,
-    plan: validated.plan as any,
-    mainChannel: validated.mainChannel as any,
-    orgId,
-    contractStart: validated.contractStart
-      ? new Date(validated.contractStart)
-      : undefined,
-    contractEnd: validated.contractEnd ? new Date(validated.contractEnd) : undefined,
-    paymentDay: validated.paymentDay,
-    contractValue: validated.contractValue,
-    isInstallment: validated.isInstallment,
-    installmentCount: validated.installmentCount,
-    installmentValue: validated.installmentValue,
-    installmentPaymentDays: validated.installmentPaymentDays,
-  })
+  const client = await createClientUseCase.execute({ ...validated, orgId })
 
-  await ClientBillingService.generateInstallments({
-    clientId: client.id,
-    isInstallment: validated.isInstallment,
-    installmentCount: validated.installmentCount ?? undefined,
-    contractValue: validated.contractValue ?? undefined,
-    contractStart: validated.contractStart
-      ? new Date(validated.contractStart)
-      : undefined,
-    paymentDay: validated.paymentDay ?? null,
-    installmentValue: validated.installmentValue ?? null,
-    installmentPaymentDays: validated.installmentPaymentDays ?? null,
-  })
-
-  return ApiResponseHandler.created(client)
+  return ApiResponseHandler.created(mapClientResponse(client))
 }
 
 export async function listClientsController(
@@ -75,95 +84,20 @@ export async function listClientsController(
   }
 
   const { orgId, role, userId } = authContext
-  const { lite, limit, cursor } = query.data
-  const take = Math.min(limit ?? 50, 200)
+  const listResult = await listClientsUseCase.execute({
+    orgId,
+    role,
+    userId,
+    ...query.data,
+  })
 
-  if (role === 'CLIENT') {
-    const client = await prisma.client.findFirst({
-      where: { orgId, clientUserId: userId, deletedAt: null },
-    })
-    if (!client) {
+  if ('client' in listResult) {
+    if (!listResult.client) {
       return ApiResponseHandler.success([], 'Nenhum cliente associado')
     }
-    return ApiResponseHandler.success([
-      { id: client.id, name: client.name, email: client.email },
-    ])
+    return ApiResponseHandler.success([listResult.client])
   }
 
-  const liteMode = lite === '1'
-  const baseQuery = {
-    where: { orgId, deletedAt: null },
-    orderBy: [{ createdAt: 'desc' as const }, { id: 'desc' as const }],
-    take: take + 1,
-    ...(cursor
-      ? {
-          cursor: { id: cursor },
-          skip: 1,
-        }
-      : {}),
-  }
-
-  if (liteMode) {
-    const clients = await prisma.client.findMany({
-      ...baseQuery,
-      select: {
-        id: true,
-        name: true,
-      },
-    })
-    const hasNextPage = clients.length > take
-    const data = clients.slice(0, take)
-    const nextCursor = hasNextPage ? data[data.length - 1]?.id ?? null : null
-
-    return ApiResponseHandler.success({
-      data,
-      meta: {
-        page: 1,
-        limit: take,
-        total: data.length,
-        totalPages: 1,
-        hasNextPage,
-        hasPreviousPage: Boolean(cursor),
-        nextCursor,
-      },
-    })
-  }
-
-  const clients = await prisma.client.findMany({
-    ...baseQuery,
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      phone: true,
-      status: true,
-      plan: true,
-      mainChannel: true,
-      paymentStatus: true,
-      contractStart: true,
-      contractEnd: true,
-      contractValue: true,
-      paymentDay: true,
-      isInstallment: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  })
-
-  const hasNextPage = clients.length > take
-  const data = clients.slice(0, take)
-  const nextCursor = hasNextPage ? data[data.length - 1]?.id ?? null : null
-
-  return ApiResponseHandler.success({
-    data,
-    meta: {
-      page: 1,
-      limit: take,
-      total: data.length,
-      totalPages: 1,
-      hasNextPage,
-      hasPreviousPage: Boolean(cursor),
-      nextCursor,
-    },
-  })
+  const mappedData = listResult.data.map(mapClientResponse)
+  return ApiResponseHandler.paginatedList(mappedData, listResult.meta)
 }

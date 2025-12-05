@@ -1,4 +1,7 @@
-import { ClientStatus } from '../value-objects/client-status.vo'
+import type { ClientStatus as ClientStatusEnum } from '@/types/enums'
+import type { ClientPlan, SocialChannel } from '@prisma/client'
+
+import { ClientStatus as DomainClientStatus } from '../value-objects/client-status.vo'
 import { CNPJ } from '../value-objects/cnpj.vo'
 import { Email } from '../value-objects/email.vo'
 
@@ -14,7 +17,7 @@ export interface ClientProps {
   phone?: string | null
   cnpj?: CNPJ | null
   cpf?: string | null
-  status: ClientStatus
+  status: DomainClientStatus
   orgId: string
   createdAt: Date
   updatedAt: Date
@@ -61,7 +64,7 @@ export class Client {
     return this.props.cpf ?? null
   }
 
-  get status(): ClientStatus {
+  get status(): DomainClientStatus {
     return this.props.status
   }
 
@@ -82,12 +85,12 @@ export class Client {
   }
 
   get isActive(): boolean {
-    return this.props.status === ClientStatus.ACTIVE
+    return this.props.status === DomainClientStatus.ACTIVE
   }
 
   get isDeleted(): boolean {
     return (
-      this.props.status === ClientStatus.DELETED &&
+      this.props.status === DomainClientStatus.DELETED &&
       this.props.deletedAt !== null
     )
   }
@@ -115,7 +118,7 @@ export class Client {
     if (this.isDeleted) {
       throw new Error('Cliente excluído não pode ser ativado')
     }
-    this.props.status = ClientStatus.ACTIVE
+    this.props.status = DomainClientStatus.ACTIVE
     this.props.updatedAt = new Date()
   }
 
@@ -123,12 +126,12 @@ export class Client {
     if (this.isDeleted) {
       throw new Error('Cliente excluído não pode ser desativado')
     }
-    this.props.status = ClientStatus.INACTIVE
+    this.props.status = DomainClientStatus.INACTIVE
     this.props.updatedAt = new Date()
   }
 
   softDelete(): void {
-    this.props.status = ClientStatus.DELETED
+    this.props.status = DomainClientStatus.DELETED
     this.props.deletedAt = new Date()
     this.props.updatedAt = new Date()
   }
@@ -147,3 +150,27 @@ export class Client {
     return { ...this.props }
   }
 }
+
+// Aggregate shapes used by infrastructure mappers and use cases
+export interface ClientAggregate {
+  id: string
+  name: string
+  email: string | null
+  phone: string | null
+  status: ClientStatusEnum
+  plan: ClientPlan | null
+  mainChannel: SocialChannel | null
+  paymentStatus: string | null
+  contractStart: Date | null
+  contractEnd: Date | null
+  contractValue: number | null
+  paymentDay: number | null
+  isInstallment: boolean
+  installmentCount: number | null
+  installmentValue: number | null
+  installmentPaymentDays: number[]
+  createdAt: Date
+  updatedAt: Date
+}
+
+export type LiteClientAggregate = Pick<ClientAggregate, 'id' | 'name' | 'email'>
