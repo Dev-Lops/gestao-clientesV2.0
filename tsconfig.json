@@ -24,9 +24,12 @@
       "@/infrastructure/*": ["./src/infrastructure/*"],
       "@/presentation/*": ["./src/presentation/*"],
       "@/shared/*": ["./src/shared/*"],
-      "@/components/*": ["./src/presentation/components/*"],
-      "@/hooks/*": ["./src/presentation/hooks/*"],
-      "@/context/*": ["./src/presentation/contexts/*"],
+      "@/components/*": [
+        "./src/components/*",
+        "./src/presentation/components/*"
+      ],
+      "@/hooks/*": ["./src/hooks/*", "./src/presentation/hooks/*"],
+      "@/context/*": ["./src/context/*", "./src/presentation/contexts/*"],
       "@/types/*": ["./src/shared/types/*"],
       "@/schemas/*": ["./src/shared/schemas/*"],
       "@/utils/*": ["./src/shared/utils/*"],

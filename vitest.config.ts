@@ -16,11 +16,18 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
+      '@/': path.resolve(__dirname, 'src') + path.sep,
       '@/domain': path.resolve(__dirname, 'src/core/domain'),
+      '@/domain/': path.resolve(__dirname, 'src/core/domain') + path.sep,
       '@/core': path.resolve(__dirname, 'src/core'),
+      '@/core/': path.resolve(__dirname, 'src/core') + path.sep,
       '@/use-cases': path.resolve(__dirname, 'src/core/use-cases'),
+      '@/use-cases/': path.resolve(__dirname, 'src/core/use-cases') + path.sep,
       '@/ports': path.resolve(__dirname, 'src/core/ports'),
+      '@/ports/': path.resolve(__dirname, 'src/core/ports') + path.sep,
       '@/infrastructure': path.resolve(__dirname, 'src/infrastructure'),
+      '@/infrastructure/':
+        path.resolve(__dirname, 'src/infrastructure') + path.sep,
     },
   },
 })
