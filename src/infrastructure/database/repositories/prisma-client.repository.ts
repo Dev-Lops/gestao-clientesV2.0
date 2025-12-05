@@ -85,7 +85,10 @@ export class PrismaClientRepository implements IClientRepository {
       orgId: string
       deletedAt: null
       status?: { in: string[] }
-      OR?: Array<{ name?: any; email?: any }>
+      OR?: Array<{
+        name?: { contains: string; mode: 'insensitive' }
+        email?: { contains: string; mode: 'insensitive' }
+      }>
     } = {
       orgId,
       deletedAt: null,

@@ -69,7 +69,7 @@ model Member {
 model Client {
   id                      String                   @id @default(cuid())
   name                    String
-  email                   String?
+  email                   String
   orgId                   String
   createdAt               DateTime                 @default(now())
   phone                   String?
