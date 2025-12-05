@@ -186,7 +186,7 @@ function KanbanColumn({ column, tasks, handleEdit, handleDelete }: KanbanColumnP
     },
   };
 
-  const style = columnStyles[column.id];
+  const style = columnStyles[column.id] || columnStyles['TODO']; // Fallback para TODO se não encontrar
 
   return (
     <div ref={setNodeRef} className="flex-1 min-w-[280px] max-w-[360px]">
@@ -245,9 +245,10 @@ export function TasksPanel({ clientId, initialTasks = [] }: TasksPanelProps) {
 
   // Kanban columns
   const columns = [
-    { id: 'todo' as TaskStatus, title: 'A Fazer', color: 'bg-slate-100 dark:bg-slate-800' },
-    { id: 'in-progress' as TaskStatus, title: 'Em Progresso', color: 'bg-blue-100 dark:bg-blue-950/30' },
-    { id: 'done' as TaskStatus, title: 'Concluído', color: 'bg-emerald-100 dark:bg-emerald-950/30' },
+    { id: 'TODO' as TaskStatus, title: 'A Fazer', color: 'bg-slate-100 dark:bg-slate-800' },
+    { id: 'IN_PROGRESS' as TaskStatus, title: 'Em Progresso', color: 'bg-blue-100 dark:bg-blue-950/30' },
+    { id: 'REVIEW' as TaskStatus, title: 'Em Revisão', color: 'bg-purple-100 dark:bg-purple-950/30' },
+    { id: 'DONE' as TaskStatus, title: 'Concluído', color: 'bg-emerald-100 dark:bg-emerald-950/30' },
   ];
 
   // Drag and drop logic
