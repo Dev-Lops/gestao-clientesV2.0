@@ -1,6 +1,10 @@
 import { prisma } from '@/lib/prisma'
-import { Payment, PaymentStatus } from '@/core/domain/payment/entities/payment.entity'
+import {
+  Payment,
+  PaymentStatus,
+} from '@/core/domain/payment/entities/payment.entity'
 import { Money } from '@/core/domain/payment/value-objects/money.vo'
+import { IPaymentRepository } from '@/core/ports/repositories/payment.repository.interface'
 import {
   Transaction,
   TransactionStatus,
@@ -8,8 +12,8 @@ import {
   TransactionType,
 } from '@prisma/client'
 
-export class PrismaPaymentRepository {
-  async upsert(payment: Payment): Promise<void> {
+export class PrismaPaymentRepository implements IPaymentRepository {
+  async save(payment: Payment): Promise<void> {
     const data = this.mapToTransaction(payment)
 
     await prisma.transaction.upsert({
