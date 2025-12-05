@@ -1,6 +1,6 @@
 /**
  * Barrel export para componentes base
- * Facilita importação: import { Button, Card } from '@/ui/components/base'
+ * Facilita importação: import { Button, Card } from '@/components/atoms'
  */
 
 export { Button, buttonVariants } from './Button'
