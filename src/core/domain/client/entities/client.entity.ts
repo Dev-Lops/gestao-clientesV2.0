@@ -87,7 +87,7 @@ export class Client {
 
   get isDeleted(): boolean {
     return (
-      this.props.status === ClientStatus.DELETED ||
+      this.props.status === ClientStatus.DELETED &&
       this.props.deletedAt !== null
     )
   }

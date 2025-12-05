@@ -1,4 +1,4 @@
-import { IClientRepository } from '@/ports/repositories/client.repository.interface'
+import { IClientRepository } from '@/core/ports/repositories/client.repository.interface'
 import { z } from 'zod'
 
 /**

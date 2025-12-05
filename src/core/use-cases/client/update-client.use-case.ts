@@ -1,5 +1,5 @@
-import { Email } from '@/domain/client/value-objects/email.vo'
-import { IClientRepository } from '@/ports/repositories/client.repository.interface'
+import { Email } from '@/core/domain/client/value-objects/email.vo'
+import { IClientRepository } from '@/core/ports/repositories/client.repository.interface'
 import { z } from 'zod'
 
 /**

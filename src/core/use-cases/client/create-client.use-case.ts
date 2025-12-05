@@ -1,8 +1,8 @@
-import { Client } from '@/domain/client/entities/client.entity'
-import { ClientStatus } from '@/domain/client/value-objects/client-status.vo'
-import { CNPJ } from '@/domain/client/value-objects/cnpj.vo'
-import { Email } from '@/domain/client/value-objects/email.vo'
-import { IClientRepository } from '@/ports/repositories/client.repository.interface'
+import { Client } from '@/core/domain/client/entities/client.entity'
+import { ClientStatus } from '@/core/domain/client/value-objects/client-status.vo'
+import { CNPJ } from '@/core/domain/client/value-objects/cnpj.vo'
+import { Email } from '@/core/domain/client/value-objects/email.vo'
+import { IClientRepository } from '@/core/ports/repositories/client.repository.interface'
 import { z } from 'zod'
 
 /**

@@ -1,5 +1,5 @@
-import { Client } from '@/domain/client/entities/client.entity'
-import { IClientRepository } from '@/ports/repositories/client.repository.interface'
+import { Client } from '@/core/domain/client/entities/client.entity'
+import { IClientRepository } from '@/core/ports/repositories/client.repository.interface'
 import { z } from 'zod'
 
 /**
