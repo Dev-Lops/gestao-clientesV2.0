@@ -1,172 +1,145 @@
-import { Client } from '@/domain/client/entities/client.entity'
-import { ClientStatus } from '@/domain/client/value-objects/client-status.vo'
-import { CNPJ } from '@/domain/client/value-objects/cnpj.vo'
-import { Email } from '@/domain/client/value-objects/email.vo'
-import { IClientRepository } from '@/ports/repositories/client.repository.interface'
-import { PrismaClient } from '@prisma/client'
+import type {
+  ClientAggregate,
+  LiteClientAggregate,
+} from '@/core/domain/client/entities/client.entity'
+import type {
+  ClientRepository,
+  CreateClientRepositoryInput,
+  ListClientsRepositoryInput,
+  ListClientsRepositoryOutput,
+} from '@/core/ports/repositories/client.repository'
+import { prisma } from '@/lib/prisma'
 
-/**
- * Implementação do Repository de Clientes usando Prisma
- */
-export class PrismaClientRepository implements IClientRepository {
-  constructor(private readonly prisma: PrismaClient) {}
-
-  async save(client: Client): Promise<void> {
-    const data = {
-      id: client.id,
-      name: client.name,
-      email: client.email.value,
-      phone: client.phone,
-      cnpj: client.cnpj?.value ?? null,
-      cpf: client.cpf,
-      status: client.status,
-      orgId: client.orgId,
-      updatedAt: client.updatedAt,
-      deletedAt: client.deletedAt,
-    }
-
-    await this.prisma.client.upsert({
-      where: { id: client.id },
-      create: {
-        ...data,
-        createdAt: client.createdAt,
-      },
-      update: data,
-    })
-  }
-
-  async findById(id: string): Promise<Client | null> {
-    const data = await this.prisma.client.findUnique({
-      where: { id },
-    })
-
-    return data ? this.toDomain(data) : null
-  }
-
-  async findByEmail(email: string, orgId: string): Promise<Client | null> {
-    const data = await this.prisma.client.findFirst({
-      where: {
-        email: email.toLowerCase(),
-        orgId,
-        deletedAt: null,
+export class PrismaClientRepository implements ClientRepository {
+  async create(data: CreateClientRepositoryInput): Promise<ClientAggregate> {
+    const client = await prisma.client.create({
+      data: {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        status: data.status,
+        plan: data.plan,
+        mainChannel: data.mainChannel,
+        orgId: data.orgId,
+        contractStart: data.contractStart ?? undefined,
+        contractEnd: data.contractEnd ?? undefined,
+        paymentDay: data.paymentDay ?? undefined,
+        contractValue: data.contractValue ?? undefined,
+        isInstallment: data.isInstallment ?? false,
+        installmentCount: data.installmentCount ?? undefined,
+        installmentValue: data.installmentValue ?? undefined,
+        installmentPaymentDays: data.installmentPaymentDays ?? undefined,
       },
     })
 
-    return data ? this.toDomain(data) : null
+    return this.toAggregate(client)
   }
 
-  async findByCNPJ(cnpj: string, orgId: string): Promise<Client | null> {
-    const cleanCNPJ = cnpj.replace(/\D/g, '')
-    const data = await this.prisma.client.findFirst({
-      where: {
-        cnpj: cleanCNPJ,
-        orgId,
-        deletedAt: null,
-      },
+  async findClientForUser(params: {
+    orgId: string
+    userId: string
+  }): Promise<LiteClientAggregate | null> {
+    const client = await prisma.client.findFirst({
+      where: { orgId: params.orgId, clientUserId: params.userId, deletedAt: null },
     })
 
-    return data ? this.toDomain(data) : null
-  }
-
-  async findByOrgId(
-    orgId: string,
-    options?: {
-      page?: number
-      limit?: number
-      status?: string[]
-      search?: string
-    }
-  ): Promise<{ clients: Client[]; total: number }> {
-    const page = options?.page ?? 1
-    const limit = options?.limit ?? 10
-    const skip = (page - 1) * limit
-
-    const where: {
-      orgId: string
-      deletedAt: null
-      status?: { in: string[] }
-      OR?: Array<{
-        name?: { contains: string; mode: 'insensitive' }
-        email?: { contains: string; mode: 'insensitive' }
-      }>
-    } = {
-      orgId,
-      deletedAt: null,
-    }
-
-    if (options?.status && options.status.length > 0) {
-      where.status = { in: options.status }
-    }
-
-    if (options?.search) {
-      where.OR = [
-        { name: { contains: options.search, mode: 'insensitive' } },
-        { email: { contains: options.search, mode: 'insensitive' } },
-      ]
-    }
-
-    const [data, total] = await Promise.all([
-      this.prisma.client.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-      }),
-      this.prisma.client.count({ where }),
-    ])
+    if (!client) return null
 
     return {
-      clients: data.map((d) => this.toDomain(d)),
-      total,
+      id: client.id,
+      name: client.name,
+      email: client.email ?? null,
     }
   }
 
-  async delete(id: string): Promise<void> {
-    await this.prisma.client.update({
-      where: { id },
-      data: {
-        status: ClientStatus.DELETED,
-        deletedAt: new Date(),
-        updatedAt: new Date(),
+  async list(params: ListClientsRepositoryInput): Promise<ListClientsRepositoryOutput> {
+    const baseQuery = {
+      where: { orgId: params.orgId, deletedAt: null },
+      orderBy: [{ createdAt: 'desc' as const }, { id: 'desc' as const }],
+      take: params.take + 1,
+      ...(params.cursor
+        ? {
+            cursor: { id: params.cursor },
+            skip: 1,
+          }
+        : {}),
+    }
+
+    if (params.lite) {
+      const rows = await prisma.client.findMany({
+        ...baseQuery,
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      })
+
+      return this.buildPagination(rows, params.take)
+    }
+
+    const rows = await prisma.client.findMany({
+      ...baseQuery,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        status: true,
+        plan: true,
+        mainChannel: true,
+        paymentStatus: true,
+        contractStart: true,
+        contractEnd: true,
+        contractValue: true,
+        paymentDay: true,
+        isInstallment: true,
+        installmentCount: true,
+        installmentValue: true,
+        installmentPaymentDays: true,
+        createdAt: true,
+        updatedAt: true,
       },
     })
+
+    return this.buildPagination(rows, params.take)
   }
 
-  async exists(id: string): Promise<boolean> {
-    const count = await this.prisma.client.count({
-      where: { id, deletedAt: null },
-    })
-    return count > 0
+  private buildPagination(
+    rows: any[],
+    take: number
+  ): ListClientsRepositoryOutput {
+    const hasNextPage = rows.length > take
+    const data = rows.slice(0, take)
+    const nextCursor = hasNextPage ? data[data.length - 1]?.id ?? null : null
+
+    return {
+      data: data.map((row) => this.toAggregate(row)),
+      hasNextPage,
+      nextCursor,
+    }
   }
 
-  /**
-   * Converte dados do Prisma para entidade de domínio
-   */
-  private toDomain(data: {
-    id: string
-    name: string
-    email: string
-    phone: string | null
-    cnpj: string | null
-    cpf: string | null
-    status: string
-    orgId: string
-    createdAt: Date
-    updatedAt: Date
-    deletedAt: Date | null
-  }): Client {
-    return Client.restore({
-      id: data.id,
-      name: data.name,
-      email: new Email(data.email),
-      phone: data.phone,
-      cnpj: data.cnpj ? new CNPJ(data.cnpj) : null,
-      cpf: data.cpf,
-      status: data.status as ClientStatus,
-      orgId: data.orgId,
-      createdAt: data.createdAt,
-      updatedAt: data.updatedAt,
-      deletedAt: data.deletedAt,
-    })
+  private toAggregate(row: any): ClientAggregate {
+    return {
+      id: row.id,
+      name: row.name,
+      email: row.email ?? null,
+      phone: row.phone ?? null,
+      status: row.status,
+      plan: row.plan ?? null,
+      mainChannel: row.mainChannel ?? null,
+      paymentStatus: row.paymentStatus ?? null,
+      contractStart: row.contractStart ?? null,
+      contractEnd: row.contractEnd ?? null,
+      contractValue: row.contractValue ?? null,
+      paymentDay: row.paymentDay ?? null,
+      isInstallment: row.isInstallment ?? false,
+      installmentCount: row.installmentCount ?? null,
+      installmentValue: row.installmentValue ?? null,
+      installmentPaymentDays: row.installmentPaymentDays ?? [],
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    }
   }
 }
