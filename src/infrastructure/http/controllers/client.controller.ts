@@ -1,257 +1,103 @@
-import { ClientStatus } from '@/domain/client/value-objects/client-status.vo'
-import { authenticateRequest } from '@/infra/http/auth-middleware'
+import { CreateClientUseCase } from '@/core/use-cases/client/create-client.use-case'
+import { ListClientsUseCase } from '@/core/use-cases/client/list-clients.use-case'
+import { ApiResponseHandler } from '@/infrastructure/http/response'
 import { PrismaClientRepository } from '@/infrastructure/database/repositories/prisma-client.repository'
-import { prisma } from '@/lib/prisma'
-import { CreateClientUseCase } from '@/use-cases/client/create-client.use-case'
-import { DeleteClientUseCase } from '@/use-cases/client/delete-client.use-case'
-import { GetClientUseCase } from '@/use-cases/client/get-client.use-case'
-import { ListClientsUseCase } from '@/use-cases/client/list-clients.use-case'
-import { UpdateClientUseCase } from '@/use-cases/client/update-client.use-case'
-import { NextRequest, NextResponse } from 'next/server'
+import { ClientBillingServiceAdapter } from '@/infrastructure/services/billing/client-billing.service'
+import {
+  type CreateClientInput,
+  clientListQuerySchema,
+  createClientSchema,
+} from '@/shared/schemas/client.schema'
 
-/**
- * Controller HTTP para Clientes
- * Responsável por lidar com requisições HTTP relacionadas a clientes
- */
-export class ClientController {
-  private readonly clientRepository: PrismaClientRepository
+interface AuthContext {
+  orgId: string
+  role: string
+  userId: string
+}
 
-  constructor() {
-    this.clientRepository = new PrismaClientRepository(prisma)
-  }
+const clientRepository = new PrismaClientRepository()
+const billingService = new ClientBillingServiceAdapter()
+const createClientUseCase = new CreateClientUseCase(clientRepository, billingService)
+const listClientsUseCase = new ListClientsUseCase(clientRepository)
 
-  /**
-   * POST /api/clients - Criar novo cliente
-   */
-  async create(request: NextRequest): Promise<NextResponse> {
-    try {
-      // 1. Autenticação
-      const authResult = await authenticateRequest(request, {
-        allowedRoles: ['OWNER'],
-        requireOrg: true,
-      })
-
-      if ('error' in authResult) {
-        return authResult.error
-      }
-
-      const { orgId } = authResult.context
-
-      // 2. Parse do body
-      const body = await request.json()
-
-      // 3. Executar use case
-      const createClientUseCase = new CreateClientUseCase(this.clientRepository)
-      const result = await createClientUseCase.execute({
-        ...body,
-        orgId,
-      })
-
-      // 4. Retornar sucesso
-      return NextResponse.json({ id: result.clientId }, { status: 201 })
-    } catch (error) {
-      console.error('Erro ao criar cliente:', error)
-
-      if (error instanceof Error) {
-        return NextResponse.json({ error: error.message }, { status: 400 })
-      }
-
-      return NextResponse.json(
-        { error: 'Erro interno do servidor' },
-        { status: 500 }
-      )
+function mapClientResponse(client: any) {
+  if (!('status' in client)) {
+    return {
+      id: client.id,
+      name: client.name,
+      email: client.email ?? null,
     }
   }
 
-  /**
-   * GET /api/clients - Listar clientes
-   */
-  async list(request: NextRequest): Promise<NextResponse> {
-    try {
-      // 1. Autenticação
-      const authResult = await authenticateRequest(request, {
-        requireOrg: true,
-      })
+  return {
+    id: client.id,
+    name: client.name,
+    email: client.email ?? null,
+    phone: client.phone ?? null,
+    status: client.status,
+    plan: client.plan,
+    mainChannel: client.mainChannel,
+    paymentStatus: client.paymentStatus ?? null,
+    contractStart: client.contractStart,
+    contractEnd: client.contractEnd,
+    contractValue: client.contractValue,
+    paymentDay: client.paymentDay,
+    isInstallment: client.isInstallment,
+    installmentCount: client.installmentCount,
+    installmentValue: client.installmentValue,
+    installmentPaymentDays: client.installmentPaymentDays,
+    createdAt: client.createdAt,
+    updatedAt: client.updatedAt,
+  }
+}
 
-      if ('error' in authResult) {
-        return authResult.error
-      }
-
-      const { orgId } = authResult.context
-
-      // 2. Parse dos query params
-      const { searchParams } = new URL(request.url)
-      const page = parseInt(searchParams.get('page') || '1')
-      const limit = parseInt(searchParams.get('limit') || '50')
-      const search = searchParams.get('search') || undefined
-      const statusParam = searchParams.get('status')
-
-      // Mapear strings para ClientStatus enum
-      const status = statusParam
-        ? statusParam
-            .split(',')
-            .map((s) => {
-              const upper = s.toUpperCase()
-              return upper in ClientStatus
-                ? ClientStatus[upper as keyof typeof ClientStatus]
-                : undefined
-            })
-            .filter((s): s is ClientStatus => s !== undefined)
-        : undefined
-
-      // 3. Executar use case
-      const listClientsUseCase = new ListClientsUseCase(this.clientRepository)
-      const result = await listClientsUseCase.execute({
-        orgId,
-        page,
-        limit,
-        search,
-        status,
-      })
-
-      // 4. Retornar sucesso
-      return NextResponse.json(result)
-    } catch (error) {
-      console.error('Erro ao listar clientes:', error)
-
-      if (error instanceof Error) {
-        return NextResponse.json({ error: error.message }, { status: 400 })
-      }
-
-      return NextResponse.json(
-        { error: 'Erro interno do servidor' },
-        { status: 500 }
-      )
-    }
+export async function createClientController(body: unknown, orgId: string) {
+  const validationResult = createClientSchema.safeParse(body)
+  if (!validationResult.success) {
+    return ApiResponseHandler.badRequest(
+      'Dados inválidos',
+      validationResult.error.issues
+    )
   }
 
-  /**
-   * GET /api/clients/:id - Buscar cliente específico
-   */
-  async get(request: NextRequest, clientId: string): Promise<NextResponse> {
-    try {
-      // 1. Autenticação
-      const authResult = await authenticateRequest(request, {
-        requireOrg: true,
-      })
+  const validated: CreateClientInput = validationResult.data
+  const client = await createClientUseCase.execute({ ...validated, orgId })
 
-      if ('error' in authResult) {
-        return authResult.error
-      }
+  return ApiResponseHandler.created(mapClientResponse(client))
+}
 
-      const { orgId } = authResult.context
+export async function listClientsController(
+  searchParams: URLSearchParams,
+  authContext: AuthContext
+) {
+  const query = clientListQuerySchema.safeParse({
+    lite: searchParams.get('lite') ?? undefined,
+    limit: searchParams.get('limit') ?? undefined,
+    cursor: searchParams.get('cursor') ?? undefined,
+  })
 
-      // 2. Executar use case
-      const getClientUseCase = new GetClientUseCase(this.clientRepository)
-      const result = await getClientUseCase.execute({
-        clientId,
-        orgId,
-      })
-
-      // 3. Retornar sucesso
-      return NextResponse.json(result.client)
-    } catch (error) {
-      console.error('Erro ao buscar cliente:', error)
-
-      if (error instanceof Error) {
-        return NextResponse.json(
-          { error: error.message },
-          { status: error.message === 'Cliente não encontrado' ? 404 : 400 }
-        )
-      }
-
-      return NextResponse.json(
-        { error: 'Erro interno do servidor' },
-        { status: 500 }
-      )
-    }
+  if (!query.success) {
+    return ApiResponseHandler.badRequest(
+      'Parâmetros inválidos',
+      query.error.flatten()
+    )
   }
 
-  /**
-   * PUT /api/clients/:id - Atualizar cliente
-   */
-  async update(request: NextRequest, clientId: string): Promise<NextResponse> {
-    try {
-      // 1. Autenticação
-      const authResult = await authenticateRequest(request, {
-        requireOrg: true,
-      })
+  const { orgId, role, userId } = authContext
+  const listResult = await listClientsUseCase.execute({
+    orgId,
+    role,
+    userId,
+    ...query.data,
+  })
 
-      if ('error' in authResult) {
-        return authResult.error
-      }
-
-      const { orgId } = authResult.context
-
-      // 2. Parse do body
-      const body = await request.json()
-
-      // 3. Executar use case
-      const updateClientUseCase = new UpdateClientUseCase(this.clientRepository)
-      const result = await updateClientUseCase.execute({
-        ...body,
-        clientId,
-        orgId,
-      })
-
-      // 4. Retornar sucesso
-      return NextResponse.json({ id: result.clientId })
-    } catch (error) {
-      console.error('Erro ao atualizar cliente:', error)
-
-      if (error instanceof Error) {
-        return NextResponse.json(
-          { error: error.message },
-          { status: error.message === 'Cliente não encontrado' ? 404 : 400 }
-        )
-      }
-
-      return NextResponse.json(
-        { error: 'Erro interno do servidor' },
-        { status: 500 }
-      )
+  if ('client' in listResult) {
+    if (!listResult.client) {
+      return ApiResponseHandler.success([], 'Nenhum cliente associado')
     }
+    return ApiResponseHandler.success([listResult.client])
   }
 
-  /**
-   * DELETE /api/clients/:id - Deletar cliente
-   */
-  async delete(request: NextRequest, clientId: string): Promise<NextResponse> {
-    try {
-      // 1. Autenticação
-      const authResult = await authenticateRequest(request, {
-        requireOrg: true,
-      })
-
-      if ('error' in authResult) {
-        return authResult.error
-      }
-
-      const { orgId } = authResult.context
-
-      // 2. Executar use case
-      const deleteClientUseCase = new DeleteClientUseCase(this.clientRepository)
-      const result = await deleteClientUseCase.execute({
-        clientId,
-        orgId,
-      })
-
-      // 3. Retornar sucesso
-      return NextResponse.json({ id: result.clientId })
-    } catch (error) {
-      console.error('Erro ao deletar cliente:', error)
-
-      if (error instanceof Error) {
-        return NextResponse.json(
-          { error: error.message },
-          { status: error.message === 'Cliente não encontrado' ? 404 : 400 }
-        )
-      }
-
-      return NextResponse.json(
-        { error: 'Erro interno do servidor' },
-        { status: 500 }
-      )
-    }
-  }
+  const mappedData = listResult.data.map(mapClientResponse)
+  return ApiResponseHandler.paginatedList(mappedData, listResult.meta)
 }
