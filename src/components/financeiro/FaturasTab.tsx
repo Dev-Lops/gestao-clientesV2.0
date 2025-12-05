@@ -94,8 +94,9 @@ export function FaturasTab() {
       if (!response.ok) throw new Error('Erro ao carregar faturas')
 
       const result = await response.json()
-      setInvoices(result.data || [])
-      setTotalPages(result.totalPages || 1)
+      // API retorna { invoices: [], meta: { page, totalPages, ... } }
+      setInvoices(Array.isArray(result.invoices) ? result.invoices : [])
+      setTotalPages(result.meta?.totalPages || 1)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro desconhecido')
     } finally {
