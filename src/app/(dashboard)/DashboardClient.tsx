@@ -58,6 +58,9 @@ export function DashboardClient({ initialData, initialMonthKey, role }: Dashboar
   const completedTasks = tasks.filter(t => isDoneStatus(t.status))
   const priorities = pendingTasks.slice(0, 6)
   const metrics = data.metrics
+  const totalClients = metrics?.totals.clients ?? clients.length
+  const totalTasks = metrics?.totals.tasks ?? tasks.length
+  const completedPercent = totalTasks > 0 ? Math.round((completedTasks.length / totalTasks) * 100) : 0
 
   return (
     <div className="page-background">
@@ -105,7 +108,7 @@ export function DashboardClient({ initialData, initialMonthKey, role }: Dashboar
             <KpiCard
               variant="blue"
               icon={Users}
-              value={clients.length}
+              value={totalClients}
               label="Total de Clientes"
               description="Base de clientes"
             />
@@ -128,8 +131,8 @@ export function DashboardClient({ initialData, initialMonthKey, role }: Dashboar
               icon={CheckCircle2}
               value={completedTasks.length}
               label="Concluídas"
-              description={`${tasks.length > 0 ? Math.round((completedTasks.length / tasks.length) * 100) : 0}% taxa de conclusão`}
-              progress={tasks.length > 0 ? Math.round((completedTasks.length / tasks.length) * 100) : 0}
+              description={`${completedPercent}% taxa de conclusão`}
+              progress={completedPercent}
             />
           </KpiGrid>
         </motion.section>
