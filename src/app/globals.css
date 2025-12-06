@@ -9,7 +9,23 @@
 @layer base {
   :root {
     /* Keep only non-generated runtime tokens here. */
-    --radius: 0.625rem;
+    --radius: 0.75rem;
+    --bg-shell: radial-gradient(circle at 10% 20%, rgba(129, 140, 248, 0.08), transparent 25%),
+      radial-gradient(circle at 90% 10%, rgba(236, 72, 153, 0.08), transparent 25%),
+      linear-gradient(135deg, #f8fafc 0%, #ffffff 50%, #f1f5f9 100%);
+    --bg-shell-dark: radial-gradient(circle at 10% 20%, rgba(129, 140, 248, 0.14), transparent 25%),
+      radial-gradient(circle at 90% 10%, rgba(236, 72, 153, 0.12), transparent 25%),
+      linear-gradient(135deg, #020617 0%, #0f172a 50%, #020617 100%);
+    --surface: rgba(255, 255, 255, 0.9);
+    --surface-strong: rgba(255, 255, 255, 0.98);
+    --surface-dark: rgba(15, 23, 42, 0.85);
+    --surface-strong-dark: rgba(15, 23, 42, 0.95);
+    --border-strong: rgba(100, 116, 139, 0.14);
+    --border-strong-dark: rgba(51, 65, 85, 0.6);
+    --glow: 0 10px 30px rgba(99, 102, 241, 0.15), 0 10px 50px rgba(59, 130, 246, 0.12);
+    --glow-strong: 0 10px 40px rgba(99, 102, 241, 0.25), 0 20px 60px rgba(14, 165, 233, 0.2);
+    --subtle-text: #64748b;
+    --muted-text: #94a3b8;
     /* Generated vars are imported from ../styles/generated-vars.css */
   }
 
@@ -19,12 +35,19 @@
 
   html,
   body {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     scroll-behavior: smooth;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
   }
 
   body {
     @apply bg-background text-foreground;
+    background-image: var(--bg-shell);
+  }
+
+  .dark body {
+    background-image: var(--bg-shell-dark);
   }
 
   * {
@@ -130,32 +153,85 @@
 }
 
 @layer components {
-  /* Superfície padrão das páginas */
+  /* Shell responsivo e consistente */
   .page-background {
-    @apply bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950;
+    @apply min-h-screen w-full;
+    background-image: var(--bg-shell);
+  }
+
+  .dark .page-background {
+    background-image: var(--bg-shell-dark);
   }
 
   /* Contêiner máximo padronizado */
   .page-shell {
-    @apply max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 w-full;
+    @apply max-w-6xl xl:max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 w-full;
   }
 
-  /* Painéis e cartões de seção */
+  /* Painéis e cartões de seção refinados */
   .surface-panel {
-    @apply rounded-2xl border border-slate-200/70 dark:border-slate-800/70 bg-white/80 dark:bg-slate-900/70 shadow-sm backdrop-blur;
+    @apply rounded-2xl border bg-white/90 dark:bg-slate-900/80 shadow-sm backdrop-blur;
+    border-color: var(--border-strong);
+    box-shadow: var(--glow);
   }
 
-  /* Títulos de seção e legendas */
+  .dark .surface-panel {
+    border-color: var(--border-strong-dark);
+    box-shadow: none;
+  }
+
+  /* Hierarquia de tipografia */
   .section-heading {
-    @apply text-lg sm:text-xl font-semibold text-slate-900 dark:text-slate-100 tracking-tight;
+    @apply text-xl sm:text-2xl font-semibold text-slate-900 dark:text-slate-100 tracking-tight leading-tight;
   }
 
   .section-subtitle {
-    @apply text-sm text-slate-600 dark:text-slate-400 leading-relaxed;
+    @apply text-sm sm:text-base leading-relaxed;
+    color: var(--subtle-text);
+  }
+
+  .dark .section-subtitle {
+    color: #cbd5f5;
   }
 
   /* Grid padrão com alturas equilibradas */
   .section-grid {
-    @apply grid gap-4 sm:gap-6 auto-rows-[minmax(0,1fr)];
+    @apply grid gap-4 sm:gap-6 lg:gap-7 auto-rows-[minmax(0,1fr)];
+  }
+
+  /* Nova malha para cards responsivos */
+  .card-grid {
+    @apply grid gap-3 sm:gap-4 md:gap-5;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+
+  /* Utilitários de superfície */
+  .glass-surface {
+    @apply rounded-2xl border shadow-sm backdrop-blur;
+    background: var(--surface);
+    border-color: var(--border-strong);
+  }
+
+  .glass-surface-strong {
+    @apply rounded-2xl border shadow-lg backdrop-blur;
+    background: var(--surface-strong);
+    border-color: var(--border-strong);
+    box-shadow: var(--glow);
+  }
+
+  .dark .glass-surface,
+  .dark .glass-surface-strong {
+    background: var(--surface-dark);
+    border-color: var(--border-strong-dark);
+    box-shadow: none;
+  }
+
+  .pill {
+    @apply inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide;
+  }
+
+  .muted-label {
+    @apply text-xs font-medium uppercase tracking-wide;
+    color: var(--muted-text);
   }
 }

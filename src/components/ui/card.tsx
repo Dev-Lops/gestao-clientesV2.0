@@ -24,10 +24,14 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
     // default to 'sm' for nested cards, else default to 'md' for top-level cards.
     const effectiveSize: 'sm' | 'md' | 'lg' = (size as any) ?? (parentSize ? 'sm' : 'md')
     const variantClasses = {
-      default: 'border-2 shadow-sm',
-      elevated: 'border-2 shadow-lg',
-      interactive: 'border-2 shadow-sm cursor-pointer hover:scale-[1.02] active:scale-[0.98]',
-      bordered: 'border-2 border-slate-300 dark:border-slate-700',
+      default:
+        'border border-slate-200/70 dark:border-slate-800/70 bg-white/90 dark:bg-slate-900/80 shadow-sm backdrop-blur',
+      elevated:
+        'border border-slate-200/80 dark:border-slate-800/60 bg-white/95 dark:bg-slate-900/85 shadow-lg backdrop-blur-lg',
+      interactive:
+        'border border-slate-200/80 dark:border-slate-800/70 bg-white/90 dark:bg-slate-900/75 shadow-sm backdrop-blur cursor-pointer hover:-translate-y-0.5 active:translate-y-0',
+      bordered:
+        'border border-slate-300/80 dark:border-slate-700/70 bg-white/80 dark:bg-slate-900/60 backdrop-blur',
     };
 
     return (
@@ -36,11 +40,11 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
           ref={ref}
           className={cn(
             // Base styles
-            'rounded-xl bg-card text-card-foreground transition-all duration-200',
+            'rounded-2xl text-card-foreground transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-200 dark:focus-visible:ring-indigo-500/40',
             // Variant styles
             variantClasses[variant],
             // Hover effect
-            hover && 'hover:shadow-lg',
+            hover && 'hover:shadow-lg hover:border-slate-300/90 dark:hover:border-slate-700/90',
             className,
           )}
           {...props}

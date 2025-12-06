@@ -89,38 +89,51 @@ export function DashboardClient({ initialData, initialMonthKey, role }: Dashboar
 
   return (
     <div className="page-background">
-      <div className="page-shell py-4 sm:py-6 space-y-4 sm:space-y-6">
+      <div className="page-shell py-6 sm:py-8 lg:py-10 space-y-6 sm:space-y-8">
 
         {/* Header */}
         <motion.div
-          className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4"
+          className="glass-surface-strong border border-slate-200/80 dark:border-slate-800/70 shadow-lg"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gradient-primary mb-1 sm:mb-2">
-              Painel de Gestão
-            </h1>
-            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">
-              Olá, {data.user.name || 'Usuário'}! Aqui está um resumo do seu negócio
-            </p>
-          </div>
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3 }}
-            className="w-full sm:w-auto"
-          >
-            <div className="px-4 sm:px-6 py-2 sm:py-3 rounded-xl bg-linear-to-br from-white to-white/90 dark:from-slate-800 dark:to-slate-900 backdrop-blur-md border-2 border-slate-200 dark:border-slate-700 shadow-lg hover:shadow-xl transition-all duration-200">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 dark:text-blue-400" />
-                <p className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200">
-                  {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-2 rounded-full bg-indigo-50/80 dark:bg-indigo-500/10 px-3 py-1 text-xs font-semibold text-indigo-700 dark:text-indigo-200 ring-1 ring-indigo-100 dark:ring-indigo-500/30">
+                <span className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
+                Visão Geral
+              </div>
+              <div>
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white leading-tight">
+                  Painel de Gestão
+                </h1>
+                <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300">
+                  Olá, {data.user.name || 'Usuário'}! Aqui está um resumo do seu negócio.
                 </p>
               </div>
             </div>
-          </motion.div>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.94 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2 }}
+              className="w-full lg:w-auto"
+            >
+              <div className="flex flex-wrap gap-3 justify-start lg:justify-end">
+                <div className="glass-surface px-4 sm:px-5 py-3 flex items-center gap-3 border border-slate-200/70 dark:border-slate-800/60 shadow-sm">
+                  <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-300">
+                    <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Hoje</p>
+                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                      {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
         </motion.div>
 
         {/* KPIs */}
@@ -129,7 +142,7 @@ export function DashboardClient({ initialData, initialMonthKey, role }: Dashboar
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <KpiGrid columns={4}>
+          <KpiGrid columns={4} className="card-grid">
             <KpiCard
               variant="blue"
               icon={Users}
@@ -175,13 +188,16 @@ export function DashboardClient({ initialData, initialMonthKey, role }: Dashboar
           {/* Calendário (2/3) */}
           <div className="lg:col-span-2">
             {data.activities && (
-              <Card variant="default" hover className="border-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 transition-all duration-200 hover:shadow-2xl h-full">
+              <Card variant="elevated" hover className="h-full border border-slate-200/80 dark:border-slate-800/70">
                 <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 bg-linear-to-br from-blue-100 to-indigo-100 dark:from-blue-900/50 dark:to-indigo-900/50 rounded-lg shadow-lg hover:scale-110 transition-transform duration-200">
-                      <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 dark:text-blue-400" />
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-300 ring-1 ring-blue-100 dark:ring-blue-500/30">
+                      <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />
                     </div>
-                    <CardTitle className="text-base sm:text-lg">Calendário de Atividades</CardTitle>
+                    <div>
+                      <CardTitle className="text-base sm:text-lg">Calendário de Atividades</CardTitle>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">Acompanhe entregas e compromissos do mês</p>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -248,23 +264,24 @@ export function DashboardClient({ initialData, initialMonthKey, role }: Dashboar
 
             {/* Métricas Detalhadas */}
             {metrics && (
-              <Card variant="default" hover className="border-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 transition-all duration-200 hover:shadow-2xl">
+              <Card variant="elevated" hover className="border border-slate-200/80 dark:border-slate-800/70">
                 <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 bg-linear-to-br from-purple-100 to-pink-100 dark:from-purple-900/50 dark:to-pink-900/50 rounded-lg shadow-lg hover:scale-110 transition-transform duration-200">
-                      <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600 dark:text-purple-400" />
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-300 ring-1 ring-purple-100 dark:ring-purple-500/30">
+                      <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
                     </div>
-                    <CardTitle className="text-base sm:text-lg">Métricas do Negócio</CardTitle>
+                    <div>
+                      <CardTitle className="text-base sm:text-lg">Métricas do Negócio</CardTitle>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">Insights automáticos sobre clientes e tarefas</p>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3 sm:space-y-4">
                   {metrics.mostPendingClient && (
-                    <div className="p-3 sm:p-4 rounded-xl bg-linear-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 border-2 border-amber-200 dark:border-amber-800 hover:scale-105 transition-all duration-200">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <h4 className="text-xs font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wider mb-1">
-                            Mais Tarefas Pendentes
-                          </h4>
+                    <div className="p-3 sm:p-4 rounded-xl glass-surface border border-amber-200/70 dark:border-amber-800/60">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="space-y-1">
+                          <h4 className="text-xs font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wider">Mais Tarefas Pendentes</h4>
                           <p className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
                             {metrics.mostPendingClient.name}
                           </p>
@@ -272,20 +289,18 @@ export function DashboardClient({ initialData, initialMonthKey, role }: Dashboar
                             {metrics.mostPendingClient.pending} tarefas aguardando
                           </p>
                         </div>
-                        <div className="p-2 bg-linear-to-br from-amber-100 to-orange-100 dark:from-amber-900/50 dark:to-orange-900/50 rounded-lg shadow-lg hover:scale-110 transition-transform duration-200">
-                          <ListTodo className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600 dark:text-amber-400" />
+                        <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-300 ring-1 ring-amber-100 dark:ring-amber-500/30">
+                          <ListTodo className="h-4 w-4 sm:h-5 sm:w-5" />
                         </div>
                       </div>
                     </div>
                   )}
 
                   {metrics.mostUrgentClient && (
-                    <div className="p-3 sm:p-4 rounded-xl bg-linear-to-br from-red-50 to-rose-50 dark:from-red-950/30 dark:to-rose-950/30 border-2 border-red-200 dark:border-red-800 hover:scale-105 transition-all duration-200">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <h4 className="text-xs font-semibold text-red-700 dark:text-red-300 uppercase tracking-wider mb-1">
-                            Mais Tarefas Urgentes
-                          </h4>
+                    <div className="p-3 sm:p-4 rounded-xl glass-surface border border-red-200/70 dark:border-red-800/60">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="space-y-1">
+                          <h4 className="text-xs font-semibold text-red-700 dark:text-red-300 uppercase tracking-wider">Mais Tarefas Urgentes</h4>
                           <p className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
                             {metrics.mostUrgentClient.name}
                           </p>
@@ -293,8 +308,8 @@ export function DashboardClient({ initialData, initialMonthKey, role }: Dashboar
                             {metrics.mostUrgentClient.urgent} tarefas urgentes
                           </p>
                         </div>
-                        <div className="p-2 bg-linear-to-br from-red-100 to-rose-100 dark:from-red-900/50 dark:to-rose-900/50 rounded-lg shadow-lg hover:scale-110 transition-transform duration-200">
-                          <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-red-600 dark:text-red-400" />
+                        <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-300 ring-1 ring-rose-100 dark:ring-rose-500/30">
+                          <Clock className="h-4 w-4 sm:h-5 sm:w-5" />
                         </div>
                       </div>
                     </div>
@@ -302,16 +317,16 @@ export function DashboardClient({ initialData, initialMonthKey, role }: Dashboar
 
                   <div className="pt-3 sm:pt-4 border-t-2 border-slate-200 dark:border-slate-700">
                     <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                      <div className="text-center p-3 sm:p-4 rounded-xl bg-linear-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-2 border-blue-200 dark:border-blue-800 transition-all duration-200 hover:scale-105 hover:shadow-lg">
-                        <p className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400">
+                      <div className="text-center p-3 sm:p-4 rounded-xl glass-surface border border-blue-200/70 dark:border-blue-800/60">
+                        <p className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-300">
                           {metrics.totals.clients}
                         </p>
                         <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mt-1 uppercase tracking-wider">
                           Clientes
                         </p>
                       </div>
-                      <div className="text-center p-3 sm:p-4 rounded-xl bg-linear-to-br from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 border-2 border-purple-200 dark:border-purple-800 transition-all duration-200 hover:scale-105 hover:shadow-lg">
-                        <p className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400">
+                      <div className="text-center p-3 sm:p-4 rounded-xl glass-surface border border-purple-200/70 dark:border-purple-800/60">
+                        <p className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-300">
                           {metrics.totals.tasks}
                         </p>
                         <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mt-1 uppercase tracking-wider">
@@ -330,11 +345,11 @@ export function DashboardClient({ initialData, initialMonthKey, role }: Dashboar
 
             {/* Tarefas Mais Urgentes */}
             {metrics && metrics.urgentTasks.length > 0 && (
-              <Card variant="default" hover className="border-2 border-red-200 dark:border-red-800 bg-white dark:bg-slate-900 transition-all duration-200 hover:shadow-2xl">
+              <Card variant="elevated" hover className="border border-red-200/70 dark:border-red-800/60">
                 <CardHeader className="pb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 bg-linear-to-br from-red-100 to-rose-100 dark:from-red-900/50 dark:to-rose-900/50 rounded-lg shadow-lg hover:scale-110 transition-transform duration-200">
-                      <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-red-600 dark:text-red-400" />
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-300 ring-1 ring-red-100 dark:ring-red-500/30">
+                      <Clock className="h-4 w-4 sm:h-5 sm:w-5" />
                     </div>
                     <CardTitle className="text-sm sm:text-base">Tarefas Mais Urgentes</CardTitle>
                   </div>
@@ -345,7 +360,7 @@ export function DashboardClient({ initialData, initialMonthKey, role }: Dashboar
                       <Link
                         key={t.id}
                         href={`/clients/${t.client.id}/tasks`}
-                        className="block p-2 sm:p-3 rounded-lg border-2 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-900/40 transition-all duration-200 hover:scale-105 group"
+                        className="block p-2.5 sm:p-3 rounded-lg glass-surface border border-red-200/70 dark:border-red-800/60 hover:border-red-300 dark:hover:border-red-700 transition-all duration-200 hover:-translate-y-0.5 group"
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1 min-w-0">
@@ -387,11 +402,11 @@ export function DashboardClient({ initialData, initialMonthKey, role }: Dashboar
 
             {/* Tarefas Prioritárias */}
             {priorities.length > 0 && (
-              <Card variant="default" hover className="border-2 border-amber-200 dark:border-amber-800 bg-white dark:bg-slate-900 transition-all duration-200 hover:shadow-2xl">
+              <Card variant="elevated" hover className="border border-amber-200/70 dark:border-amber-800/60">
                 <CardHeader className="pb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 bg-linear-to-br from-amber-100 to-orange-100 dark:from-amber-900/50 dark:to-orange-900/50 rounded-lg shadow-lg hover:scale-110 transition-transform duration-200">
-                      <ListTodo className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600 dark:text-amber-400" />
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-300 ring-1 ring-amber-100 dark:ring-amber-500/30">
+                      <ListTodo className="h-4 w-4 sm:h-5 sm:w-5" />
                     </div>
                     <CardTitle className="text-sm sm:text-base">Tarefas Prioritárias</CardTitle>
                   </div>
@@ -402,7 +417,7 @@ export function DashboardClient({ initialData, initialMonthKey, role }: Dashboar
                       <Link
                         key={task.id}
                         href={`/clients/${task.client.id}/tasks`}
-                        className="block p-2 sm:p-3 rounded-lg border-2 border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-all duration-200 hover:scale-105 group"
+                        className="block p-2.5 sm:p-3 rounded-lg glass-surface border border-amber-200/70 dark:border-amber-800/60 hover:border-amber-300 dark:hover:border-amber-700 transition-all duration-200 hover:-translate-y-0.5 group"
                       >
                         <div className="flex items-start justify-between gap-2 mb-2">
                           <h4 className="font-semibold text-sm truncate text-slate-900 dark:text-white">
