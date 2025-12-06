@@ -4,7 +4,7 @@ import { DashboardNotes } from '@/features/dashboard/components/DashboardNotes';
 import { MonthlyCalendar } from '@/features/dashboard/components/MonthlyCalendar';
 import { AppRole } from '@/lib/permissions';
 import { DashboardData } from '@/modules/dashboard/domain/schema';
-import { Card, CardContent, CardHeader, CardTitle } from '@/ui/components/base/Card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/atoms/Card';
 import { motion } from 'framer-motion';
 import { Activity, ArrowUpRight, Calendar, CheckCircle2, Clock, ListTodo, TrendingUp, Users } from 'lucide-react';
 import Link from 'next/link';
@@ -61,7 +61,7 @@ export function DashboardClient({ initialData, initialMonthKey, role }: Dashboar
 
   return (
     <div className="page-background">
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
+      <div className="page-shell py-4 sm:py-6 space-y-4 sm:space-y-6">
 
         {/* Header */}
         <motion.div

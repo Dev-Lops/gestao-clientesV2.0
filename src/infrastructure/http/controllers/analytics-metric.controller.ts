@@ -1,29 +1,29 @@
-import { IAnalyticsMetricRepository } from '../../ports/repositories/analytics-metric.repository.interface'
+import { IAnalyticsMetricRepository } from '@/core/ports/repositories/analytics-metric.repository.interface'
 import {
   CreateAnalyticsMetricUseCase,
   ICreateAnalyticsMetricRequest,
   ICreateAnalyticsMetricResponse,
-} from '../../use-cases/analytics/create-analytics-metric.use-case'
+} from '@/core/use-cases/analytics/create-analytics-metric.use-case'
 import {
   DeleteAnalyticsMetricUseCase,
   IDeleteAnalyticsMetricRequest,
   IDeleteAnalyticsMetricResponse,
-} from '../../use-cases/analytics/delete-analytics-metric.use-case'
+} from '@/core/use-cases/analytics/delete-analytics-metric.use-case'
 import {
   GetAnalyticsMetricUseCase,
   IGetAnalyticsMetricRequest,
   IGetAnalyticsMetricResponse,
-} from '../../use-cases/analytics/get-analytics-metric.use-case'
+} from '@/core/use-cases/analytics/get-analytics-metric.use-case'
 import {
   IListAnalyticsMetricsRequest,
   IListAnalyticsMetricsResponse,
   ListAnalyticsMetricsUseCase,
-} from '../../use-cases/analytics/list-analytics-metrics.use-case'
+} from '@/core/use-cases/analytics/list-analytics-metrics.use-case'
 import {
   IUpdateAnalyticsMetricRequest,
   IUpdateAnalyticsMetricResponse,
   UpdateAnalyticsMetricUseCase,
-} from '../../use-cases/analytics/update-analytics-metric.use-case'
+} from '@/core/use-cases/analytics/update-analytics-metric.use-case'
 
 export class AnalyticsMetricController {
   private createUseCase: CreateAnalyticsMetricUseCase

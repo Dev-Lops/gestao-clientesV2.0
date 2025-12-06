@@ -1,18 +1,28 @@
-import { ClientController } from '@/infrastructure/http/controllers/client.controller'
+import {
+  createClientController,
+  listClientsController,
+} from '@/infrastructure/http/controllers/client.controller'
 import { NextRequest } from 'next/server'
-
-const controller = new ClientController()
 
 /**
  * POST /api/clients/v2 - Criar novo cliente
  */
 export async function POST(request: NextRequest) {
-  return controller.create(request)
+  const body = await request.json()
+  const orgId = request.headers.get('x-org-id') ?? ''
+  return createClientController(body, orgId)
 }
 
 /**
  * GET /api/clients/v2 - Listar clientes
  */
 export async function GET(request: NextRequest) {
-  return controller.list(request)
+  const orgId = request.headers.get('x-org-id') ?? ''
+  const role = request.headers.get('x-user-role') ?? ''
+  const userId = request.headers.get('x-user-id') ?? ''
+  return listClientsController(request.nextUrl.searchParams, {
+    orgId,
+    role,
+    userId,
+  })
 }

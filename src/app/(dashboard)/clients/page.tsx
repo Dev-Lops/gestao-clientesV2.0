@@ -11,9 +11,9 @@ import { getSessionProfile } from "@/services/auth/session";
 import { listClientsByOrg } from "@/services/repositories/clients";
 import { CLIENT_STATUS_LABELS } from "@/types/enums";
 import type { AppClient } from "@/types/tables";
-import { Badge } from "@/ui/components/base/Badge";
-import { Button } from "@/ui/components/base/Button";
-import { Card } from "@/ui/components/base/Card";
+import { Badge } from "@/components/atoms/Badge";
+import { Button } from "@/components/atoms/Button";
+import { Card } from "@/components/atoms/Card";
 import type { ClientPlan, SocialChannel } from "@prisma/client";
 import { CheckCircle2, PauseCircle, Plus, Users, XCircle } from "lucide-react";
 import Link from "next/link";
@@ -135,7 +135,7 @@ export default async function ClientsPage({ searchParams }: PageProps) {
     <ClientsPageClient>
       <AppShell>
         <div className="page-background">
-          <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
+          <div className="page-shell py-4 sm:py-6 space-y-4 sm:space-y-6">
             <GradientPageHeader
               icon={Users}
               title="Meus Clientes"

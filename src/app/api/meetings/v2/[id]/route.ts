@@ -12,10 +12,10 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = params.id
+    const { id } = await context.params
 
     const repository = new PrismaMeetingRepository(prisma)
     const controller = new MeetingController(repository)
@@ -39,7 +39,7 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const body = await request.json()
@@ -56,8 +56,10 @@ export async function PATCH(
     const repository = new PrismaMeetingRepository(prisma)
     const controller = new MeetingController(repository)
 
+    const { id } = await context.params
+
     const meeting = await controller.update({
-      id: params.id,
+      id,
       title,
       description,
       clientId,
@@ -77,16 +79,17 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await context.params
     const { searchParams } = new URL(request.url)
     const deletedBy = searchParams.get('deletedBy') || 'system'
 
     const repository = new PrismaMeetingRepository(prisma)
     const controller = new MeetingController(repository)
 
-    await controller.delete(params.id, deletedBy)
+    await controller.delete(id, deletedBy)
 
     return NextResponse.json(
       { message: 'Reunião deletada com sucesso' },

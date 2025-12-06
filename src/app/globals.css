@@ -128,3 +128,34 @@
     animation: spin 3s linear infinite;
   }
 }
+
+@layer components {
+  /* Superfície padrão das páginas */
+  .page-background {
+    @apply bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950;
+  }
+
+  /* Contêiner máximo padronizado */
+  .page-shell {
+    @apply max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 w-full;
+  }
+
+  /* Painéis e cartões de seção */
+  .surface-panel {
+    @apply rounded-2xl border border-slate-200/70 dark:border-slate-800/70 bg-white/80 dark:bg-slate-900/70 shadow-sm backdrop-blur;
+  }
+
+  /* Títulos de seção e legendas */
+  .section-heading {
+    @apply text-lg sm:text-xl font-semibold text-slate-900 dark:text-slate-100 tracking-tight;
+  }
+
+  .section-subtitle {
+    @apply text-sm text-slate-600 dark:text-slate-400 leading-relaxed;
+  }
+
+  /* Grid padrão com alturas equilibradas */
+  .section-grid {
+    @apply grid gap-4 sm:gap-6 auto-rows-[minmax(0,1fr)];
+  }
+}

@@ -27,10 +27,6 @@ export interface IGetAnalyticsMetricResponse {
 }
 
 import { IAnalyticsMetricRepository } from '../../ports/repositories/analytics-metric.repository.interface'
-import {
-  IGetAnalyticsMetricRequest,
-  IGetAnalyticsMetricResponse,
-} from './get-analytics-metric.dto'
 
 export class GetAnalyticsMetricUseCase {
   constructor(private repository: IAnalyticsMetricRepository) {}
