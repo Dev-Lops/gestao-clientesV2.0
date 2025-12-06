@@ -89,7 +89,6 @@ export class Meeting {
       | 'createdAt'
       | 'updatedAt'
       | 'deletedAt'
-      | 'createdBy'
       | 'updatedBy'
       | 'deletedBy'
     >
@@ -136,7 +135,7 @@ export class Meeting {
       createdAt: new Date(),
       updatedAt: new Date(),
       deletedAt: null,
-      createdBy: null,
+      createdBy: props.createdBy ?? null,
       updatedBy: null,
       deletedBy: null,
     })

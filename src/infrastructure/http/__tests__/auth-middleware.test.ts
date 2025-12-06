@@ -9,7 +9,7 @@ import {
   authenticateOwner,
   authenticateRequest,
   authenticateStaff,
-} from '../auth-middleware'
+} from '../middlewares/auth.middleware'
 
 // Mock das dependências
 vi.mock('@/services/auth/session')

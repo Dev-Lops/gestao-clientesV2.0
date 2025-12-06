@@ -70,6 +70,8 @@ export const getDashboardData = cache(
       finances,
       dashboardEvents,
       dashboardNotes,
+      clientCount,
+      taskCount,
     ] = await Promise.all([
       prisma.client.findMany({
         where: { orgId },
@@ -106,7 +108,7 @@ export const getDashboardData = cache(
       }),
       prisma.transaction.findMany({
         where: { orgId },
-        select: { clientId: true, type: true, amount: true },
+        select: { clientId: true, type: true, amount: true, date: true },
       }),
       prisma.dashboardEvent.findMany({
         where: {
@@ -140,6 +142,8 @@ export const getDashboardData = cache(
           updatedAt: true,
         },
       }),
+      prisma.client.count({ where: { orgId } }),
+      prisma.task.count({ where: { orgId } }),
     ])
 
     const isPending = (s: string) => ['PENDING', 'TODO'].includes(s)
@@ -316,6 +320,8 @@ export const getDashboardData = cache(
       saldo: number
     }[] = []
     const now = new Date()
+    const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1)
+    const relevantTransactions = finances.filter((t) => t.date >= sixMonthsAgo)
     for (let i = 5; i >= 0; i--) {
       const targetMonth = new Date(now.getFullYear(), now.getMonth() - i, 1)
       const monthStart = new Date(
@@ -331,14 +337,10 @@ export const getDashboardData = cache(
         59,
         59
       )
-      // Fetch transactions from the new financial system
-      const monthTransactions = await prisma.transaction.findMany({
-        where: {
-          orgId,
-          date: { gte: monthStart, lte: monthEnd },
-        },
-        select: { type: true, amount: true },
-      })
+
+      const monthTransactions = relevantTransactions.filter(
+        (t) => t.date >= monthStart && t.date <= monthEnd
+      )
 
       const receitas = monthTransactions
         .filter((t) => t.type === 'INCOME')
@@ -363,7 +365,7 @@ export const getDashboardData = cache(
       clients,
       tasks,
       metrics: {
-        totals: { clients: clients.length, tasks: tasks.length },
+        totals: { clients: clientCount, tasks: taskCount },
         mostPendingClient,
         mostUrgentClient,
         urgentTasks: urgentTasks.slice(0, 15),

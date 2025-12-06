@@ -4,7 +4,7 @@ import { DashboardNotes } from '@/features/dashboard/components/DashboardNotes';
 import { MonthlyCalendar } from '@/features/dashboard/components/MonthlyCalendar';
 import { AppRole } from '@/lib/permissions';
 import { DashboardData } from '@/modules/dashboard/domain/schema';
-import { Card, CardContent, CardHeader, CardTitle } from '@/ui/components/base/Card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/atoms/Card';
 import { motion } from 'framer-motion';
 import { Activity, ArrowUpRight, Calendar, CheckCircle2, Clock, ListTodo, TrendingUp, Users } from 'lucide-react';
 import Link from 'next/link';
@@ -58,10 +58,13 @@ export function DashboardClient({ initialData, initialMonthKey, role }: Dashboar
   const completedTasks = tasks.filter(t => isDoneStatus(t.status))
   const priorities = pendingTasks.slice(0, 6)
   const metrics = data.metrics
+  const totalClients = metrics?.totals.clients ?? clients.length
+  const totalTasks = metrics?.totals.tasks ?? tasks.length
+  const completedPercent = totalTasks > 0 ? Math.round((completedTasks.length / totalTasks) * 100) : 0
 
   return (
     <div className="page-background">
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
+      <div className="page-shell py-4 sm:py-6 space-y-4 sm:space-y-6">
 
         {/* Header */}
         <motion.div
@@ -105,7 +108,7 @@ export function DashboardClient({ initialData, initialMonthKey, role }: Dashboar
             <KpiCard
               variant="blue"
               icon={Users}
-              value={clients.length}
+              value={totalClients}
               label="Total de Clientes"
               description="Base de clientes"
             />
@@ -128,8 +131,8 @@ export function DashboardClient({ initialData, initialMonthKey, role }: Dashboar
               icon={CheckCircle2}
               value={completedTasks.length}
               label="Concluídas"
-              description={`${tasks.length > 0 ? Math.round((completedTasks.length / tasks.length) * 100) : 0}% taxa de conclusão`}
-              progress={tasks.length > 0 ? Math.round((completedTasks.length / tasks.length) * 100) : 0}
+              description={`${completedPercent}% taxa de conclusão`}
+              progress={completedPercent}
             />
           </KpiGrid>
         </motion.section>
