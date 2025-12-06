@@ -1,4 +1,4 @@
-import { v4 as uuid } from 'uuid'
+import { randomUUID } from 'crypto'
 import {
   MetricType,
   TimeRangeType,
@@ -103,7 +103,7 @@ export class AnalyticsMetric {
     }
 
     return new AnalyticsMetric({
-      id: uuid(),
+      id: randomUUID(),
       createdAt: new Date(),
       updatedAt: new Date(),
       ...props,

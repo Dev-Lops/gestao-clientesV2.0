@@ -1,5 +1,5 @@
-import { authenticateStaff } from '@/infra/http/auth-middleware'
-import { ApiResponseHandler } from '@/infra/http/response'
+import { authenticateStaff } from '@/infrastructure/http/middlewares/auth.middleware'
+import { ApiResponseHandler } from '@/infrastructure/http/response'
 import {
   createPresignedPutUrl,
   generateFileKey,

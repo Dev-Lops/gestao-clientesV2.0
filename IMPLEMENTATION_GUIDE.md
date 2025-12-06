@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
 **Como usar:**
 
 ```typescript
-import { Button, Card, Input, Badge, Loading, EmptyState } from '@/ui/components/base'
+import { Button, Card, Input, Badge, Loading, EmptyState } from '@/components/atoms'
 
 export function MyComponent() {
   return (

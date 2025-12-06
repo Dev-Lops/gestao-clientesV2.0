@@ -14,7 +14,9 @@ export type ClientCreateInput = {
 
 export async function createClient(input: ClientCreateInput) {
   // Postgres (fonte de verdade objetiva)
-  const client = await prisma.client.create({ data: input })
+  const client = await prisma.client.create({
+    data: { ...input, email: input.email ?? '' },
+  })
 
   if (DUAL_WRITE) {
     try {
