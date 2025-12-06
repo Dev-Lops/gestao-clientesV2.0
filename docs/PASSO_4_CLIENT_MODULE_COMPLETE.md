@@ -18,6 +18,7 @@ O módulo **Client** foi completamente refatorado seguindo o padrão **Clean Arc
 ## 📁 Estrutura Criada/Validada
 
 ### Domain Layer (Camada de Domínio)
+
 ```
 ✅ src/core/domain/client/
    ├── entities/
@@ -31,6 +32,7 @@ O módulo **Client** foi completamente refatorado seguindo o padrão **Clean Arc
 **Status**: ✅ Completo com validações completas
 
 ### Application Layer (Camada de Aplicação)
+
 ```
 ✅ src/core/use-cases/client/
    ├── create-client.use-case.ts
@@ -43,6 +45,7 @@ O módulo **Client** foi completamente refatorado seguindo o padrão **Clean Arc
 **Status**: ✅ 5 Use Cases com validação Zod
 
 ### Infrastructure Layer (Camada de Infraestrutura)
+
 ```
 ✅ src/core/ports/repositories/
    └── client.repository.interface.ts
@@ -57,6 +60,7 @@ O módulo **Client** foi completamente refatorado seguindo o padrão **Clean Arc
 **Status**: ✅ Repository, Prisma, Controller implementados
 
 ### HTTP Layer (Camada HTTP)
+
 ```
 ✅ src/app/api/clients/v2/
    ├── route.ts (POST/GET)
@@ -70,6 +74,7 @@ O módulo **Client** foi completamente refatorado seguindo o padrão **Clean Arc
 ## 🧪 Testes Implementados (84 testes)
 
 ### Client Entity Tests (40 testes)
+
 ```
 ✅ Creation (5 testes)
 ✅ Getters (5 testes)
@@ -87,6 +92,7 @@ O módulo **Client** foi completamente refatorado seguindo o padrão **Clean Arc
 **Cobertura**: 100% da Entity
 
 ### Value Objects Tests (37 testes)
+
 ```
 ✅ Email VO (18 testes)
    - Validação de email
@@ -108,6 +114,7 @@ O módulo **Client** foi completamente refatorado seguindo o padrão **Clean Arc
 **Cobertura**: 100% dos VOs
 
 ### Use Cases Tests (7 testes)
+
 ```
 ✅ CreateClientUseCase (2 testes)
    - Criar cliente com sucesso
@@ -143,25 +150,27 @@ O módulo **Client** foi completamente refatorado seguindo o padrão **Clean Arc
 
 ## 📈 Métricas de Qualidade
 
-| Métrica | Resultado |
-|---------|-----------|
-| Testes | 84/84 ✅ |
-| Cobertura | 100% |
-| Type-Safety | ✅ |
-| Lint Errors | 1 (CNPJ unused) |
-| Architecture Compliance | ✅ |
+| Métrica                 | Resultado       |
+| ----------------------- | --------------- |
+| Testes                  | 84/84 ✅        |
+| Cobertura               | 100%            |
+| Type-Safety             | ✅              |
+| Lint Errors             | 1 (CNPJ unused) |
+| Architecture Compliance | ✅              |
 
 ---
 
 ## 📝 Arquivos Criados/Modificados
 
 ### Criados
+
 - `tests/unit/domain/client.entity.test.ts` (40 testes)
 - `tests/unit/domain/client-value-objects.test.ts` (37 testes)
 - `tests/unit/use-cases/client.use-cases.test.ts` (7 testes)
 - `docs/REFACTORING_STATUS_REPORT.md`
 
 ### Modificados
+
 - `src/core/domain/client/entities/client.entity.ts` (fix isDeleted)
 - `src/core/use-cases/client/*.ts` (5 files - path corrections)
 
@@ -170,6 +179,7 @@ O módulo **Client** foi completamente refatorado seguindo o padrão **Clean Arc
 ## 🚀 Próximas Etapas
 
 ### PASSO 5: Finance/Invoice/Payment Modules (Dias 6-12)
+
 - Invoice Entity + Value Objects
 - Payment Entity + Value Objects
 - 7 Invoice Use Cases
@@ -178,6 +188,7 @@ O módulo **Client** foi completamente refatorado seguindo o padrão **Clean Arc
 - **Impacto**: +12% (66% → 78%)
 
 ### Timeline
+
 - ✅ **PASSO 4** (56% → 66%): **CONCLUÍDO**
 - ⏳ **PASSO 5**: Em começar
 - ⏳ **PASSO 6**: DI Container
@@ -219,5 +230,5 @@ O módulo **Client** foi completamente refatorado seguindo o padrão **Clean Arc
 
 ---
 
-*Status do Projeto: 66% completo (56% → 66% com PASSO 4)*  
-*Próximo milestone: 78% com Finance Module*
+_Status do Projeto: 66% completo (56% → 66% com PASSO 4)_  
+_Próximo milestone: 78% com Finance Module_

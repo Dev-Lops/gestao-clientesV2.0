@@ -42,11 +42,12 @@ export function FinancialAlerts() {
 
       if (!response.ok) throw new Error('Erro ao carregar alertas')
 
-      const data = await response.json()
+      const result = await response.json()
+      const data = result.data || result
       const newAlerts: FinancialAlert[] = []
 
       // Alerta: Faturas vencidas
-      if (data.invoices.overdue.count > 0) {
+      if (data?.invoices?.overdue?.count > 0) {
         newAlerts.push({
           id: 'overdue',
           type: 'danger',
@@ -60,7 +61,7 @@ export function FinancialAlerts() {
       }
 
       // Alerta: Alta receita pendente
-      if (data.financial.pendingIncome > data.financial.totalIncome * 0.5) {
+      if (data?.financial?.pendingIncome > (data?.financial?.totalIncome ?? 0) * 0.5) {
         newAlerts.push({
           id: 'pending-income',
           type: 'warning',
@@ -74,7 +75,7 @@ export function FinancialAlerts() {
       }
 
       // Alerta: Resultado negativo
-      if (data.financial.netProfit < 0) {
+      if (data?.financial?.netProfit < 0) {
         newAlerts.push({
           id: 'negative-profit',
           type: 'danger',
@@ -84,7 +85,7 @@ export function FinancialAlerts() {
       }
 
       // Sucesso: Nenhuma fatura vencida
-      if (data.invoices.overdue.count === 0 && data.invoices.open.count > 0) {
+      if (data?.invoices?.overdue?.count === 0 && data?.invoices?.open?.count > 0) {
         newAlerts.push({
           id: 'all-good',
           type: 'success',
@@ -94,7 +95,7 @@ export function FinancialAlerts() {
       }
 
       // Info: Total a receber
-      if (data.invoices.totalReceivable > 0) {
+      if (data?.invoices?.totalReceivable > 0) {
         newAlerts.push({
           id: 'receivable',
           type: 'info',

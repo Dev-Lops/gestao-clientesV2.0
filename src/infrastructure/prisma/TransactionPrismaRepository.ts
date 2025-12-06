@@ -39,7 +39,7 @@ export class TransactionPrismaRepository implements TransactionRepository {
     end: Date
   ): Promise<ReadonlyArray<{ type: 'INCOME' | 'EXPENSE'; amount: number }>> {
     const rows = await this.prisma.transaction.findMany({
-      where: { orgId, date: { gte: start, lt: end }, deletedAt: null },
+      where: { orgId, date: { gte: start, lte: end }, deletedAt: null },
       select: { type: true, amount: true },
     })
     return rows.map((r) => ({

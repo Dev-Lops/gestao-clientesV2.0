@@ -7,9 +7,10 @@ const controller = new AnalyticsMetricController(repository)
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const searchParams = request.nextUrl.searchParams
     const orgId = searchParams.get('orgId')
 
@@ -21,7 +22,7 @@ export async function GET(
     }
 
     const result = await controller.get({
-      id: params.id,
+      id,
       orgId,
     })
 
@@ -41,9 +42,10 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const searchParams = request.nextUrl.searchParams
     const orgId = searchParams.get('orgId')
     const body = await request.json()
@@ -56,7 +58,7 @@ export async function PATCH(
     }
 
     const result = await controller.update({
-      id: params.id,
+      id,
       orgId,
       name: body.name,
       value: body.value,
@@ -82,9 +84,10 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const searchParams = request.nextUrl.searchParams
     const orgId = searchParams.get('orgId')
 
@@ -96,7 +99,7 @@ export async function DELETE(
     }
 
     const result = await controller.delete({
-      id: params.id,
+      id,
       orgId,
     })
 
