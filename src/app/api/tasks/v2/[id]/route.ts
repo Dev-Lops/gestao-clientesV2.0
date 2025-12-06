@@ -7,10 +7,11 @@ const controller = new TaskController(prisma)
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const result = await controller.get({ taskId: params.id })
+    const { id } = await context.params
+    const result = await controller.get({ taskId: id })
 
     return NextResponse.json(result)
   } catch (error) {
@@ -27,13 +28,13 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const body = await request.json()
 
     const result = await controller.update({
-      taskId: params.id,
+      taskId: (await context.params).id,
       title: body.title,
       description: body.description,
       priority: body.priority,
@@ -45,7 +46,7 @@ export async function PATCH(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Validação falhou', details: error.errors },
+        { error: 'Validação falhou', details: error.issues },
         { status: 400 }
       )
     }
@@ -63,10 +64,11 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const result = await controller.delete({ taskId: params.id })
+    const { id } = await context.params
+    const result = await controller.delete({ taskId: id })
 
     return NextResponse.json(result)
   } catch (error) {

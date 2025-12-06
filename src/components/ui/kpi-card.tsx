@@ -115,7 +115,7 @@ export const KpiCard = React.forwardRef<HTMLDivElement, KpiCardProps>(
       <div
         ref={ref}
         className={cn(
-          'group rounded-xl border-2 p-6 transition-all duration-200',
+          'group rounded-2xl border-2 p-6 sm:p-7 transition-all duration-200 h-full min-h-[180px] sm:min-h-[190px] flex flex-col justify-between backdrop-blur-sm',
           styles.card,
           interactive && 'hover:shadow-xl hover:scale-105 cursor-default',
           className
@@ -186,7 +186,7 @@ export const KpiGrid = React.forwardRef<HTMLDivElement, KpiGridProps>(
     return (
       <div
         ref={ref}
-        className={cn('grid gap-4', gridCols[columns], className)}
+        className={cn('grid gap-4 md:gap-5 auto-rows-[minmax(0,1fr)]', gridCols[columns], className)}
         {...props}
       >
         {children}

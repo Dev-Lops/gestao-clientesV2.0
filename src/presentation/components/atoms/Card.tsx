@@ -8,16 +8,16 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { forwardRef, HTMLAttributes } from 'react'
 
 const cardVariants = cva(
-  'rounded-lg border bg-card text-card-foreground shadow-sm',
+  'surface-panel text-card-foreground transition-colors duration-200',
   {
     variants: {
       variant: {
         default: '',
         outline: 'border-2',
-        ghost: 'border-0 shadow-none',
+        ghost: 'border-0 shadow-none bg-transparent',
       },
       hover: {
-        true: 'transition-all duration-200 hover:shadow-lg',
+        true: 'hover:shadow-lg hover:border-slate-300/80 dark:hover:border-slate-700/80',
         false: '',
       },
     },

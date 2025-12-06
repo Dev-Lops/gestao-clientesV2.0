@@ -6,6 +6,7 @@ import { TaskModal } from "@/features/tasks/components/TaskModal";
 import { TaskStats as StatsCards } from "@/features/tasks/components/TaskStats";
 import { useTasks } from "@/features/tasks/hooks/useTasks";
 import { Task, TaskPriority, TaskStatus } from "@/features/tasks/types";
+import { toast } from "sonner";
 import { parseDateInput, toLocalISOString } from "@/lib/utils";
 import type { DragEndEvent, DragStartEvent, UniqueIdentifier } from '@dnd-kit/core';
 import {
@@ -30,11 +31,20 @@ interface TaskCardProps {
   onDelete?: (id: string) => void;
 }
 
+type StatusStyle = {
+  bg: string
+  border: string
+  text: string
+  dot: string
+  badge: string
+  header?: string
+}
+
 function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
   const { setNodeRef, listeners, attributes, isDragging } = useSortable({ id: task.id });
 
   // Cores sofisticadas por status
-  const statusStyles: Record<string, any> = {
+  const statusStyles: Record<TaskStatus, StatusStyle> = {
     'TODO': {
       bg: 'bg-linear-to-br from-white via-amber-50/50 to-yellow-50 dark:from-slate-900 dark:via-amber-950/30 dark:to-yellow-950/30',
       border: 'border-amber-200 dark:border-amber-800',
@@ -148,7 +158,7 @@ function KanbanColumn({ column, tasks, handleEdit, handleDelete }: KanbanColumnP
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
 
   // Estilos sofisticados por coluna
-  const columnStyles: Record<string, any> = {
+  const columnStyles: Record<TaskStatus, StatusStyle> = {
     'TODO': {
       bg: 'bg-linear-to-b from-amber-50/80 to-yellow-50/50 dark:from-amber-950/20 dark:to-yellow-950/10',
       border: 'border-amber-200 dark:border-amber-800',
@@ -196,7 +206,7 @@ function KanbanColumn({ column, tasks, handleEdit, handleDelete }: KanbanColumnP
           }`}
       >
         {/* Header da coluna */}
-        <div className={`${style.header} rounded-t-2xl p-4 border-b-2 ${style.border}`}>
+        <div className={`${style.header ?? style.bg} rounded-t-2xl p-4 border-b-2 ${style.border}`}>
           <div className="flex items-center justify-between">
             <h3 className={`font-bold text-base ${style.text} flex items-center gap-2`}>
               {column.title}
@@ -274,8 +284,10 @@ export function TasksPanel({ clientId, initialTasks = [] }: TasksPanelProps) {
       const res = await fetch(`/api/clients/${clientId}/tasks?taskId=${id}`, { method: "DELETE" })
       if (!res.ok) throw new Error("Falha ao excluir tarefa")
       await invalidate()
+      toast.success("Tarefa excluída")
     } catch (err) {
       console.error(err)
+      toast.error("Não foi possível excluir a tarefa")
     }
   }
 
@@ -284,8 +296,10 @@ export function TasksPanel({ clientId, initialTasks = [] }: TasksPanelProps) {
       const res = await fetch(`/api/clients/${clientId}/tasks?taskId=${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status }) })
       if (!res.ok) throw new Error("Falha ao atualizar status")
       await invalidate()
+      toast.success("Status atualizado")
     } catch (err) {
       console.error(err)
+      toast.error("Não foi possível atualizar o status")
     }
   }
 
@@ -297,16 +311,20 @@ export function TasksPanel({ clientId, initialTasks = [] }: TasksPanelProps) {
         const res = await fetch(`/api/clients/${clientId}/tasks?taskId=${editing.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
         if (!res.ok) throw new Error("Falha ao atualizar tarefa");
         await invalidate();
+        toast.success("Tarefa atualizada")
       } catch (err) {
         console.error(err);
+        toast.error("Não foi possível atualizar a tarefa");
       }
     } else {
       try {
         const res = await fetch(`/api/clients/${clientId}/tasks`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
         if (!res.ok) throw new Error("Falha ao criar tarefa");
         await invalidate();
+        toast.success("Tarefa criada")
       } catch (err) {
         console.error(err);
+        toast.error("Não foi possível criar a tarefa");
       }
     }
     setIsModalOpen(false); resetForm();
