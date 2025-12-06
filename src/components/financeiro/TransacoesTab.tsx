@@ -51,6 +51,7 @@ export function TransacoesTab() {
   const [error, setError] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [totalCount, setTotalCount] = useState(0)
   const [modalOpen, setModalOpen] = useState(false)
   const [detailModalOpen, setDetailModalOpen] = useState(false)
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | undefined>()
@@ -99,7 +100,9 @@ export function TransacoesTab() {
       // ApiResponseHandler retorna { data: { transactions, meta } } ou { data: [] }
       const data = result.data || result
       setTransactions(Array.isArray(data) ? data : (data.transactions || []))
-      setTotalPages(data.meta?.totalPages || result.totalPages || 1)
+      const meta = result.meta || data.meta || {}
+      setTotalPages(meta.totalPages || result.totalPages || 1)
+      setTotalCount(meta.total || result.total || 0)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro desconhecido')
     } finally {
@@ -228,7 +231,7 @@ export function TransacoesTab() {
         <CardHeader className="pb-4">
           <CardTitle className="text-xl">Transações Registradas</CardTitle>
           <CardDescription className="text-base">
-            Mostrando {filteredTransactions.length} de {transactions.length} transações
+            Mostrando {transactions.length} de {totalCount} transações {totalPages > 1 && `(Página ${page} de ${totalPages})`}
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-0">

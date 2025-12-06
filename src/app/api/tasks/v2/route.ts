@@ -22,6 +22,7 @@ export async function POST(request: NextRequest) {
       assignee: body.assignee,
       dueDate: body.dueDate ? new Date(body.dueDate) : undefined,
       createdBy: body.createdBy,
+      autoAssign: body.autoAssign !== false, // Padrão: true (ativa atribuição automática)
     })
 
     return NextResponse.json(result, { status: 201 })

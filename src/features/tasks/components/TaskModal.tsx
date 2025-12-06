@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { useAssignees } from '@/features/tasks/hooks/useAssignees';
 import { Sparkles, X } from 'lucide-react';
 import { Task, TaskPriority, TaskStatus } from '../types';
 
@@ -11,6 +12,7 @@ interface TaskModalProps {
   open: boolean;
   onClose: () => void;
   editing: Task | null;
+  orgId?: string;
   form: {
     title: string; description: string; status: TaskStatus; priority: TaskPriority; assignee: string; dueDate: string;
   };
@@ -18,7 +20,8 @@ interface TaskModalProps {
   onSubmit: (e: React.FormEvent) => void;
 }
 
-export function TaskModal({ open, onClose, editing, form, setForm, onSubmit }: TaskModalProps) {
+export function TaskModal({ open, onClose, editing, orgId, form, setForm, onSubmit }: TaskModalProps) {
+  const { assignees, loading: loadingAssignees } = useAssignees(orgId);
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={onClose}>
@@ -70,13 +73,34 @@ export function TaskModal({ open, onClose, editing, form, setForm, onSubmit }: T
 
           <div className="space-y-2">
             <Label htmlFor="assignee" className="text-sm font-semibold text-slate-700 dark:text-slate-300">Responsável</Label>
-            <Input
-              id="assignee"
-              value={form.assignee}
-              onChange={(e) => setForm({ ...form, assignee: e.target.value })}
-              placeholder="Nome do responsável"
-              className="border-2 border-slate-200 dark:border-slate-700"
-            />
+            {loadingAssignees ? (
+              <div className="border-2 border-slate-200 dark:border-slate-700 rounded-md p-2 text-slate-500 text-sm">
+                Carregando responsáveis...
+              </div>
+            ) : assignees.length > 0 ? (
+              <Select value={form.assignee} onValueChange={(value) => setForm({ ...form, assignee: value })}>
+                <SelectTrigger className="border-2 border-slate-200 dark:border-slate-700">
+                  <SelectValue placeholder="Selecione um responsável" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Sem atribuição</SelectItem>
+                  {assignees.map((assignee) => (
+                    <SelectItem key={assignee.id} value={assignee.id}>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{assignee.name}</span>
+                        <span className="text-xs text-slate-500 ml-2">
+                          {assignee.role === 'OWNER' ? '👑 Owner' : '👤 Staff'}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <div className="border-2 border-slate-200 dark:border-slate-700 rounded-md p-2 text-slate-500 text-sm">
+                Nenhum responsável cadastrado
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

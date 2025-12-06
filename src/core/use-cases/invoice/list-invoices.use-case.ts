@@ -1,5 +1,5 @@
-import { Invoice } from '@/domain/invoice/entities/invoice.entity'
-import { InvoiceStatus } from '@/domain/invoice/value-objects/invoice-status.vo'
+import { Invoice } from '@/core/domain/invoice/entities/invoice.entity'
+import { InvoiceStatus } from '@/core/domain/invoice/value-objects/invoice-status.vo'
 import { IInvoiceRepository } from '@/ports/repositories/invoice.repository.interface'
 import { z } from 'zod'
 
