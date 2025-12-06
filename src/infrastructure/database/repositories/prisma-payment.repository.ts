@@ -1,10 +1,10 @@
+import { prisma } from '@/lib/prisma'
 import {
   Payment,
   PaymentStatus,
 } from '@/core/domain/payment/entities/payment.entity'
 import { Money } from '@/core/domain/payment/value-objects/money.vo'
 import { IPaymentRepository } from '@/core/ports/repositories/payment.repository.interface'
-import { prisma } from '@/lib/prisma'
 import {
   Transaction,
   TransactionStatus,
@@ -21,40 +21,6 @@ export class PrismaPaymentRepository implements IPaymentRepository {
       create: data,
       update: data,
     })
-  }
-
-  async findByOrgId(
-    orgId: string,
-    options?: { page?: number; limit?: number; invoiceId?: string }
-  ): Promise<{ payments: Payment[]; total: number }> {
-    const page = options?.page ?? 1
-    const limit = options?.limit ?? 10
-    const skip = (page - 1) * limit
-
-    const where: any = {
-      orgId,
-      category: 'payment',
-      deletedAt: null,
-    }
-
-    if (options?.invoiceId) {
-      where.invoiceId = options.invoiceId
-    }
-
-    const [data, total] = await Promise.all([
-      prisma.transaction.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { date: 'desc' },
-      }),
-      prisma.transaction.count({ where }),
-    ])
-
-    return {
-      payments: data.map((d) => this.mapToDomain(d)),
-      total,
-    }
   }
 
   async findById(id: string): Promise<Payment | null> {
@@ -126,3 +92,4 @@ export class PrismaPaymentRepository implements IPaymentRepository {
     }
   }
 }
+

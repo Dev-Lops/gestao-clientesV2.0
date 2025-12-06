@@ -18,55 +18,21 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "paths": {
-      "@/*": [
-        "./src/*"
-      ],
-      "@/core/*": [
-        "./src/core/*"
-      ],
-      "@/domain/*": [
-        "./src/core/domain/*",
-        "./src/domain/*"
-      ],
-      "@/use-cases/*": [
-        "./src/core/use-cases/*"
-      ],
-      "@/ports/*": [
-        "./src/core/ports/*"
-      ],
-      "@/infrastructure/*": [
-        "./src/infrastructure/*"
-      ],
-      "@/presentation/*": [
-        "./src/presentation/*"
-      ],
-      "@/shared/*": [
-        "./src/shared/*"
-      ],
-      "@/components/*": [
-        "./src/components/*",
-        "./src/presentation/components/*"
-      ],
-      "@/hooks/*": [
-        "./src/hooks/*",
-        "./src/presentation/hooks/*"
-      ],
-      "@/context/*": [
-        "./src/context/*",
-        "./src/presentation/contexts/*"
-      ],
-      "@/types/*": [
-        "./src/shared/types/*"
-      ],
-      "@/schemas/*": [
-        "./src/shared/schemas/*"
-      ],
-      "@/utils/*": [
-        "./src/shared/utils/*"
-      ],
-      "@/config/*": [
-        "./src/shared/config/*"
-      ]
+      "@/*": ["./src/*"],
+      "@/core/*": ["./src/core/*"],
+      "@/domain/*": ["./src/core/domain/*", "./src/domain/*"],
+      "@/use-cases/*": ["./src/core/use-cases/*"],
+      "@/ports/*": ["./src/core/ports/*"],
+      "@/infrastructure/*": ["./src/infrastructure/*"],
+      "@/presentation/*": ["./src/presentation/*"],
+      "@/shared/*": ["./src/shared/*"],
+      "@/components/*": ["./src/presentation/components/*"],
+      "@/hooks/*": ["./src/presentation/hooks/*"],
+      "@/context/*": ["./src/presentation/contexts/*"],
+      "@/types/*": ["./src/shared/types/*"],
+      "@/schemas/*": ["./src/shared/schemas/*"],
+      "@/utils/*": ["./src/shared/utils/*"],
+      "@/config/*": ["./src/shared/config/*"]
     },
     "lib": [
       "dom",
@@ -85,8 +51,7 @@
     "next-env.d.ts",
     "src/**/*.ts",
     "src/**/*.tsx",
-    ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
+    ".next/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

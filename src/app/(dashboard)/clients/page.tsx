@@ -135,7 +135,7 @@ export default async function ClientsPage({ searchParams }: PageProps) {
     <ClientsPageClient>
       <AppShell>
         <div className="page-background">
-          <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
+          <div className="page-shell py-4 sm:py-6 space-y-4 sm:space-y-6">
             <GradientPageHeader
               icon={Users}
               title="Meus Clientes"
