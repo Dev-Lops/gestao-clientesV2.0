@@ -173,7 +173,7 @@ export function FinancialAlerts() {
 
   if (loading) {
     return (
-      <Card className="border-2 border-border/50 shadow-lg bg-gradient-to-br from-background via-background to-muted/10">
+      <Card size="sm" className="border-2 border-border/50 shadow-lg bg-gradient-to-br from-background via-background to-muted/10">
         <div className="bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 h-1 animate-pulse" />
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
@@ -193,76 +193,59 @@ export function FinancialAlerts() {
   }
 
   return (
-    <Card className="border-2 border-border/50 shadow-xl overflow-hidden">
-      <div className="bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 h-1" />
-      <CardHeader className="pb-4">
+    <Card size="sm" className="border-2 border-border/50 shadow-md overflow-hidden">
+      <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
-              <Bell className="h-5 w-5 text-white" />
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-md shadow-sm">
+              <Bell className="h-4 w-4 text-white" />
             </div>
             <div>
-              <CardTitle className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent flex items-center gap-2">
+              <CardTitle className="text-sm font-bold text-primary flex items-center gap-2">
                 Alertas Financeiros
-                <Badge className="bg-gradient-to-r from-blue-600 to-indigo-600">
-                  {alerts.length}
-                </Badge>
+                <Badge className="text-xs px-2 py-0.5">{alerts.length}</Badge>
               </CardTitle>
             </div>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={fetchAlerts}
-            className="shadow-sm hover:shadow-md transition-all"
-          >
-            Atualizar
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={fetchAlerts} className="text-xs">
+              Atualizar
+            </Button>
+          </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <AnimatePresence>
-          {alerts.map((alert, index) => {
-            const colors = getAlertColors(alert.type)
 
-            return (
-              <motion.div
-                key={alert.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.3, delay: index * 0.1 }}
-              >
-                <Card className={`border-2 ${colors.border} ${colors.bg} overflow-hidden hover:shadow-md transition-all duration-300`}>
-                  <div className={`h-1 bg-gradient-to-r ${colors.accent}`} />
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <div className={`p-2.5 ${colors.iconBg} rounded-xl shadow-sm flex-shrink-0`}>
-                        <div className={colors.iconColor}>
-                          {getAlertIcon(alert.type)}
-                        </div>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-bold text-sm mb-1">{alert.title}</h4>
-                        <p className="text-sm text-muted-foreground mb-2">{alert.message}</p>
-                        {alert.action && (
-                          <Link href={alert.action.href}>
-                            <Button
-                              variant="link"
-                              size="sm"
-                              className={`h-auto p-0 ${colors.iconColor} hover:underline`}
-                            >
-                              {alert.action.label} →
-                            </Button>
-                          </Link>
-                        )}
-                      </div>
+      <CardContent>
+        <AnimatePresence>
+          <div className="flex flex-wrap gap-2">
+            {alerts.map((alert, index) => {
+              const colors = getAlertColors(alert.type)
+              return (
+                <motion.div
+                  key={alert.id}
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 6 }}
+                  transition={{ duration: 0.18, delay: index * 0.04 }}
+                >
+                  <div className={`flex items-center gap-3 px-3 py-2 border rounded-lg max-w-xs ${colors.bg} ${colors.border}`}>
+                    <div className={`${colors.iconBg} rounded-full p-2 flex-shrink-0`}>
+                      <div className={colors.iconColor}>{getAlertIcon(alert.type)}</div>
                     </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            )
-          })}
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold truncate">{alert.title}</div>
+                      <div className="text-xs text-muted-foreground truncate">{alert.message}</div>
+                    </div>
+                    {alert.action && (
+                      <Link href={alert.action.href} className="ml-2 text-xs text-primary hover:underline">
+                        {alert.action.label} →
+                      </Link>
+                    )}
+                  </div>
+                </motion.div>
+              )
+            })}
+          </div>
         </AnimatePresence>
       </CardContent>
     </Card>

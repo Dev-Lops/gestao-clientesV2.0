@@ -58,8 +58,8 @@ export function QuickStats() {
     return (
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         {[...Array(4)].map((_, i) => (
-          <Card key={i} className="border-0 shadow-sm">
-            <CardContent className="p-4">
+          <Card key={i} size="sm" className="border-0 shadow-sm">
+            <CardContent>
               <Skeleton className="h-4 w-20 mb-2" />
               <Skeleton className="h-6 w-24" />
             </CardContent>
@@ -72,9 +72,9 @@ export function QuickStats() {
   if (!data) return null
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-      <Card className="border-0 shadow-md hover:shadow-lg transition-shadow bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20">
-        <CardContent className="p-4">
+    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-6">
+      <Card size="sm" className="border-0 shadow-md hover:shadow-lg transition-shadow bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20">
+        <CardContent>
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-medium text-green-700 dark:text-green-400">Receitas</p>
             <TrendingUp className="h-4 w-4 text-green-600" />
@@ -83,8 +83,8 @@ export function QuickStats() {
         </CardContent>
       </Card>
 
-      <Card className="border-0 shadow-md hover:shadow-lg transition-shadow bg-gradient-to-br from-red-50 to-rose-50 dark:from-red-950/20 dark:to-rose-950/20">
-        <CardContent className="p-4">
+      <Card size="sm" className="border-0 shadow-md hover:shadow-lg transition-shadow bg-gradient-to-br from-red-50 to-rose-50 dark:from-red-950/20 dark:to-rose-950/20">
+        <CardContent>
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-medium text-red-700 dark:text-red-400">Despesas</p>
             <TrendingDown className="h-4 w-4 text-red-600" />
@@ -96,11 +96,11 @@ export function QuickStats() {
         </CardContent>
       </Card>
 
-      <Card className={`border-0 shadow-md hover:shadow-lg transition-shadow ${data.netProfit >= 0
+      <Card size="sm" className={`border-0 shadow-md hover:shadow-lg transition-shadow ${data.netProfit >= 0
         ? 'bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20'
         : 'bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20'
         }`}>
-        <CardContent className="p-4">
+        <CardContent>
           <div className="flex items-center justify-between mb-2">
             <p className={`text-xs font-medium ${data.netProfit >= 0 ? 'text-blue-700 dark:text-blue-400' : 'text-orange-700 dark:text-orange-400'
               }`}>
@@ -119,8 +119,8 @@ export function QuickStats() {
         </CardContent>
       </Card>
 
-      <Card className="border-0 shadow-md hover:shadow-lg transition-shadow bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20">
-        <CardContent className="p-4">
+      <Card size="sm" className="border-0 shadow-md hover:shadow-lg transition-shadow bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20">
+        <CardContent>
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-medium text-purple-700 dark:text-purple-400">A Receber</p>
             <Wallet className="h-4 w-4 text-purple-600" />
@@ -129,8 +129,8 @@ export function QuickStats() {
         </CardContent>
       </Card>
       {typeof data.cashOnHandMonthly === 'number' && (
-        <Card className="border-0 shadow-md hover:shadow-lg transition-shadow bg-gradient-to-br from-slate-50 to-zinc-50 dark:from-slate-950/20 dark:to-zinc-950/20">
-          <CardContent className="p-4">
+        <Card size="sm" className="border-0 shadow-md hover:shadow-lg transition-shadow bg-gradient-to-br from-slate-50 to-zinc-50 dark:from-slate-950/20 dark:to-zinc-950/20">
+          <CardContent>
             <div className="flex items-center justify-between mb-2">
               <p className="text-xs font-medium text-slate-700 dark:text-slate-400">Em Caixa</p>
               <Wallet className="h-4 w-4 text-slate-600" />

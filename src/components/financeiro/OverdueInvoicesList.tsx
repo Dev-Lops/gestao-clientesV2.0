@@ -14,7 +14,7 @@ import {
 } from 'lucide-react'
 
 interface OverdueInvoicesListProps {
-  overdue: Array<{
+  overdue?: Array<{
     id: string
     number: string
     clientId: string
@@ -31,9 +31,9 @@ interface OverdueInvoicesListProps {
 }
 
 export function OverdueInvoicesList({ overdue }: OverdueInvoicesListProps) {
-  if (overdue.length === 0) {
+  if (!overdue || overdue.length === 0) {
     return (
-      <Card className="border-2 border-emerald-200/50 dark:border-emerald-800/50 bg-gradient-to-br from-emerald-50/80 to-green-50/80 dark:from-emerald-950/30 dark:to-green-950/30 shadow-lg">
+      <Card size="md" className="border-2 border-emerald-200/50 dark:border-emerald-800/50 bg-gradient-to-br from-emerald-50/80 to-green-50/80 dark:from-emerald-950/30 dark:to-green-950/30 shadow-lg">
         <CardContent className="py-16">
           <div className="text-center">
             <motion.div
@@ -60,9 +60,9 @@ export function OverdueInvoicesList({ overdue }: OverdueInvoicesListProps) {
   const criticalOverdue = overdue.filter((inv) => inv.daysLate > 30)
 
   return (
-    <Card className="border-2 border-rose-200/50 dark:border-rose-800/50 shadow-xl">
+    <Card size="md" className="border-2 border-rose-200/50 dark:border-rose-800/50 shadow-xl">
       <div className="bg-gradient-to-r from-rose-500 via-red-500 to-pink-500 h-1" />
-      <CardHeader className="pb-4">
+      <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-gradient-to-br from-rose-500 to-red-600 rounded-xl shadow-lg animate-pulse">
@@ -89,7 +89,7 @@ export function OverdueInvoicesList({ overdue }: OverdueInvoicesListProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+        <div className="space-y-2 max-h-[480px] overflow-y-auto pr-2 custom-scrollbar">
           {overdue.map((inv, index) => {
             const isCritical = inv.daysLate > 30
             const isUrgent = inv.daysLate > 15
@@ -102,6 +102,7 @@ export function OverdueInvoicesList({ overdue }: OverdueInvoicesListProps) {
                 transition={{ duration: 0.3, delay: index * 0.05 }}
               >
                 <Card
+                  size="sm"
                   className={`border-2 transition-all duration-300 hover:shadow-lg hover:-translate-x-1 ${isCritical
                     ? 'border-red-400 dark:border-red-700 bg-gradient-to-r from-red-50/80 to-rose-50/80 dark:from-red-950/30 dark:to-rose-950/30'
                     : isUrgent
@@ -109,7 +110,7 @@ export function OverdueInvoicesList({ overdue }: OverdueInvoicesListProps) {
                       : 'border-yellow-300 dark:border-yellow-700 bg-gradient-to-r from-yellow-50/80 to-amber-50/80 dark:from-yellow-950/30 dark:to-amber-950/30'
                     }`}
                 >
-                  <CardContent className="p-4">
+                  <CardContent>
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
@@ -139,7 +140,7 @@ export function OverdueInvoicesList({ overdue }: OverdueInvoicesListProps) {
                           {inv.client.name}
                         </p>
 
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground mb-3">
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground mb-2">
                           <div className="flex items-center gap-1">
                             <span className="text-rose-600 dark:text-rose-400 font-medium">
                               Venceu:{' '}

@@ -9,10 +9,20 @@ import * as React from "react";
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: 'default' | 'elevated' | 'interactive' | 'bordered';
   hover?: boolean;
+  size?: 'sm' | 'md' | 'lg'
 }
 
+// Provide card size to subcomponents via context so header/content can adapt
+// Use `null` as default to detect absence of a parent Card provider.
+const CardSizeContext = React.createContext<'sm' | 'md' | 'lg' | null>(null)
+
 const Card = React.forwardRef<HTMLDivElement, CardProps>(
-  ({ className, variant = 'default', hover = false, ...props }, ref) => {
+  ({ className, variant = 'default', hover = false, size, ...props }, ref) => {
+    // detect parent card size (if any)
+    const parentSize = React.useContext(CardSizeContext)
+    // If `size` prop is provided, use it. Otherwise, if we're nested (parentSize != null)
+    // default to 'sm' for nested cards, else default to 'md' for top-level cards.
+    const effectiveSize: 'sm' | 'md' | 'lg' = (size as any) ?? (parentSize ? 'sm' : 'md')
     const variantClasses = {
       default: 'border-2 shadow-sm',
       elevated: 'border-2 shadow-lg',
@@ -21,20 +31,22 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
     };
 
     return (
-      <div
-        ref={ref}
-        className={cn(
-          // Base styles
-          'rounded-xl bg-card text-card-foreground transition-all duration-200',
-          // Variant styles
-          variantClasses[variant],
-          // Hover effect
-          hover && 'hover:shadow-lg',
-          className,
-        )}
-        {...props}
-      />
-    );
+      <CardSizeContext.Provider value={effectiveSize}>
+        <div
+          ref={ref}
+          className={cn(
+            // Base styles
+            'rounded-xl bg-card text-card-foreground transition-all duration-200',
+            // Variant styles
+            variantClasses[variant],
+            // Hover effect
+            hover && 'hover:shadow-lg',
+            className,
+          )}
+          {...props}
+        />
+      </CardSizeContext.Provider>
+    )
   }
 );
 Card.displayName = "Card";
@@ -42,73 +54,91 @@ Card.displayName = "Card";
 const CardHeader = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      "flex flex-col space-y-1.5 p-4 sm:p-6",
-      className
-    )}
-    {...props}
-  />
-));
+>(({ className, ...props }, ref) => {
+  const size = React.useContext(CardSizeContext)
+  const base = size === 'sm' ? 'p-3 sm:p-4 space-y-1' : size === 'lg' ? 'p-6 sm:p-8 space-y-2' : 'p-4 sm:p-6 space-y-1.5'
+  return (
+    <div
+      ref={ref}
+      className={cn(base, className)}
+      {...props}
+    />
+  )
+});
 CardHeader.displayName = "CardHeader";
 
 const CardTitle = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLHeadingElement>
->(({ className, ...props }, ref) => (
-  <h3
-    ref={ref}
-    className={cn(
-      "text-lg sm:text-xl font-semibold leading-tight tracking-tight text-slate-900 dark:text-white",
-      className,
-    )}
-    {...props}
-  />
-));
+>(({ className, ...props }, ref) => {
+  const size = React.useContext(CardSizeContext)
+  const sizeClass = size === 'sm' ? 'text-sm sm:text-base' : size === 'lg' ? 'text-xl sm:text-2xl' : 'text-lg sm:text-xl'
+  return (
+    <h3
+      ref={ref}
+      className={cn(
+        `${sizeClass} font-semibold leading-tight tracking-tight text-slate-900 dark:text-white`,
+        className,
+      )}
+      {...props}
+    />
+  )
+});
 CardTitle.displayName = "CardTitle";
 
 const CardDescription = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
->(({ className, ...props }, ref) => (
-  <p 
-    ref={ref} 
-    className={cn(
-      "text-sm text-slate-600 dark:text-slate-400 leading-relaxed", 
-      className
-    )} 
-    {...props} 
-  />
-));
+>(({ className, ...props }, ref) => {
+  const size = React.useContext(CardSizeContext)
+  const textClass = size === 'sm' ? 'text-xs' : size === 'lg' ? 'text-base' : 'text-sm'
+  return (
+    <p
+      ref={ref}
+      className={cn(
+        `${textClass} text-slate-600 dark:text-slate-400 leading-relaxed`,
+        className
+      )}
+      {...props}
+    />
+  )
+});
 CardDescription.displayName = "CardDescription";
 
 const CardContent = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div 
-    ref={ref} 
-    className={cn("px-4 sm:px-6 pb-4 sm:pb-6", className)} 
-    {...props} 
-  />
-));
+>(({ className, ...props }, ref) => {
+  const size = React.useContext(CardSizeContext)
+  const pad = size === 'sm' ? 'px-3 sm:px-4 pb-3 sm:pb-4' : size === 'lg' ? 'px-6 sm:px-8 pb-6 sm:pb-8' : 'px-4 sm:px-6 pb-4 sm:pb-6'
+  return (
+    <div
+      ref={ref}
+      className={cn(pad, className)}
+      {...props}
+    />
+  )
+});
 CardContent.displayName = "CardContent";
 
 const CardFooter = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      "flex items-center gap-2 px-4 sm:px-6 pb-4 sm:pb-6",
-      className
-    )}
-    {...props}
-  />
-));
+>(({ className, ...props }, ref) => {
+  const size = React.useContext(CardSizeContext)
+  const pad = size === 'sm' ? 'px-3 sm:px-4 pb-3 sm:pb-4' : size === 'lg' ? 'px-6 sm:px-8 pb-6 sm:pb-8' : 'px-4 sm:px-6 pb-4 sm:pb-6'
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        'flex items-center gap-2',
+        pad,
+        className
+      )}
+      {...props}
+    />
+  )
+});
 CardFooter.displayName = "CardFooter";
 
 export {
@@ -117,5 +147,6 @@ export {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
+  CardTitle
 };
+

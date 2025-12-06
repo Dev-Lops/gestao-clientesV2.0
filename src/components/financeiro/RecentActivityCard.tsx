@@ -37,7 +37,7 @@ const statusLabels: Record<string, string> = {
 export function RecentActivityCard({ activities }: RecentActivityCardProps) {
   if (activities.length === 0) {
     return (
-      <Card className="border-2 border-border/50 shadow-lg">
+      <Card size="md" className="border-2 border-border/50 shadow-lg">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Activity className="h-5 w-5" />
@@ -55,15 +55,15 @@ export function RecentActivityCard({ activities }: RecentActivityCardProps) {
   }
 
   return (
-    <Card className="border-2 border-border/50 shadow-xl overflow-hidden">
+    <Card size="md" className="border-2 border-border/50 shadow-xl overflow-hidden">
       <div className="bg-gradient-to-r from-violet-500 via-purple-500 to-fuchsia-500 h-1" />
-      <CardHeader className="pb-4">
+      <CardHeader className="pb-3">
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl shadow-lg">
             <Activity className="h-5 w-5 text-white" />
           </div>
           <div>
-            <CardTitle className="text-xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
+            <CardTitle className="text-lg font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
               Atividade Recente
             </CardTitle>
             <CardDescription className="text-sm">
@@ -73,7 +73,7 @@ export function RecentActivityCard({ activities }: RecentActivityCardProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-2 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+        <div className="space-y-2 max-h-[420px] overflow-y-auto pr-2 custom-scrollbar">
           {activities.slice(0, 10).map((activity, index) => {
             const isIncome = activity.type === 'INCOME'
 
@@ -84,8 +84,8 @@ export function RecentActivityCard({ activities }: RecentActivityCardProps) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.2, delay: index * 0.03 }}
               >
-                <Card className="border hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
-                  <CardContent className="p-3">
+                <Card size="sm" className="border hover:shadow-md transition-all duration-200">
+                  <CardContent>
                     <div className="flex items-center gap-3">
                       {/* Icon */}
                       <div
@@ -141,7 +141,7 @@ export function RecentActivityCard({ activities }: RecentActivityCardProps) {
                       {/* Amount */}
                       <div className="text-right flex-shrink-0">
                         <p
-                          className={`text-lg font-black ${isIncome
+                          className={`text-base font-bold ${isIncome
                             ? 'text-emerald-600 dark:text-emerald-400'
                             : 'text-rose-600 dark:text-rose-400'
                             }`}

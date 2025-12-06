@@ -192,7 +192,7 @@ export function CustosTab() {
   return (
     <div className="space-y-6">
       {/* Cabeçalho Premium */}
-      <Card className="border-0 shadow-lg bg-gradient-to-r from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-950/30 dark:via-orange-950/30 dark:to-yellow-950/30">
+      <Card size="md" className="border-0 shadow-lg bg-gradient-to-r from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-950/30 dark:via-orange-950/30 dark:to-yellow-950/30">
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">
             <div>
@@ -233,7 +233,7 @@ export function CustosTab() {
             </Button>
           </div>
 
-          <Card className="border-0 shadow-md">
+          <Card size="md" className="border-0 shadow-md">
             <CardHeader className="pb-4">
               <CardTitle className="text-lg">Filtros</CardTitle>
             </CardHeader>
@@ -245,7 +245,7 @@ export function CustosTab() {
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-lg">
+          <Card size="md" className="border-0 shadow-lg">
             <CardHeader className="pb-4">
               <CardTitle className="text-xl">Itens de Custo Cadastrados</CardTitle>
               <CardDescription className="text-base">Mostrando {filteredCostItems.length} de {costItems.length} itens</CardDescription>
@@ -328,7 +328,7 @@ export function CustosTab() {
             </Button>
           </div>
 
-          <Card className="border-0 shadow-md">
+          <Card size="md" className="border-0 shadow-md">
             <CardHeader className="pb-4">
               <CardTitle className="text-lg">Filtros</CardTitle>
             </CardHeader>
@@ -340,7 +340,7 @@ export function CustosTab() {
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-lg">
+          <Card size="md" className="border-0 shadow-lg">
             <CardHeader className="pb-4">
               <CardTitle className="text-xl">Associações Cliente-Custo</CardTitle>
               <CardDescription className="text-base">Mostrando {filteredSubscriptions.length} de {subscriptions.length} associações</CardDescription>

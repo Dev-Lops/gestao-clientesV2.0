@@ -43,7 +43,7 @@ export default function AdvancedFilters({
   children,
 }: AdvancedFilterProps) {
   return (
-    <Card>
+    <Card size="sm">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">

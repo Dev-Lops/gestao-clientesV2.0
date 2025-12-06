@@ -217,7 +217,7 @@ export function FaturasTab() {
       <QuickStats />
 
       {/* Cabeçalho Premium */}
-      <Card className="border-0 shadow-lg bg-gradient-to-r from-purple-50 via-pink-50 to-fuchsia-50 dark:from-purple-950/30 dark:via-pink-950/30 dark:to-fuchsia-950/30">
+      <Card size="md" className="border-0 shadow-lg bg-gradient-to-r from-purple-50 via-pink-50 to-fuchsia-50 dark:from-purple-950/30 dark:via-pink-950/30 dark:to-fuchsia-950/30">
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">
             <div>
@@ -286,7 +286,7 @@ export function FaturasTab() {
         </CardContent>
       </Card>
 
-      <Card className="border-0 shadow-md bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+      <Card size="md" className="border-0 shadow-md bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
         <CardHeader className="pb-4">
           <CardTitle className="text-lg flex items-center gap-2"><span className="inline-block p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30"><TrendingUp className="h-5 w-5 text-purple-600" /></span>Filtros Avançados</CardTitle>
         </CardHeader>
@@ -361,7 +361,7 @@ export function FaturasTab() {
         </CardContent>
       </Card>
 
-      <Card className="border-0 shadow-lg">
+      <Card size="md" className="border-0 shadow-lg">
         <CardHeader className="pb-4">
           <CardTitle className="text-xl">Faturas Registradas</CardTitle>
           <CardDescription className="text-base">Mostrando {filteredInvoices.length} de {invoices.length} faturas</CardDescription>

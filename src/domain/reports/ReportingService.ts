@@ -113,9 +113,13 @@ export class ReportingService {
     )
     const openInvoicesThisPeriod =
       (invoiceSummary.open?.total || 0) + (invoiceSummary.overdue?.total || 0)
-    const nonFixedExpenseThisPeriod = nonFixedExpenseAgg._sum.amount || 0
+    const nonFixedExpenseThisPeriod =
+      (nonFixedExpenseAgg._sum.amount as any)?.toNumber?.() ??
+      (nonFixedExpenseAgg._sum.amount || 0)
+    // Lucro Previsto = (Invoices abertas + atrasadas) - (Despesas não-fixas confirmadas + Despesas fixas pendentes)
     const projectedNetProfit =
-      openInvoicesThisPeriod - (nonFixedExpenseThisPeriod + pendingFixed)
+      openInvoicesThisPeriod -
+      (nonFixedExpenseThisPeriod + materializedFixedThisPeriod)
     const cashOnHand =
       (cashIncomeAgg._sum.amount || 0) - (cashExpenseAgg._sum.amount || 0)
 

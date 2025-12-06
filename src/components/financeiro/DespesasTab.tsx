@@ -271,7 +271,7 @@ export function DespesasTab() {
   return (
     <div className="space-y-6">
       {/* Cabeçalho Premium */}
-      <Card className="border-0 shadow-lg bg-gradient-to-r from-red-50 via-rose-50 to-pink-50 dark:from-red-950/30 dark:via-rose-950/30 dark:to-pink-950/30">
+      <Card size="md" className="border-0 shadow-lg bg-gradient-to-r from-red-50 via-rose-50 to-pink-50 dark:from-red-950/30 dark:via-rose-950/30 dark:to-pink-950/30">
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">
             <div>
@@ -292,7 +292,7 @@ export function DespesasTab() {
         </CardContent>
       </Card>
 
-      <Card className="border-0 shadow-md">
+      <Card size="md" className="border-0 shadow-md">
         <CardHeader className="pb-4">
           <CardTitle className="text-lg">Filtros</CardTitle>
         </CardHeader>
@@ -325,7 +325,7 @@ export function DespesasTab() {
         </CardContent>
       </Card>
 
-      <Card className="border-0 shadow-lg">
+      <Card size="md" className="border-0 shadow-lg">
         <CardHeader className="pb-4">
           <CardTitle className="text-xl">Despesas Recorrentes</CardTitle>
           <CardDescription className="text-base">Mostrando {filteredExpenses.length} de {expenses.length} despesas</CardDescription>

@@ -13,12 +13,12 @@ import {
 } from 'lucide-react'
 
 interface InvoiceStatusGridProps {
-  invoices: {
-    open: { count: number; total: number }
-    paid: { count: number; total: number }
-    overdue: { count: number; total: number }
-    cancelled: { count: number; total: number }
-  }
+  invoices?: {
+    open?: { count: number; total: number }
+    paid?: { count: number; total: number }
+    overdue?: { count: number; total: number }
+    cancelled?: { count: number; total: number }
+  } | null
 }
 
 const statusConfig = [
@@ -69,10 +69,13 @@ const statusConfig = [
 ]
 
 export function InvoiceStatusGrid({ invoices }: InvoiceStatusGridProps) {
+  if (!invoices) {
+    return null
+  }
   return (
-    <Card className="border-2 border-border/50 shadow-xl overflow-hidden">
+    <Card size="md" className="border-2 border-border/50 shadow-xl overflow-hidden">
       <div className="bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 h-1" />
-      <CardHeader className="pb-4">
+      <CardHeader className="pb-3">
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
             <FileText className="h-5 w-5 text-white" />
@@ -92,6 +95,8 @@ export function InvoiceStatusGrid({ invoices }: InvoiceStatusGridProps) {
           {statusConfig.map((status, index) => {
             const Icon = status.icon
             const data = invoices[status.key as keyof typeof invoices]
+            const count = data?.count ?? 0
+            const total = data?.total ?? 0
 
             return (
               <motion.div
@@ -101,6 +106,7 @@ export function InvoiceStatusGrid({ invoices }: InvoiceStatusGridProps) {
                 transition={{ duration: 0.3, delay: index * 0.1 }}
               >
                 <Card
+                  size="sm"
                   className={`relative overflow-hidden border-2 ${status.border} bg-gradient-to-br ${status.bg} hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group`}
                 >
                   {/* Top gradient accent */}
@@ -108,7 +114,7 @@ export function InvoiceStatusGrid({ invoices }: InvoiceStatusGridProps) {
                     className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${status.gradient}`}
                   />
 
-                  <CardContent className="p-5">
+                  <CardContent>
                     <div className="flex items-start justify-between mb-4">
                       <div
                         className={`p-3 rounded-xl ${status.iconBg} shadow-sm group-hover:scale-110 transition-transform duration-300`}
@@ -119,7 +125,7 @@ export function InvoiceStatusGrid({ invoices }: InvoiceStatusGridProps) {
                         variant="secondary"
                         className={`${status.textColor} bg-white/50 dark:bg-black/20 text-xs font-bold`}
                       >
-                        {data.count}
+                        {count}
                       </Badge>
                     </div>
 
@@ -130,15 +136,15 @@ export function InvoiceStatusGrid({ invoices }: InvoiceStatusGridProps) {
                         {status.label}
                       </p>
                       <p className={`text-2xl font-black ${status.valueColor}`}>
-                        {formatCurrency(data.total)}
+                        {formatCurrency(total)}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {data.count} {data.count === 1 ? 'fatura' : 'faturas'}
+                        {count} {count === 1 ? 'fatura' : 'faturas'}
                       </p>
                     </div>
 
-                    {/* Shine effect */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                    {/* Shine effect (visual only, non-interactive) */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 pointer-events-none" />
                   </CardContent>
                 </Card>
               </motion.div>

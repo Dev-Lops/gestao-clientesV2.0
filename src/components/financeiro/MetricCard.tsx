@@ -74,7 +74,8 @@ export function MetricCard({
       transition={{ duration: 0.5, delay }}
     >
       <Card
-        className={`relative overflow-hidden border-2 ${scheme.border} bg-gradient-to-br ${scheme.bg} backdrop-blur-sm shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 group`}
+        size="md"
+        className={`relative overflow-hidden border-2 ${scheme.border} bg-gradient-to-br ${scheme.bg} backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 group`}
       >
         {/* Gradient Accent */}
         <div
@@ -86,7 +87,7 @@ export function MetricCard({
           <div className="absolute inset-0 bg-grid-pattern" />
         </div>
 
-        <CardContent className="relative p-6">
+        <CardContent className="relative">
           <div className="flex items-start justify-between mb-4">
             <div>
               <p
@@ -107,7 +108,7 @@ export function MetricCard({
 
           <div className="space-y-2">
             <p
-              className={`text-3xl font-black tracking-tight ${scheme.valueText}`}
+              className={`text-2xl font-extrabold tracking-tight ${scheme.valueText}`}
             >
               {formatCurrency(value)}
             </p>
@@ -115,8 +116,8 @@ export function MetricCard({
             {trend && (
               <div
                 className={`flex items-center gap-1.5 text-sm font-medium ${trend.isPositive
-                    ? 'text-green-600 dark:text-green-400'
-                    : 'text-red-600 dark:text-red-400'
+                  ? 'text-green-600 dark:text-green-400'
+                  : 'text-red-600 dark:text-red-400'
                   }`}
               >
                 {trend.isPositive ? (
@@ -133,8 +134,8 @@ export function MetricCard({
             )}
           </div>
 
-          {/* Shine Effect on Hover */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+          {/* Shine Effect on Hover (non-interactive) */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 pointer-events-none" />
         </CardContent>
       </Card>
     </motion.div>

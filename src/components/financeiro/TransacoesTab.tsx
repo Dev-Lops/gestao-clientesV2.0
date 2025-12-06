@@ -157,7 +157,7 @@ export function TransacoesTab() {
       <QuickStats />
 
       {/* Cabeçalho Premium */}
-      <Card className="border-0 shadow-lg bg-gradient-to-r from-green-50 via-emerald-50 to-teal-50 dark:from-green-950/30 dark:via-emerald-950/30 dark:to-teal-950/30">
+      <Card size="md" className="border-0 shadow-lg bg-gradient-to-r from-green-50 via-emerald-50 to-teal-50 dark:from-green-950/30 dark:via-emerald-950/30 dark:to-teal-950/30">
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">
             <div>
@@ -227,7 +227,7 @@ export function TransacoesTab() {
 
 
       {/* Lista de Transações */}
-      <Card className="border-0 shadow-lg">
+      <Card size="md" className="border-0 shadow-lg">
         <CardHeader className="pb-4">
           <CardTitle className="text-xl">Transações Registradas</CardTitle>
           <CardDescription className="text-base">
