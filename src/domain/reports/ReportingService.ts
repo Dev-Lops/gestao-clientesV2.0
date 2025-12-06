@@ -812,6 +812,284 @@ export class ReportingService {
       period: { start: startOfYear, end: endOfYear },
     }
   }
+
+  /**
+   * Busca dados completos do dashboard de um cliente específico
+   * Consolidação de todas as métricas relacionadas ao cliente
+   */
+  static async getClientDashboard(
+    orgId: string,
+    clientId: string,
+    now: Date = new Date()
+  ) {
+    // 1. Buscar cliente
+    const client = await prisma.client.findUnique({
+      where: { id: clientId },
+      include: { media: true },
+    })
+
+    if (!client || client.orgId !== orgId) {
+      throw new Error('Cliente não encontrado ou sem acesso')
+    }
+
+    // 2. Buscar tarefas do cliente
+    const tasks = await prisma.task.findMany({
+      where: { clientId, deletedAt: null },
+      orderBy: { createdAt: 'desc' },
+    })
+
+    // 3. Buscar reuniões
+    const meetings = await prisma.meeting.findMany({
+      where: { clientId },
+      orderBy: { startTime: 'asc' },
+    })
+
+    // 4. Buscar transações financeiras
+    const transactions = await prisma.transaction.findMany({
+      where: { clientId, deletedAt: null },
+    })
+
+    // 5. Buscar faturas
+    const invoices = await prisma.invoice.findMany({
+      where: { clientId },
+    })
+
+    // 6. Buscar mídias
+    const mediaByType = await prisma.media.groupBy({
+      by: ['type'],
+      where: { clientId },
+      _count: true,
+    })
+
+    // 7. Calcular estatísticas de tarefas
+    const taskStats = {
+      total: tasks.length,
+      completed: tasks.filter((t) => ['done', 'completed'].includes(t.status))
+        .length,
+      inProgress: tasks.filter((t) =>
+        ['in_progress', 'in-progress'].includes(t.status)
+      ).length,
+      pending: tasks.filter((t) => ['pending', 'todo'].includes(t.status))
+        .length,
+      overdue: tasks.filter(
+        (t) =>
+          !['done', 'completed'].includes(t.status) &&
+          t.dueDate &&
+          t.dueDate.getTime() < now.getTime()
+      ).length,
+      urgent: tasks.filter((t) => {
+        if (['done', 'completed'].includes(t.status)) return false
+        if (t.priority !== 'HIGH' && t.priority !== 'URGENT') return false
+        if (t.dueDate && t.dueDate.getTime() - now.getTime() < 86400000)
+          return true // < 1 dia
+        return false
+      }).length,
+    }
+
+    // 8. Calcular estatísticas de reuniões
+    const meetingStats = {
+      total: meetings.length,
+      upcoming: meetings.filter(
+        (m) => new Date(m.startTime).getTime() > now.getTime()
+      ).length,
+      past: meetings.filter(
+        (m) => new Date(m.startTime).getTime() <= now.getTime()
+      ).length,
+    }
+
+    // 9. Calcular estatísticas financeiras
+    const financialStats = {
+      income: transactions
+        .filter((t) => t.type === 'INCOME')
+        .reduce((sum, t) => sum + (t.amount || 0), 0),
+      expense: transactions
+        .filter((t) => t.type === 'EXPENSE')
+        .reduce((sum, t) => sum + (t.amount || 0), 0),
+      net: 0, // Calculado abaixo
+    }
+    financialStats.net = financialStats.income - financialStats.expense
+
+    // 10. Calcular estatísticas de mídia
+    const mediaStats = {
+      total: mediaByType.reduce((sum, m) => sum + m._count, 0),
+      images: mediaByType.find((m) => m.type === 'image')?._count || 0,
+      videos: mediaByType.find((m) => m.type === 'video')?._count || 0,
+      documents: mediaByType.find((m) => m.type === 'document')?._count || 0,
+    }
+
+    // 11. Calcular tendências 30d
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+    const tasksLast30d = tasks.filter(
+      (t) => new Date(t.createdAt).getTime() >= thirtyDaysAgo.getTime()
+    )
+    const meetingsLast30d = meetings.filter(
+      (m) => new Date(m.startTime).getTime() >= thirtyDaysAgo.getTime()
+    )
+    const mediaLast30d = await prisma.media.count({
+      where: {
+        clientId,
+        createdAt: { gte: thirtyDaysAgo },
+      },
+    })
+    const transactionsLast30d = transactions.filter(
+      (t) => new Date(t.date).getTime() >= thirtyDaysAgo.getTime()
+    )
+
+    const trends = {
+      tasksCreated30dPct:
+        tasks.length > 0
+          ? Math.round((tasksLast30d.length / tasks.length) * 100)
+          : 0,
+      meetings30dPct:
+        meetings.length > 0
+          ? Math.round((meetingsLast30d.length / meetings.length) * 100)
+          : 0,
+      media30dPct:
+        mediaStats.total > 0
+          ? Math.round((mediaLast30d / mediaStats.total) * 100)
+          : 0,
+      financeNet30dPct:
+        transactions.length > 0
+          ? transactionsLast30d.length > 0
+            ? Math.round(
+                (transactionsLast30d.length / transactions.length) * 100
+              )
+            : 0
+          : 0,
+    }
+
+    // 12. Compilar alertas
+    const alerts: Array<{
+      tone: 'danger' | 'warning' | 'info'
+      label: string
+      href: string
+    }> = []
+    if (taskStats.overdue > 0) {
+      alerts.push({
+        tone: 'danger',
+        label: `${taskStats.overdue} tarefa(s) atrasada(s)`,
+        href: `/clients/${clientId}/tasks`,
+      })
+    }
+    if (financialStats.net < 0) {
+      alerts.push({
+        tone: 'danger',
+        label: 'Balanço financeiro negativo',
+        href: `/clients/${clientId}/billing`,
+      })
+    }
+    if (client.contractEnd) {
+      const diffDays = Math.ceil(
+        (new Date(client.contractEnd).getTime() - now.getTime()) /
+          (1000 * 60 * 60 * 24)
+      )
+      if (diffDays > 0 && diffDays <= 15) {
+        alerts.push({
+          tone: 'warning',
+          label: `Contrato vence em ${diffDays} dia(s)`,
+          href: `/clients/${clientId}/billing`,
+        })
+      }
+    }
+    if (!client.instagramAccessToken) {
+      alerts.push({
+        tone: 'info',
+        label: 'Instagram não conectado',
+        href: `/clients/${clientId}/settings`,
+      })
+    } else if (client.instagramTokenExpiresAt) {
+      const daysUntilExpiry = Math.ceil(
+        (new Date(client.instagramTokenExpiresAt).getTime() - now.getTime()) /
+          (1000 * 60 * 60 * 24)
+      )
+      if (daysUntilExpiry <= 7) {
+        alerts.push({
+          tone: 'warning',
+          label: `Token do Instagram expira em ${daysUntilExpiry} dia(s)`,
+          href: `/clients/${clientId}/settings`,
+        })
+      }
+    }
+
+    // 13. Tarefas urgentes
+    const urgentTasks = tasks
+      .filter(
+        (t) =>
+          !['done', 'completed'].includes(t.status) &&
+          ((t.priority && (t.priority === 'HIGH' || t.priority === 'URGENT')) ||
+            (t.dueDate && t.dueDate.getTime() < now.getTime()))
+      )
+      .sort((a, b) => {
+        const aScore =
+          (a.priority && (a.priority === 'HIGH' || a.priority === 'URGENT')
+            ? 10
+            : 0) + (a.dueDate && a.dueDate.getTime() < now.getTime() ? 5 : 0)
+        const bScore =
+          (b.priority && (b.priority === 'HIGH' || b.priority === 'URGENT')
+            ? 10
+            : 0) + (b.dueDate && b.dueDate.getTime() < now.getTime() ? 5 : 0)
+        return bScore - aScore
+      })
+      .slice(0, 5)
+
+    // 14. Próxima reunião agendada
+    const upcomingMeetings = meetings.filter(
+      (m) => new Date(m.startTime).getTime() > now.getTime()
+    )
+    const nextMeeting =
+      upcomingMeetings.length > 0
+        ? upcomingMeetings.sort(
+            (a, b) =>
+              new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+          )[0]
+        : null
+
+    // 15. Próximo vencimento
+    let nextDueDate: Date | null = null
+    if (client.paymentDay) {
+      const year = now.getFullYear()
+      const month = now.getMonth()
+      const day = Number(client.paymentDay)
+      const candidate = new Date(year, month, day)
+      if (candidate >= new Date(year, month, now.getDate())) {
+        nextDueDate = candidate
+      } else {
+        nextDueDate = new Date(year, month + 1, day)
+      }
+    }
+
+    // 16. Calcular dias ativos
+    const daysActive = client.createdAt
+      ? Math.floor(
+          (now.getTime() - new Date(client.createdAt).getTime()) /
+            (1000 * 60 * 60 * 24)
+        )
+      : 0
+
+    return {
+      client,
+      tasks,
+      meetings,
+      transactions,
+      invoices,
+      counts: {
+        tasks: taskStats,
+        meetings: meetingStats,
+        finance: {
+          income: financialStats.income,
+          expense: financialStats.expense,
+          net: financialStats.net,
+        },
+        media: mediaStats,
+      },
+      trends,
+      alerts,
+      urgentTasks,
+      nextMeeting,
+      nextDueDate,
+      daysActive,
+    }
+  }
 }
 
 export default ReportingService

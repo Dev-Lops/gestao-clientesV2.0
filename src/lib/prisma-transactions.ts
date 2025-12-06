@@ -82,7 +82,7 @@ export class PrismaTransactionManager {
       })
 
       // Create transaction if requested
-      let transaction = null
+      let transaction: any = null
       if (data.createTransaction) {
         transaction = await tx.transaction.create({
           data: {

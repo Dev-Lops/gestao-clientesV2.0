@@ -110,7 +110,14 @@ export async function PATCH(
             ? installmentPaymentDays
             : [updatedClient.paymentDay || startDate.getDate()]
 
-        const installmentsToCreate = []
+        type InstallmentData = {
+          clientId: string
+          number: number
+          amount: number
+          dueDate: Date
+          status: 'PENDING'
+        }
+        const installmentsToCreate: InstallmentData[] = []
         let installmentNumber = 1
         const currentDate = new Date(
           startDate.getFullYear(),

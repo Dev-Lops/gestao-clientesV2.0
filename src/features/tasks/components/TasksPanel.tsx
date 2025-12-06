@@ -89,53 +89,51 @@ function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
       ref={setNodeRef}
       {...attributes}
       {...listeners}
-      className={`rounded-xl p-4 mb-3 shadow-md hover:shadow-xl transition-all duration-200 cursor-move border-2 ${style.bg
-        } ${style.border}${isDragging ? ' opacity-60 scale-95 ring-2 ring-blue-500 shadow-2xl' : ''
-        }`}
+      className={`rounded-xl p-3 sm:p-4 mb-2 sm:mb-3 shadow-md hover:shadow-xl transition-all duration-200 cursor-move border-2 ${style.bg} ${style.border}${isDragging ? ' opacity-60 scale-95 ring-2 ring-blue-500 shadow-2xl' : ''}`}
       style={{ zIndex: isDragging ? 50 : undefined }}
     >
-      {/* Header com título e ações */}
-      <div className="flex items-start gap-3 mb-3">
+      {/* Header com título e ações - Mobile First */}
+      <div className="flex items-start gap-2 sm:gap-3 mb-3">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
             <span className={`w-2 h-2 rounded-full ${style.dot} animate-pulse`} />
-            <h4 className={`font-bold text-sm line-clamp-2 ${style.text}`}>
+            <h4 className={`font-bold text-xs sm:text-sm line-clamp-2 ${style.text}`}>
               {task.title}
             </h4>
           </div>
           {task.description && (
-            <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 mt-2">
+            <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 mt-1.5 sm:mt-2">
               {task.description}
             </p>
           )}
         </div>
-        <div className="flex gap-1 shrink-0">
+        <div className="flex gap-0.5 sm:gap-1 shrink-0">
           <button
             type="button"
             aria-label="Editar tarefa"
-            className="p-1.5 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors group"
+            className="p-1.5 sm:p-2 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors group"
             onClick={e => { e.stopPropagation(); onEdit?.(task); }}
           >
-            <Pencil className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 group-hover:scale-110 transition-transform" />
+            <Pencil className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-blue-500 dark:text-blue-400 group-hover:scale-110 transition-transform" />
           </button>
           <button
             type="button"
             aria-label="Excluir tarefa"
-            className="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors group"
+            className="p-1.5 sm:p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors group"
             onClick={e => { e.stopPropagation(); onDelete?.(task.id); }}
           >
-            <Trash2 className="w-3.5 h-3.5 text-red-500 dark:text-red-400 group-hover:scale-110 transition-transform" />
+            <Trash2 className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-red-500 dark:text-red-400 group-hover:scale-110 transition-transform" />
           </button>
         </div>
       </div>
 
-      {/* Footer com badges */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className={`text-xs px-2.5 py-1 rounded-full font-semibold border ${style.badge}`}>
+      {/* Footer com badges - Mobile First */}
+      <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+        <span className={`text-xs px-2 sm:px-2.5 py-1 rounded-full font-semibold border ${style.badge}`}>
           {task.priority === 'URGENT' ? 'Urgente' : task.priority === 'HIGH' ? 'Alta' : task.priority === 'MEDIUM' ? 'Média' : 'Baixa'}
         </span>
         {task.dueDate && (
-          <span className={`text-xs flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300`}>
+          <span className={`text-xs flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300`}>
             <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="6" cy="6" r="5" />
             </svg>
@@ -173,19 +171,19 @@ function KanbanColumn({ column, tasks, handleEdit, handleDelete }: KanbanColumnP
       text: 'text-blue-900 dark:text-blue-100',
       badge: 'bg-blue-200 dark:bg-blue-800 text-blue-900 dark:text-blue-100'
     },
-    'DONE': {
-      bg: 'bg-linear-to-b from-emerald-50/80 to-green-50/50 dark:from-emerald-950/20 dark:to-green-950/10',
-      border: 'border-emerald-200 dark:border-emerald-800',
-      header: 'bg-linear-to-r from-emerald-100 to-green-100 dark:from-emerald-900/50 dark:to-green-900/50',
-      text: 'text-emerald-900 dark:text-emerald-100',
-      badge: 'bg-emerald-200 dark:bg-emerald-800 text-emerald-900 dark:text-emerald-100'
-    },
     'REVIEW': {
       bg: 'bg-linear-to-b from-purple-50/80 to-violet-50/50 dark:from-purple-950/20 dark:to-violet-950/10',
       border: 'border-purple-200 dark:border-purple-800',
       header: 'bg-linear-to-r from-purple-100 to-violet-100 dark:from-purple-900/50 dark:to-violet-900/50',
       text: 'text-purple-900 dark:text-purple-100',
       badge: 'bg-purple-200 dark:bg-purple-800 text-purple-900 dark:text-purple-100'
+    },
+    'DONE': {
+      bg: 'bg-linear-to-b from-emerald-50/80 to-green-50/50 dark:from-emerald-950/20 dark:to-green-950/10',
+      border: 'border-emerald-200 dark:border-emerald-800',
+      header: 'bg-linear-to-r from-emerald-100 to-green-100 dark:from-emerald-900/50 dark:to-green-900/50',
+      text: 'text-emerald-900 dark:text-emerald-100',
+      badge: 'bg-emerald-200 dark:bg-emerald-800 text-emerald-900 dark:text-emerald-100'
     },
     'CANCELLED': {
       bg: 'bg-linear-to-b from-gray-50/80 to-slate-50/50 dark:from-gray-950/20 dark:to-slate-950/10',
@@ -196,14 +194,12 @@ function KanbanColumn({ column, tasks, handleEdit, handleDelete }: KanbanColumnP
     },
   };
 
-  const style = columnStyles[column.id] || columnStyles['TODO']; // Fallback para TODO se não encontrar
+  const style = columnStyles[column.id] || columnStyles['TODO'];
 
   return (
-    <div ref={setNodeRef} className="flex-1 min-w-[280px] max-w-[360px]">
+    <div ref={setNodeRef} className="h-full flex flex-col">
       <div
-        className={`h-full rounded-2xl shadow-xl border-2 transition-all duration-200 ${style.bg
-          } ${style.border}${isOver ? ' ring-4 ring-blue-400 ring-offset-2 scale-[1.02] shadow-2xl' : ''
-          }`}
+        className={`h-full rounded-2xl shadow-xl border-2 transition-all duration-200 flex flex-col ${style.bg} ${style.border}${isOver ? ' ring-4 ring-blue-400 ring-offset-2 scale-[1.02] shadow-2xl' : ''}`}
       >
         {/* Header da coluna */}
         <div className={`${style.header ?? style.bg} rounded-t-2xl p-4 border-b-2 ${style.border}`}>
@@ -211,26 +207,26 @@ function KanbanColumn({ column, tasks, handleEdit, handleDelete }: KanbanColumnP
             <h3 className={`font-bold text-base ${style.text} flex items-center gap-2`}>
               {column.title}
             </h3>
-            <span className={`text-xs font-bold px-3 py-1.5 rounded-full ${style.badge} shadow-sm`}>
+            <span className={`text-xs font-bold px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full ${style.badge} shadow-sm flex-shrink-0`}>
               {tasks.length}
             </span>
           </div>
         </div>
 
-        {/* Área de conteúdo */}
-        <div className="p-4 min-h-[200px]">
+        {/* Área de conteúdo - Mobile First */}
+        <div className="flex-1 overflow-y-auto p-3 sm:p-4 min-h-[200px] sm:min-h-[300px]">
           <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
             {tasks.length === 0 ? (
-              <div className="text-center py-12">
-                <div className={`w-16 h-16 mx-auto mb-3 rounded-full ${style.bg} border-2 ${style.border} flex items-center justify-center`}>
-                  <ListTodo className={`w-8 h-8 ${style.text} opacity-30`} />
+              <div className="text-center py-8 sm:py-12 flex flex-col items-center justify-center h-full">
+                <div className={`w-12 sm:w-16 h-12 sm:h-16 mx-auto mb-2 sm:mb-3 rounded-full ${style.bg} border-2 ${style.border} flex items-center justify-center flex-shrink-0`}>
+                  <ListTodo className={`w-6 sm:w-8 h-6 sm:h-8 ${style.text} opacity-30`} />
                 </div>
-                <p className={`text-xs ${style.text} opacity-60 font-medium`}>
+                <p className={`text-xs sm:text-sm ${style.text} opacity-60 font-medium`}>
                   Nenhuma tarefa
                 </p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2 sm:space-y-3">
                 {tasks.map((task: Task) => (
                   <TaskCard
                     key={task.id}
@@ -248,9 +244,9 @@ function KanbanColumn({ column, tasks, handleEdit, handleDelete }: KanbanColumnP
   );
 }
 
-interface TasksPanelProps { clientId: string; initialTasks?: Task[] }
+interface TasksPanelProps { clientId: string; initialTasks?: Task[]; orgId?: string }
 
-export function TasksPanel({ clientId, initialTasks = [] }: TasksPanelProps) {
+export function TasksPanel({ clientId, initialTasks = [], orgId }: TasksPanelProps) {
   const { tasks, filtered, stats, isLoading, refetch, invalidate, search, setSearch, statusFilter, setStatusFilter, error } = useTasks({ clientId, initial: initialTasks })
 
   // Kanban columns
@@ -309,20 +305,30 @@ export function TasksPanel({ clientId, initialTasks = [] }: TasksPanelProps) {
     if (editing) {
       try {
         const res = await fetch(`/api/clients/${clientId}/tasks?taskId=${editing.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-        if (!res.ok) throw new Error("Falha ao atualizar tarefa");
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error || errData.message || "Falha ao atualizar tarefa");
+        }
+        toast.success("Tarefa atualizada com sucesso");
         await invalidate();
         toast.success("Tarefa atualizada")
       } catch (err) {
+        const message = err instanceof Error ? err.message : "Erro ao atualizar tarefa";
         console.error(err);
         toast.error("Não foi possível atualizar a tarefa");
       }
     } else {
       try {
         const res = await fetch(`/api/clients/${clientId}/tasks`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-        if (!res.ok) throw new Error("Falha ao criar tarefa");
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error || errData.message || "Falha ao criar tarefa");
+        }
+        toast.success("Tarefa criada com sucesso");
         await invalidate();
         toast.success("Tarefa criada")
       } catch (err) {
+        const message = err instanceof Error ? err.message : "Erro ao criar tarefa";
         console.error(err);
         toast.error("Não foi possível criar a tarefa");
       }
@@ -389,16 +395,16 @@ export function TasksPanel({ clientId, initialTasks = [] }: TasksPanelProps) {
   }
 
   return (
-    <div className="page-background">
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gradient-primary mb-2">Tarefas</h1>
-            <p className="text-slate-600 dark:text-slate-400">Gerencie as tarefas deste cliente</p>
+    <div className="page-background min-h-screen">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 space-y-4 sm:space-y-6">
+        {/* Header - Mobile First */}
+        <div className="flex flex-col gap-3 sm:gap-4">
+          <div className="flex flex-col gap-2">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gradient-primary">Tarefas</h1>
+            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">Gerencie as tarefas deste cliente</p>
           </div>
           <Button
-            className="gap-2"
+            className="w-full sm:w-auto gap-2 font-semibold"
             size="lg"
             onClick={() => { resetForm(); setIsModalOpen(true) }}
           >
@@ -406,31 +412,42 @@ export function TasksPanel({ clientId, initialTasks = [] }: TasksPanelProps) {
           </Button>
         </div>
 
-        <StatsCards stats={stats} />
-        <TaskFilters statusFilter={statusFilter} setStatusFilter={setStatusFilter} search={search} setSearch={setSearch} />
+        {/* Stats - Mobile First Grid */}
+        <div>
+          <StatsCards stats={stats} />
+        </div>
 
+        {/* Filters - Mobile First */}
+        <div className="space-y-3">
+          <TaskFilters statusFilter={statusFilter} setStatusFilter={setStatusFilter} search={search} setSearch={setSearch} />
+        </div>
+
+        {/* Kanban Board - Mobile Responsive */}
         <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-          <div className="flex gap-10 md:gap-14 overflow-x-auto pb-8 pt-4">
-            {filteredKanbanTasks.map(col => (
-              <KanbanColumn
-                key={col.id}
-                column={col}
-                tasks={col.tasks}
-                handleEdit={handleEdit}
-                handleDelete={handleDelete}
-              />
-            ))}
+          <div className="w-full overflow-x-auto -mx-3 sm:-mx-4 md:mx-0 px-3 sm:px-4 md:px-0">
+            <div className="inline-flex gap-3 sm:gap-4 lg:gap-6 min-w-min md:w-full md:grid md:grid-cols-2 lg:grid-cols-4 pb-6 pt-2">
+              {filteredKanbanTasks.map(col => (
+                <div key={col.id} className="w-[calc(100vw-2rem)] sm:w-[350px] md:w-auto md:min-w-0">
+                  <KanbanColumn
+                    column={col}
+                    tasks={col.tasks}
+                    handleEdit={handleEdit}
+                    handleDelete={handleDelete}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
           <DragOverlay>
             {activeTask ? (
-              <div className="scale-110 drop-shadow-2xl px-6 py-4">
+              <div className="scale-110 drop-shadow-2xl">
                 <TaskCard task={activeTask} onEdit={() => { }} onDelete={() => { }} />
               </div>
             ) : null}
           </DragOverlay>
         </DndContext>
 
-        <TaskModal open={isModalOpen} onClose={() => setIsModalOpen(false)} editing={editing} form={form} setForm={setForm} onSubmit={handleSubmit} />
+        <TaskModal open={isModalOpen} onClose={() => setIsModalOpen(false)} editing={editing} orgId={orgId} form={form} setForm={setForm} onSubmit={handleSubmit} />
       </div>
     </div>
   )

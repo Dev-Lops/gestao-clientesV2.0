@@ -27,9 +27,10 @@ export class TaskController {
   private updateUseCase: UpdateTaskUseCase
   private deleteUseCase: DeleteTaskUseCase
 
-  constructor(prisma: PrismaClient) {
+  constructor(private prisma: PrismaClient) {
     this.repository = new PrismaTaskRepository(prisma)
-    this.createUseCase = new CreateTaskUseCase(this.repository)
+    // Passa prisma para CreateTaskUseCase para ativar atribuição automática
+    this.createUseCase = new CreateTaskUseCase(this.repository, prisma)
     this.listUseCase = new ListTasksUseCase(this.repository)
     this.getUseCase = new GetTaskUseCase(this.repository)
     this.updateUseCase = new UpdateTaskUseCase(this.repository)

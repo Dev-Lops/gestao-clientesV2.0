@@ -23,7 +23,7 @@ export function useTasks({ clientId, initial = [] }: UseTasksOptions) {
     queryKey: ['tasks', clientId],
     enabled: !!clientId,
     queryFn: async () => {
-      const url = `/api/tasks?clientId=${clientId}`
+      const url = `/api/clients/${clientId}/tasks`
       const res = await fetch(url, { cache: 'no-store' })
       if (!res.ok) {
         let body: unknown = undefined
@@ -40,8 +40,8 @@ export function useTasks({ clientId, initial = [] }: UseTasksOptions) {
         throw err
       }
       const raw: unknown = await res.json()
-      // API retorna { tasks: [], meta: { ... } }
-      const tasksArray = (raw as { tasks?: unknown }).tasks
+      // API retorna { data: [], meta: { ... } }
+      const tasksArray = (raw as { data?: unknown }).data
       if (!Array.isArray(tasksArray)) return []
       return (tasksArray as Array<Record<string, unknown>>).map((t) => ({
         id: String(t.id),
