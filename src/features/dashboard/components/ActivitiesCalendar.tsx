@@ -81,7 +81,7 @@ export function ActivitiesCalendar({ activities }: ActivitiesCalendarProps) {
   });
 
   // Gerar dias da semana
-  const weekDays = [];
+  const weekDays: Date[] = [];
   for (let i = 0; i < 7; i++) {
     const day = new Date(weekStart);
     day.setDate(weekStart.getDate() + i);

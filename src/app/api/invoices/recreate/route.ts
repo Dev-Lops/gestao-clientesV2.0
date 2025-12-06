@@ -188,7 +188,11 @@ export async function POST() {
     })
 
     // PASSO 3: Criar novas faturas
-    const createdInvoices = []
+    const createdInvoices: Array<{
+      cliente: string
+      mes: string
+      valor: number
+    }> = []
     for (let i = 0; i < invoicesToCreate.length; i++) {
       const fatura = invoicesToCreate[i]
       const clienteId = clienteMaps[fatura.cliente]
