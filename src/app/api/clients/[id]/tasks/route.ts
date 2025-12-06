@@ -187,7 +187,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function PATCH(request: NextRequest) {
+export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
     // Rate limit atualização de tarefa
     const idKey = getIdentifier(request as unknown as Request)
@@ -210,6 +210,7 @@ export async function PATCH(request: NextRequest) {
 
     const url = new URL(request.url)
     const taskId = url.searchParams.get('taskId')
+    const { id: clientId } = await params
     if (!taskId)
       return NextResponse.json({ error: 'ID não fornecido' }, { status: 400 })
 
@@ -272,7 +273,7 @@ export async function PATCH(request: NextRequest) {
   }
 }
 
-export async function DELETE(request: NextRequest) {
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     // Rate limit deleção de tarefa
     const idKey = getIdentifier(request as unknown as Request)

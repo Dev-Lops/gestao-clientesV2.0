@@ -23,6 +23,7 @@ import {
 } from '@dnd-kit/sortable';
 import { AlertCircle, ListTodo, Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 interface TaskCardProps {
   task: Task;
@@ -295,18 +296,30 @@ export function TasksPanel({ clientId, initialTasks = [] }: TasksPanelProps) {
     if (editing) {
       try {
         const res = await fetch(`/api/clients/${clientId}/tasks?taskId=${editing.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-        if (!res.ok) throw new Error("Falha ao atualizar tarefa");
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error || errData.message || "Falha ao atualizar tarefa");
+        }
+        toast.success("Tarefa atualizada com sucesso");
         await invalidate();
       } catch (err) {
+        const message = err instanceof Error ? err.message : "Erro ao atualizar tarefa";
         console.error(err);
+        toast.error(message);
       }
     } else {
       try {
         const res = await fetch(`/api/clients/${clientId}/tasks`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-        if (!res.ok) throw new Error("Falha ao criar tarefa");
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error || errData.message || "Falha ao criar tarefa");
+        }
+        toast.success("Tarefa criada com sucesso");
         await invalidate();
       } catch (err) {
+        const message = err instanceof Error ? err.message : "Erro ao criar tarefa";
         console.error(err);
+        toast.error(message);
       }
     }
     setIsModalOpen(false); resetForm();
