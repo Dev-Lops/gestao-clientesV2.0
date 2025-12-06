@@ -111,9 +111,9 @@ export function TaskModal({ open, onClose, editing, orgId, form, setForm, onSubm
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="todo">A Fazer</SelectItem>
-                  <SelectItem value="in-progress">Em Progresso</SelectItem>
-                  <SelectItem value="done">Concluída</SelectItem>
+                  <SelectItem value="TODO">A Fazer</SelectItem>
+                  <SelectItem value="IN_PROGRESS">Em Progresso</SelectItem>
+                  <SelectItem value="DONE">Concluída</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -125,9 +125,9 @@ export function TaskModal({ open, onClose, editing, orgId, form, setForm, onSubm
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="low">Baixa</SelectItem>
-                  <SelectItem value="medium">Média</SelectItem>
-                  <SelectItem value="high">Alta</SelectItem>
+                  <SelectItem value="LOW">Baixa</SelectItem>
+                  <SelectItem value="MEDIUM">Média</SelectItem>
+                  <SelectItem value="HIGH">Alta</SelectItem>
                 </SelectContent>
               </Select>
             </div>
