@@ -209,14 +209,17 @@ export function DashboardNotes({ initialNotes = [] }: DashboardNotesProps) {
 
   return (
     <>
-      <Card variant="default" hover className="border-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 h-full flex flex-col">
+      <Card variant="elevated" hover className="h-full flex flex-col border border-slate-200/80 dark:border-slate-800/70">
         <CardHeader className="shrink-0">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="p-2 bg-linear-to-br from-yellow-100 to-amber-100 dark:from-yellow-900/50 dark:to-amber-900/50 rounded-lg shadow-lg">
-                <StickyNote className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-600 dark:text-yellow-400" />
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-300 ring-1 ring-amber-100 dark:ring-amber-500/30">
+                <StickyNote className="h-4 w-4 sm:h-5 sm:w-5" />
               </div>
-              <CardTitle className="text-base sm:text-lg">Notas Rápidas</CardTitle>
+              <div>
+                <CardTitle className="text-base sm:text-lg">Notas Rápidas</CardTitle>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Organize lembretes curtos e ideias em um só lugar</p>
+              </div>
             </div>
             <Button
               size="sm"
@@ -254,7 +257,7 @@ export function DashboardNotes({ initialNotes = [] }: DashboardNotesProps) {
                 return (
                   <div
                     key={note.id}
-                    className={`${colorClasses.bg} ${colorClasses.border} ${colorClasses.text} border-2 rounded-lg p-4 shadow-sm hover:shadow-md transition-all relative group ${isDeleting ? 'opacity-50 pointer-events-none' : ''}`}
+                    className={`${colorClasses.bg} ${colorClasses.border} ${colorClasses.text} border rounded-lg p-4 shadow-sm hover:shadow-md transition-all relative group glass-surface ${isDeleting ? 'opacity-50 pointer-events-none' : ''}`}
                   >
                     {isDeleting && (
                       <div className="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-slate-900/50 rounded-lg">
